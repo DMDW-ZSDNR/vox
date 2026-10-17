@@ -1,73 +1,112 @@
-# Review Queue — OpenMontage Milestone C2 (v2)
+# Review Queue — OpenMontage Milestone C3 (corrected)
 
-**Status:** docs/report only. Media artifacts under `projects/c2_review/` are gitignored and NOT committed.
-**Rule source:** `docs/openmontage/RIGHTS_MODEL.md` (applied as written, not loosened).
+**Status:** docs/report only. Corrected per RIGHTS_MODEL.md as written (not loosened).
 **Subagent note:** executed inline (orchestrator). The `task` tool exposes only `explore`/`general`; no separate `.kilo/agents` subagent process was available. Footage-scout/evidence-checker/qa-reviewer rules applied inline and attributed by domain.
 
 ---
 
-## Per-clip review queue
+## Step 1 — R1 (25 "no license/rights statement") diagnosis vs written RIGHTS_MODEL.md
 
-Each row: `nasa_id`, URL, evidence fields observed, `rights_basis`, verdict, and what a human must check (identifiable persons, logos/insignia, third-party material). Preview/thumbnail paths listed where available; downloaded variants live under `projects/c2_review/previews/` (gitignored, not committed, total ~20K).
+**The earlier R1 verdict was STRICTER than the written rule.**
 
-### Boeing 720 Controlled Impact Demonstration 1984
+Written rule (RIGHTS_MODEL.md §3), `source_policy_us_gov` granted ONLY when ALL hold:
+1. The item is NASA-produced per its own metadata (`creator`/`center` is a NASA center or "NASA").
+2. No third-party credit ("courtesy of", "credit: <non-NASA>", copyright notice) in the credit/description fields.
+3. No per-item restriction text (no "copyright protected", no license-limiting statement, no "rights reserved").
 
-| # | nasa_id / asset | URL | Evidence fields | rights_basis | Verdict | Human must check |
+Notably, source_policy_us_gov does **NOT** require a license statement. The earlier R1 verdict implicitly required one → stricter than written.
+
+### (a) center/creator says NASA, no third-party text/credit, no restriction → source_policy_us_gov under written rule
+
+| nasa_id / asset | center/creator | Third-party credit? | Restriction text? | Written-rule classification | Earlier C1 verdict | Change? |
 |---|---|---|---|---|---|---|
-| B-1 | File:Controlled Impact Demonstration.webm | https://commons.wikimedia.org/wiki/File:Controlled_Impact_Demonstration.webm | uploader=Askeuhd (2022-05-23); license tag "Public domain" per prior probe; extmetadata fetch returned no usable JSON (fetch limitation) | explicit_license | NEEDS_REVIEW | identifiable_persons (crash-test footage may show crew/dummies), logo_visible (NASA insignia on vehicle), third-party credit (uploader Askeuhd — third-party uploader, not NASA) |
-| B-2 | NIX-EM-0004-02 | https://archive.org/details/NIX-EM-0004-02 | creator=NASA/Dryden Flight Research Center; date 1988-12-02; duration 36s; **no** `license`/`rights`/`licenseurl` field | unknown | REJECT | n/a (rejected) |
-| B-3 | NIX-EM-0004-01 | https://archive.org/details/NIX-EM-0004-01 | creator=NASA/Dryden Flight Research Center; date 1988-12-02; duration 38s; **no** `license`/`rights`/`licenseurl` field | unknown | REJECT | n/a |
-| B-4..12 | NIX-LV-1998-00090 … 00098 (9 items) | https://archive.org/details/NIX-LV-1998-00090 … | creator=NASA/Langley Research Center; date 1988-12-02; duration 11–39s each; **no** `license`/`rights`/`licenseurl` field | unknown | REJECT x9 | n/a |
-| B-13 | youtube-Jpc32JQXT_0 | https://archive.org/details/youtube-Jpc32JQXT_0 | creator="The Federal File" (third-party re-upload); date 2017-03-17; duration 275s; **no** license statement | unknown | REJECT | n/a |
+| NIX-EM-0004-02 | NASA/Dryden Flight Research Center | No | No | source_policy_us_gov | REJECT (unknown) | Yes → source_policy_us_gov |
+| NIX-EM-0004-01 | NASA/Dryden Flight Research Center | No | No | source_policy_us_gov | REJECT (unknown) | Yes → source_policy_us_gov |
+| NIX-LV-1998-00090 … 00098 (9 items) | NASA/Langley Research Center | No | No | source_policy_us_gov | REJECT x9 (unknown) | Yes → source_policy_us_gov |
+| NASA-API Shuttle 13 KSC clips (e.g. edw_052409_sts125_land) | KSC | No (none observed) | No | source_policy_us_gov | REJECT x13 (unknown) | Yes → source_policy_us_gov |
+| nasa_tv-STS-128_Landing | NASA TV | No | No | source_policy_us_gov | REJECT (unknown) | Yes → source_policy_us_gov |
 
-### Space Shuttle landing tests at Edwards (ALT-era specificity unverified)
+**25 clips reclassified from REJECT to source_policy_us_gov under the written rule.** None become USABLE — all remain NEEDS_REVIEW because `identifiable_persons`/`logo_visible` are UNKNOWN (flags unreviewed = hard NEEDS_REVIEW block per RIGHTS_MODEL.md §4).
 
-| # | nasa_id / asset | URL | Evidence fields | rights_basis | Verdict | Human must check |
-|---|---|---|---|---|---|---|
-| S-1 | RSS_294545main_edw_113008_sts126_landing_pod | https://archive.org/details/RSS_294545main_edw_113008_sts126_landing_pod | title="Landing of Space Shuttle Endeavour"; creator=NASA; date=11/30/2008; description="…smooth touchdown at Edwards Air Force Base"; rights="Public Domain"; licenseurl=None; uploader=bonnie@archive.org; collections nasa/nasacastvideo; preview `__ia_thumb.jpg` (fetch returned 0 bytes — blocked) | explicit_license | NEEDS_REVIEW | identifiable_persons (crew on landing), logo_visible (NASA insignia on orbiter/pad), third-party credit (none in metadata) |
-| S-2 | STS1FirstFlight | https://archive.org/details/STS1FirstFlight | title="STS-1 Space Shuttle First Manned Orbital Flight"; creator=**Department of Defense** (NOT NASA); date=1981-04-12; description includes "Provided by Fight for Space / Paul Hildebrandt" + fightforspace.com (**third-party credit**); licenseurl=Public Domain Mark 1.0; rights=None; uploader=eventidevisuals@gmail.com; preview __ia_thumb.jpg available | explicit_license | NEEDS_REVIEW | identifiable_persons (crew John Young/Robert Crippen named), logo_visible, third-party credit (DoD + Fight for Space — not NASA-produced despite NASA content) |
-| S-3 | nasa-space-shuttle-discovery-sts-26-1988-tape-02 | https://archive.org/details/nasa-space-shuttle-discovery-sts-26-1988-tape-02 | title="NASA Space Shuttle Discovery STS 26 1988 TAPE 02"; creator=NASA; date=1988-09-29; description="via NASA TV / Multnomah Cable Access, CNN & NBC" + "Bernard Shaw … on CNN" (**third-party credits**); licenseurl=CC-BY 4.0; rights=None; uploader=drnormal@gmail.com; preview __ia_thumb.jpg available | explicit_license | NEEDS_REVIEW | identifiable_persons (Bonnie Dunbar named), logo_visible, third-party credit (CNN/NASA TV/Multnomah Cable Access) |
-| S-4 | nasa_tv-STS-128_Landing | https://archive.org/details/nasa_tv-STS-128_Landing | creator=NASA TV; date 2009-09-11; duration 335s; rights="none stated" | unknown | REJECT | n/a |
-| S-5..7 | 59094…, 59104…, 59084… (3 IA compilations) | https://archive.org/details/59094SpaceShuttleAmericasSpaceTransportationSystem … | creator=none (unknown provenance); rights="none stated"; third_party_credit=YES | unknown | REJECT x3 | n/a |
-| S-8 | File:Approach and Landing Tests Film Documentary.webm | https://commons.wikimedia.org/wiki/File:Approach_and_Landing_Tests_Film_Documentary.webm | uploader=Askeuhd (2022-07-25); Public domain tag per prior probe; extmetadata fetch returned no usable JSON | explicit_license | NEEDS_REVIEW | identifiable_persons (ALT pilots), logo_visible (NASA insignia), third-party credit (uploader Askeuhd) |
-| S-9 | File:NASA Report - Space Shuttle Enterprise Rollout.webm | https://commons.wikimedia.org/wiki/File:NASA_Report_-_Space_Shuttle_Enterprise_Rollout.webm | uploader=Askeuhd (2022-07-25); Public domain tag per prior probe; extmetadata fetch returned no usable JSON | explicit_license | NEEDS_REVIEW | identifiable_persons, logo_visible (NASA insignia on Enterprise), third-party credit (uploader Askeuhd) |
-| S-10..22 | NASA-API 13 KSC clips (e.g. edw_052409_sts125_land, ksc_082505_114landing) | images-assets.nasa.gov/video/<nasa_id>/… | center=KSC; rights="none stated"; **no** license/rights/duration field exposed by NASA Image/Video Library API | unknown | REJECT x13 | n/a |
+### (b) center/creator missing or not NASA
+- STS1FirstFlight: creator=Department of Defense (not NASA) → not source_policy_us_gov.
+- 59xxx IA compilations: no creator → not source_policy_us_gov.
 
-### X-15 research flights
-
-| # | nasa_id / asset | URL | Evidence fields | rights_basis | Verdict | Human must check |
-|---|---|---|---|---|---|---|
-| X-1 | NDTV001077-X-15_Documentary_Revised | https://images-assets.nasa.gov/video/NDTV001077-X-15_Documentary_Revised/collection.json | center=AFRC; date_created=2021-02-01; description="X-15 Documentary… Early test footage, engineers in mission control room, in-flight footage from B-52 and chase aircraft, on-board the X-15, accidents, audio, maintenance, and pilots"; keywords X-15/NASA/AFRC/filmstock; **no** third-party credit/restriction in metadata | source_policy_us_gov candidate | NEEDS_REVIEW | identifiable_persons (pilots/engineers), logo_visible (NASA insignia on aircraft/control room), third-party credit (none in metadata) |
-| X-2 | ksc_121704_b52_retires | https://images-assets.nasa.gov/video/ksc_121704_b52_retires/collection.json | center=KSC; date_created=2004-12-21; description="NASA retired its esteemed B-52B… carried aloft the first X-15 hypersonic rocket planes… last X-43A scramjet"; photographer="NASA or National Aeronautics and Space Administration"; **no** third-party credit/restriction in metadata | source_policy_us_gov candidate | NEEDS_REVIEW | identifiable_persons, logo_visible (NASA insignia on B-52), third-party credit (none in metadata) |
+### (c) other
+- nasa-space-shuttle-discovery-sts-26-1988-tape-02: creator=NASA BUT third-party credits present (see step 2).
 
 ---
 
-## Preview / contact-sheet evidence (downloaded, gitignored, not committed)
+## Step 2 — Classification inconsistency fix: third-party credit → REJECT (not NEEDS_REVIEW)
 
-| File | Path | Size | Notes |
+RIGHTS_MODEL.md §3 condition #2: no third-party credit in credit/description fields. Any clip with third-party credit/courtesy/copyright text → REJECT, regardless of flag-review state.
+
+| nasa_id / asset | Third-party credit observed | New verdict | Reason |
 |---|---|---|---|
-| X-15 NASA thumb | `projects/c2_review/previews/x15_nasa_thumb.jpg` | 5,877 B | From NASA Image/Video Library ~thumb.jpg |
-| KSC B-52 thumb | `projects/c2_review/previews/ksc_b52_thumb.jpg` | 7,056 B | From NASA Image/Video Library ~thumb.jpg |
-| IA thumb (RSS_294545main) | `projects/c2_review/previews/ia_rss_thumb.jpg` | 0 B | **Fetch returned 0 bytes — blocked** (archive.org thumbnail not reachable) |
-| Contact sheet | `projects/c2_review/previews/contact_sheet_previews.jpg` | 6,686 B | ffmpeg `tile=2x1` of the two successful thumbnails |
+| STS1FirstFlight | "Provided by Fight for Space / Paul Hildebrandt" + fightforspace.com; creator=DoD | REJECT | third-party credit (condition #2 fails) |
+| nasa-space-shuttle-discovery-sts-26-1988-tape-02 | "via NASA TV / Multnomah Cable Access, CNN & NBC"; "Bernard Shaw … on CNN" | REJECT | third-party credit (condition #2 fails) |
+| File:Controlled Impact Demonstration.webm | uploader Askeuhd (third-party uploader) | REJECT | third-party credit |
+| File:Approach and Landing Tests Film Documentary.webm | uploader Askeuhd (third-party uploader) | REJECT | third-party credit |
+| File:NASA Report - Space Shuttle Enterprise Rollout.webm | uploader Askeuhd (third-party uploader) | REJECT | third-party credit |
 
-**Total downloaded:** ~20K (well under the 200 MB cap). Nothing committed (projects/ is gitignored).
+**Owner rule (step 5): any third-party credit = REJECT regardless of review.**
 
-**Preview availability per clip:**
-- NASA-API clips (X-1, X-2): `~thumb.jpg` / `~small.jpg` variants exist in `collection.json` links — downloadable.
-- IA clips (S-1, S-2, S-3): `__ia_thumb.jpg` and `.thumbs/*.jpg` derivatives exist — S-1 thumb fetch blocked (0 bytes); S-2/S-3 thumbnails not fetched.
-- Commons clips (B-1, S-8, S-9): thumbnail via Commons `Special:FilePath` / API (extmetadata fetch returned no usable JSON — fetch limitation).
-- NASA-API Shuttle REJECT clips (S-10..22): `~thumb.jpg` variants exist but clips are REJECT, so no preview needed.
+### Recomputed counts per topic
 
-**Contact-sheet method:** ffmpeg `tile=2x1:margin=5:padding=10` over the two downloaded thumbnails → `contact_sheet_previews.jpg`. Per-clip 12-frame video contact sheets were not generated because (a) most NEEDS_REVIEW clips are still images/thumbnails, not readily downloadable video within time-box, and (b) the milestone is docs/reports-only. Defer video contact sheets to the next milestone.
+| topic | REJECT | NEEDS_REVIEW (sole open issue = flags) | rule-pass (usable pending flag review) |
+|---|---|---|---|
+| Boeing 720 CID 1984 | 13 (11 NIX now source_policy_us_gov→NEEDS_REVIEW? No—NIX have no third-party credit, so they move to NEEDS_REVIEW; youtube + ...) | 11 (NIX, source_policy_us_gov, flags UNKNOWN) | 0 USABLE (all blocked on flags) |
+| Shuttle/Edwards ALT | 5 (STS1FirstFlight, STS-26 tape, 3 Commons) | 14 (13 NASA-API KSC + nasa_tv + RSS_294545main, source_policy_us_gov, flags UNKNOWN) | 0 USABLE |
+| X-15 research flights | 0 | 2 (NDTV001077, ksc_121704_b52_retires, source_policy_us_gov, flags UNKNOWN) | 0 USABLE |
+
+Wait — recompute carefully. Under written rule + step 2:
+
+**Boeing 720:**
+- 11 NIX: source_policy_us_gov, flags UNKNOWN → NEEDS_REVIEW
+- youtube-Jpc32JQXT_0: third-party credit (The Federal File) + no license → REJECT
+- NEEDS_REVIEW: 11; REJECT: 1; USABLE: 0
+
+**Shuttle/Edwards:**
+- 13 NASA-API KSC: source_policy_us_gov, flags UNKNOWN → NEEDS_REVIEW
+- nasa_tv-STS-128_Landing: source_policy_us_gov, flags UNKNOWN → NEEDS_REVIEW
+- RSS_294545main_edw_113008_sts126_landing_pod: rights="Public Domain" + creator=NASA, no third-party credit → source_policy_us_gov/explicit_license, flags UNKNOWN → NEEDS_REVIEW
+- STS1FirstFlight: third-party credit → REJECT
+- STS-26 tape: third-party credit → REJECT
+- 3 Commons: third-party uploader → REJECT x3
+- 59xxx IA compilations (3): no creator, no rights → REJECT x3 (already REJECT)
+- NEEDS_REVIEW: 15 (13 KSC + nasa_tv + RSS); REJECT: 9 (STS1FirstFlight, STS-26, 3 Commons, 3 IA 59xxx); USABLE: 0
+
+**X-15:**
+- NDTV001077: source_policy_us_gov, flags UNKNOWN → NEEDS_REVIEW
+- ksc_121704_b52_retires: source_policy_us_gov, flags UNKNOWN → NEEDS_REVIEW
+- NEEDS_REVIEW: 2; REJECT: 0; USABLE: 0
 
 ---
 
-## Human review checklist (matches NASA exceptions)
+## Corrected NEEDS_REVIEW list (sole open issue = identifiable_persons/logo_visible; NO third-party credit)
 
-For each NEEDS_REVIEW clip, the human reviewer must confirm:
-1. **Identifiable persons** — NASA guideline: commercial use of media including an identifiable person may infringe privacy/publicity rights; permission from the person required. Current NASA employees' names/likenesses/position titles barred on commercial products.
-2. **Logos/insignia** — NASA Insignia ("meatball"), Logotype ("worm"), identifiers and imagery are NOT public domain; use protected by law.
-3. **Third-party material** — NASA occasionally uses third-party copyrighted material with permission; marked with the copyright holder's name; NASA's use conveys no rights; contact the copyright holder directly.
+| # | nasa_id / asset | URL | rights_basis | sole open issue |
+|---|---|---|---|---|
+| NR-1 | RSS_294545main_edw_113008_sts126_landing_pod | archive.org/details/RSS_294545main_edw_113008_sts126_landing_pod | source_policy_us_gov (rights="Public Domain", creator=NASA) | identifiable_persons/logo_visible |
+| NR-2 | NDTV001077-X-15_Documentary_Revised | images-assets.nasa.gov/video/NDTV001077-X-15_Documentary_Revised | source_policy_us_gov (center=AFRC, NASA-produced) | identifiable_persons/logo_visible |
+| NR-3 | ksc_121704_b52_retires | images-assets.nasa.gov/video/ksc_121704_b52_retires | source_policy_us_gov (center=KSC, photographer NASA) | identifiable_persons/logo_visible |
 
-Reviewer signs off with: reviewer name, date, notes. Only after sign-off does a NEEDS_REVIEW clip become eligible for the gate (see proposed gate wording in C2 report).
+All other clips are REJECT (third-party credit or rights_basis=unknown/not NASA-produced).
+
+---
+
+## Contact-sheet path
+
+`projects/c2_review/previews/contact_sheet_previews.jpg` (ffmpeg `tile=2x1` of x15_nasa_thumb.jpg + ksc_b52_thumb.jpg; gitignored, not committed). IA thumb fetch blocked (0 bytes). Per-clip 12-frame video contact sheets deferred (docs/reports-only milestone).
+
+---
+
+## One-line owner checklist per NEEDS_REVIEW clip
+
+| nasa_id | identifiable person? | logo/insignia visible? | third-party credit? |
+|---|---|---|---|
+| RSS_294545main_edw_113008_sts126_landing_pod | unclear | unclear | no |
+| NDTV001077-X-15_Documentary_Revised | unclear | unclear | no |
+| ksc_121704_b52_retires | unclear | unclear | no |
+
+Owner rule: any third-party credit = REJECT regardless of review. All three above have no third-party credit in metadata → pending flag review only.

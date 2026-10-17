@@ -190,11 +190,11 @@ then record BLOCKED.
 |---|---|---|---|---|
 | Piper engine | GPL-3.0-or-later | n/a (engine) | permitted (copyleft) | `piper_tts-1.8.0.dist-info/METADATA` (local) |
 | Piper voice `en_US-lessac-medium` | n/a | **UNKNOWN** — sidecar has `"dataset": "lessac"`, no license field | UNKNOWN | `~/.local/share/piper/voices/en_US-lessac-medium.onnx.json` (local, read) |
-| Kokoro | **UNKNOWN** — not installed locally, no local model card | **UNKNOWN** | UNKNOWN | none local |
-| Chatterbox | **UNKNOWN** — not installed locally, no local model card | **UNKNOWN** | UNKNOWN | none local |
+| Piper voice `en_US-lessac-medium` | n/a | **UNKNOWN** — MODEL_CARD has no license field; points to Lessac Blizzard 2013 dataset license (separate URL); manifest asserts CC-BY-4.0 but no license text in repo | UNKNOWN — **blocked for publication** | HF `rhasspy/piper-voices` lessac/medium/MODEL_CARD; local sidecar `.onnx.json` (`"dataset": "lessac"`, no license field) |
+| Kokoro-82M (hexgrad) | Apache-2.0 | Apache-2.0 (weights); training data includes CC BY items + synthetic data of UNKNOWN origin → documented caveats | permitted (weights), subject to training-data caveats — **owner sign-off required** | HF `hexgrad/Kokoro-82M` (License: apache-2.0); `hexgrad/kokoro`/`hexgrad/misaki` LICENSE files |
+| Chatterbox | **UNKNOWN** — not installed locally | **UNKNOWN** | UNKNOWN | none local |
 
-Piper is the only locally-installed TTS engine (already used in the P1 pilot). Kokoro and
-Chatterbox are not installed and were not installed (out of scope, no keys).
+Kokoro-82M is installed locally (kokoro 0.2.2, torch 2.14.1 CPU, misaki G2P) and was smoke-tested successfully in Milestone V (see `docs/openmontage/VOICE_DECISION.md`). Kokoro is the selected narration voice pending owner sign-off on the training-data caveats; Piper lessac is blocked until its voice license is resolved. Chatterbox remains uninvestigated.
 
 ### 12.3 Voice synthesis smoke test (piper — ALLOWED candidate, installed & free)
 
@@ -273,3 +273,29 @@ into `.kilo/skills/`; EDITING_DOCTRINE.md and MUSIC_POLICY.md written.
 **Assumed (not verified):** piper voice commercial use (voice license unstated);
 stable-ts known-text forced alignment (method absent in API); long-form loudness targets for
 our delivery; human listening of the piper sample (not performed).
+
+## 14. Milestone V summary — voice decision (Kokoro-82M)
+
+**Observed:** kokoro 0.2.2 installed locally (binary wheels; `spacy`/`thinc`/`blis` source
+build failed on Python 3.14, resolved with `--only-binary=:all:`); Kokoro-82M weights
+`kokoro-v1_0.pth` (~313 MB) downloaded to `/tmp/hf-cache` (within 600 MB cap, gitignored,
+not committed); CPU synthesis of a public-domain paragraph with 3 voices (af_heart,
+af_bella, am_adam) — RTF 1.58–1.75 (slower than real-time on CPU, expected); espeak-ng
+not installed → `EspeakFallback` warning only (non-fatal); QC tool on each sample: raw
+kokoro output quiet (I=-21.8 to -25.4 LUFS → ebur128 FAILED vs -14±2); `finish_audio` on
+af_heart → I=-15.0 LUFS, TP=-4.4 dBFS PASS; native `aac` encoder mux works (FINISHED MP4:
+I=-15.0 LUFS, TP=-4.3 dBFS, ebur128 PASS, full_decode PASS).
+
+**Decision:** Kokoro-82M selected for narration (Apache-2.0 weights, clear at the
+weights level). Piper `en_US-lessac-medium` blocked (voice license UNKNOWN — MODEL_CARD
+has no license field; manifest's CC-BY-4.0 assertion unverified).
+
+**Training-data caveats (owner sign-off required):** Kokoro trained on public domain +
+Apache/MIT audio + synthetic data from closed TTS models; CC BY items (Koniwa `tnc` <1h
+CC BY 3.0; SIWIS <11h CC BY 4.0) require attribution; synthetic-data origin UNKNOWN.
+Voice license gate = NOT PASSED for Piper lessac; Kokoro = provisionally known
+(Apache-2.0 weights + documented caveats), owner sign-off required before publication.
+
+**Assumed (not verified):** human listening of kokoro samples (not performed);
+long-form loudness targets; attribution discharge for CC BY training items.
+

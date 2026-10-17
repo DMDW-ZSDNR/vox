@@ -34,7 +34,7 @@ All four are `subagent` mode. Permission rules follow the Kilo 7.8.12 schema
 | Agent | Mode | Purpose | Write scope | Bash allowlist | Network |
 |---|---|---|---|---|---|
 | `editor` | subagent | Builds/edits timeline: EDL JSON with per-cut rationale, pacing report, audio plan (cutting-rhythm, edl-edit, audio-edit skills) | `projects/**/edit/**` + EDL/timeline files only | `ffprobe`, analysis-only `ffmpeg -f null` | deny |
-| `qa-reviewer` | subagent | Independent read-only QA: ffprobe, full decode, blackdetect, freezedetect, silencedetect, ebur128; writes `qa_report.json` | `qa_report.json` + `docs/openmontage/audit/**` only | `ffprobe`, `ffmpeg -f null`, `python -m json.tool`, pytest read-only | deny |
+| `qa-reviewer` | subagent | Independent read-only QA via `tools/qa/qc.py` (ffprobe, full decode, blackdetect, freezedetect, silencedetect, ebur128, SRT sanity); writes `qa_report.json`; thresholds in `config/qc_thresholds.json` (INITIAL GUESSES) | `qa_report.json` + `docs/openmontage/audit/**` only | `ffprobe`, `ffmpeg -f null`, `python -m json.tool`, pytest read-only | deny |
 | `evidence-checker` | subagent | Claims, primary sources (NASA NTRS etc.), contradictions; maintains evidence ledger | evidence ledger file only | deny (no shell) | webfetch + websearch read |
 | `footage-scout` | subagent | Runs project source adapters; classifies clips `rights_basis` + flags; unknown => not usable | asset candidate files only | adapter execution only | deny |
 

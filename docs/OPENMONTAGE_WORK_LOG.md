@@ -2,7 +2,21 @@
 
 ---
 
-### 2026-10-17 — Milestone C4 (v2): CID (Boeing 720, 1 Dec 1984) focus (docs only)
+### 2026-10-17 — Milestone Q1 (v2): media-level QC tool per QA_SPEC.md, test-first (code + tests + docs)
+- **Goal:** tools/qa/qc.py QC module + tests/tools/test_qc_tool.py (TDD, 11 tests) + config/qc_thresholds.json; smoke test on pilot MP4; wire qa-reviewer.md + AGENTS.md; work log. Stdlib + ffmpeg/ffprobe only, no network, no new deps, no process/lock changes. Execute roles inline, say so.
+- **Preflight observed:** git status clean; HEAD `a36ea23` on `factory/business-documentary-pilot`; ffmpeg 6.1.1, ffprobe 6.1.1, pytest 9.1.1, Python 3.14.2; ruff NOT installed (used py_compile as lint substitute).
+- **TDD:** wrote 11 failing tests first (good clip, black segment, silent segment, frozen segment, no audio, wrong resolution, corrupt/truncated, subtitle drift, tool-missing BLOCKED, NOT_RUN when inputs absent, report schema). Ran red → confirmed import failure. Implemented tools/qa/qc.py. Ran green → all 11 passed.
+- **Checks implemented:** ffprobe_streams, full_decode (-f null), blackdetect, freezedetect (incl. frozen-to-end-of-clip case), silencedetect, ebur128 (ffmpeg 6.x summary parse), duration_vs_script, subtitle_sync, credits_complete, claim_ids, rights_basis, added_value. Fail-closed (tool missing → BLOCKED); absent optional inputs → NOT_RUN; verdict treats NOT_RUN as not-passed.
+- **Thresholds config:** config/qc_thresholds.json with INITIAL GUESSES from QA_SPEC.md (black 0.05, freeze 2.0s, silence 0.10, LUFS -14 +/- 2, TP -1.5, duration 1.0s, subtitle drift 0.5s), each documented as a guess.
+- **qa_report.json schema:** {job_id, check_id, status ∈ {PASS,REVIEW,BLOCKED,FAILED,NOT_RUN}, evidence, measured_value, threshold, tool_version, timestamp ISO-8601 UTC}. No secrets written.
+- **Smoke test:** pilot MP4 `projects/pallets-hidden-business/renders/pallets-hidden-business.mp4` (1080p30, 84.9s, h264/aac) → verdict FAILED; ebur128 FAILED (I=-17.1 LUFS outside -14±2, TP=-0.0 > -1.5). All stream/decode/black/freeze/silence PASS. Internal tool test only, not a publishability claim.
+- **Agent wiring:** updated .kilo/agents/qa-reviewer.md (references tools/qa/qc.py + config/qc_thresholds.json + NOT_RUN) and AGENTS.md roster row.
+- **Tests actually run:** tests/tools/test_qc_tool.py (11 passed, ~2 min). py_compile on changed files OK. test_07_playbook_intelligence.py collects 0 pytest items (it's a script, not pytest functions).
+- **Budget / provider verification:** strict $0 held. No network, no API keys, no model downloads. No installs (ruff unavailable → py_compile).
+- **Git status / user changes preserved:** tree clean at start; only agent-authored files staged; no destructive commands, no force-push.
+- **Next smallest step:** commit code+tests+docs and push; then proceed to milestone D/Q per plan.
+
+---
 - **Goal:** EVIDENCE_CID_PRIMARY_DOCS.md (6 primary docs, EXTERNALLY_VERIFIED_METADATA); metadata-only classification of 11 Boeing NEEDS_REVIEW + 1 REJECT clips; gate recompute under written gate (no lowering 10-clip); owner review pack + contact-sheet evidence; proposed (not applied) incidental-insignia wording (owner decision); plan/work log update (CID slice/pilot candidate + fallbacks). Docs/reports only: no code, no installs, no process/lock changes. Inline, not independent.
 - **Preflight observed:** git status clean; HEAD `9c6a0c71bcaef7ed916db0182d2a360f1d2921f8` on `factory/business-documentary-pilot`; all four `.kilo/agents` subagents present in `kilo agent list`.
 - **Delegation note (honest):** subagents exist but `task` tool exposes only explore/general; no separate `.kilo/agents` subagent process available. All footage-scout/evidence-checker/qa-reviewer work executed inline by orchestrator, attributed by domain. RIGHTS_MODEL.md not loosened.

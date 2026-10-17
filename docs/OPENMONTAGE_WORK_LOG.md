@@ -2,6 +2,24 @@
 
 ---
 
+### 2026-10-17 — Milestone C6 (v2): finish contact sheets for all 11 CID clips + durations + coverage map + voice decision summary (docs only)
+- **Goal:** fetch metadata + download smallest video derivative + build ffmpeg contact sheets (~12 frames) for all 11 CID clips; per-clip duration/resolution/audio table + owner checklist; coverage map of narrative beats; proposed (not applied) viability-gate wording on beat coverage; voice decision summary from TOOLING_DECISIONS.md. Docs/reports only: no code, no installs, no process/lock changes. Use curl -L. Cap: 30 network requests, 20 s timeout each; downloads <= 200 MB into gitignored projects/c5_review/ (never committed). ERROR/HTTP status/EMPTY separate states. Roles inline, said so.
+- **Preflight observed:** git status clean; HEAD `21291dc` on `factory/business-documentary-pilot`; ffmpeg 6.1.1, curl available.
+- **Network requests this session:** 9 metadata fetches (NIX-EM-0004-02, NIX-LV-1998-00091…00098) + 9 downloads (_512kb.mp4 each) = 18 requests (C5 used 10; cumulative 28/30 cap). All HTTP 200. Total downloads ~13 MB (C5 ~2.6 MB + C6 ~10.4 MB), under 200 MB cap. No errors/EMPTY conflated.
+- **Step 1 (contact sheets all 11):** metadata fetched for 7 remaining clips (EM-0004-02 already partially known; LV-00091…00098). Smallest video derivative = `_512kb.mp4` per clip. All 9 downloaded HTTP 200; combined with C5's EM-0004-01 + LV-00090 = all 11 contact sheets built via ffmpeg `select='not(mod(n,90))',scale=320:240,tile=3x4`:
+  projects/c5_review/{EM-0004-01,EM-0004-02,LV-1998-00090,LV-1998-00091,LV-1998-00092,LV-1998-00093,LV-1998-00094,LV-1998-00095,LV-1998-00096,LV-1998-00097,LV-1998-00098}_512kb_contact_sheet.jpg
+- **Step 2 (per-clip table):** ffprobe (local, no network) on all 11: all 320x240; NIX-EM-* no audio (2 clips), NIX-LV-* has audio (9 clips); durations 11.00s–38.60s, total ~286s (~4.8 min). Owner checklist columns (person | logo/insignia | third-party credit) left empty for the owner. Added to REVIEW_QUEUE.md.
+- **Step 3 (coverage map):** metadata-only beat assignment. Distinct beats covered: 4 (remote piloting, impact, fire, other). Zero-clip beats: 3 (preparation, flight, aftermath). Proposed (not applied) viability-gate wording: >= 6 distinct beats with >= 1 usable clip each, in addition to raw clip count. Applied to CID: 4 beats < 6 → NOT_GATE_READY on narrative coverage under the proposal. Proposal only, not applied.
+- **Step 4 (voice decision summary):** from TOOLING_DECISIONS.md §12.2 (D1). Piper engine GPL-3.0-or-later (commercial permitted); Piper voice en_US-lessac-medium UNKNOWN (sidecar has dataset=lessac, no license field; manifest asserts CC-BY-4.0 but no license text in repo); Kokoro UNKNOWN (not installed). Voice license known gate cannot pass → commercial publication blocked until voice license confirmed or licensed alternative selected. Smoke test was technical only (RTF 0.21), not a commercial-use approval.
+- **Delegation note:** `.kilo/agents` subagents exist but `task` tool exposes only explore/general; no separate subagent process available. All footage-scout work executed inline by orchestrator, attributed by domain. "inline, not independent."
+- **Files changed:** docs/openmontage/audit/REVIEW_QUEUE.md (appended C6 per-clip table + coverage map + voice decision summary; updated owner-list durations), docs/OPENMONTAGE_WORK_LOG.md (this entry).
+- **Media:** projects/c5_review/ (downloaded MP4s + 11 contact sheets) is gitignored (`projects/` in .gitignore), NOT committed, under 200 MB cap (~13 MB).
+- **Tests actually run:** none (docs/report milestone; ffmpeg/ffprobe observed exit 0).
+- **Budget / provider verification:** strict $0 held. 18 keyless archive.org requests this session (cumulative 28/30 cap). No API keys, no model downloads. No installs.
+- **Git status / user changes preserved:** tree clean at start; only agent docs staged; no destructive commands, no force-push.
+- **Next smallest step:** commit + push C6 docs; then proceed to next milestone per plan (voice license resolution is a blocker before publication).
+
+---
 ### 2026-10-17 — Milestone C5 (v2): archive.org download diagnosis + owner review list (docs only)
 - **Goal:** metadata + real file list per CID item; HEAD/ranged GET download diagnosis; contact sheets; numbered owner list; NASA Facts doc added to evidence; sequential-ID analysis. Docs/reports only: no code, no installs, no process/lock changes. Max 10 network requests, 20s timeout each; ERROR/HTTP status/EMPTY as separate states. Roles executed inline, said so.
 - **Preflight observed:** git status clean; HEAD `59cdf6a` on `factory/business-documentary-pilot`; ffmpeg 6.1.1, curl available.

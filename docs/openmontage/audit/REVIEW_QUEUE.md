@@ -179,19 +179,19 @@ Owner rule: any third-party credit = REJECT regardless of review. All eleven abo
 
 | # | Item page URL | One-line description | Org | Date | Duration |
 |---|---|---|---|---|---|
-| 1 | https://archive.org/details/NIX-EM-0004-01 | CID flight video montage | NASA/Dryden | 12/2/1988 | 36.56s |
-| 2 | https://archive.org/details/NIX-EM-0004-02 | CID tail camera video | NASA/Dryden | 12/2/1988 | 35.22s |
-| 3 | https://archive.org/details/NIX-LV-1998-00090 | Crash Impact Demonstration pt 1/10 | NASA/Langley | 12/2/1988 | 16.93s |
-| 4 | https://archive.org/details/NIX-LV-1998-00091 | Crash Impact Demonstration pt 2/10 | NASA/Langley | 12/2/1988 | duration n/a |
-| 5 | https://archive.org/details/NIX-LV-1998-00092 | Crash Impact Demonstration pt 3/10 | NASA/Langley | 12/2/1988 | duration n/a |
-| 6 | https://archive.org/details/NIX-LV-1998-00093 | Crash Impact Demonstration pt 4/10 | NASA/Langley | 12/2/1988 | duration n/a |
-| 7 | https://archive.org/details/NIX-LV-1998-00094 | Crash Impact Demonstration pt 5/10 | NASA/Langley | 12/2/1988 | duration n/a |
-| 8 | https://archive.org/details/NIX-LV-1998-00095 | Crash Impact Demonstration pt 6/10 | NASA/Langley | 12/2/1988 | duration n/a |
-| 9 | https://archive.org/details/NIX-LV-1998-00096 | Crash Impact Demonstration pt 7/10 | NASA/Langley | 12/2/1988 | 38.69s |
-| 10 | https://archive.org/details/NIX-LV-1998-00097 | Crash Impact Demonstration pt 8/10 | NASA/Langley | 12/2/1988 | duration n/a |
-| 11 | https://archive.org/details/NIX-LV-1998-00098 | Crash Impact Demonstration pt 9/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 1 | https://archive.org/details/NIX-EM-0004-01 | CID flight video montage | NASA/Dryden | 12/2/1988 | 35.56s (ffprobe of downloaded derivative) |
+| 2 | https://archive.org/details/NIX-EM-0004-02 | CID tail camera video | NASA/Dryden | 12/2/1988 | 34.22s (ffprobe of downloaded derivative) |
+| 3 | https://archive.org/details/NIX-LV-1998-00090 | Crash Impact Demonstration pt 1/10 | NASA/Langley | 12/2/1988 | 16.83s |
+| 4 | https://archive.org/details/NIX-LV-1998-00091 | Crash Impact Demonstration pt 2/10 | NASA/Langley | 12/2/1988 | 36.47s |
+| 5 | https://archive.org/details/NIX-LV-1998-00092 | Crash Impact Demonstration pt 3/10 | NASA/Langley | 12/2/1988 | 12.43s |
+| 6 | https://archive.org/details/NIX-LV-1998-00093 | Crash Impact Demonstration pt 4/10 | NASA/Langley | 12/2/1988 | 30.17s |
+| 7 | https://archive.org/details/NIX-LV-1998-00094 | Crash Impact Demonstration pt 5/10 | NASA/Langley | 12/2/1988 | 21.67s |
+| 8 | https://archive.org/details/NIX-LV-1998-00095 | Crash Impact Demonstration pt 6/10 | NASA/Langley | 12/2/1988 | 11.00s |
+| 9 | https://archive.org/details/NIX-LV-1998-00096 | Crash Impact Demonstration pt 7/10 | NASA/Langley | 12/2/1988 | 38.60s |
+| 10 | https://archive.org/details/NIX-LV-1998-00097 | Crash Impact Demonstration pt 8/10 | NASA/Langley | 12/2/1988 | 29.50s |
+| 11 | https://archive.org/details/NIX-LV-1998-00098 | Crash Impact Demonstration pt 9/10 | NASA/Langley | 12/2/1988 | 16.03s |
 
-**Note:** titles use "pt N/10" (implies 10 parts) but only 9 parts (00090-00098) are located under NIX-LV-1998-*. Durations marked n/a = metadata file list not re-fetched within the 10-request cap (C5 step 1). Contact sheets built for items 1 and 3 (`projects/c5_review/`).
+**Note:** titles use "pt N/10" (implies 10 parts) but only 9 parts (00090-00098) are located under NIX-LV-1998-*. Durations are ffprobe-measured from the downloaded `_512kb.mp4` derivatives (C6). Contact sheets built for all 11 items (`projects/c5_review/`).
 
 ---
 
@@ -212,4 +212,70 @@ Owner rule: any third-party credit = REJECT regardless of review. All eleven abo
 - Frame/pixel review of each part to (a) confirm whether any two parts show the exact same impact moment (overlap) and (b) identify which parts contain unique footage vs. duplicates.
 - Compare timestamps/impact-onset across parts to detect temporal overlap.
 - Confirm whether a 10th part exists elsewhere (not under NIX-LV-1998-*).
+
+---
+
+## CID per-clip table + owner checklist (Milestone C6)
+
+**Source:** ffprobe of downloaded `_512kb.mp4` derivatives (local, no network); contact sheets in gitignored `projects/c5_review/` (never committed, under 200 MB cap).
+
+| clip | duration | resolution | audio | contact-sheet path | identifiable person? | logo/insignia visible? | third-party credit? |
+|---|---|---|---|---|---|---|---|
+| NIX-EM-0004-01 | 35.56s | 320x240 | no | projects/c5_review/EM-0004-01_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-EM-0004-02 | 34.22s | 320x240 | no | projects/c5_review/EM-0004-02_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00090 | 16.83s | 320x240 | yes | projects/c5_review/LV-1998-00090_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00091 | 36.47s | 320x240 | yes | projects/c5_review/LV-1998-00091_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00092 | 12.43s | 320x240 | yes | projects/c5_review/LV-1998-00092_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00093 | 30.17s | 320x240 | yes | projects/c5_review/LV-1998-00093_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00094 | 21.67s | 320x240 | yes | projects/c5_review/LV-1998-00094_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00095 | 11.00s | 320x240 | yes | projects/c5_review/LV-1998-00095_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00096 | 38.60s | 320x240 | yes | projects/c5_review/LV-1998-00096_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00097 | 29.50s | 320x240 | yes | projects/c5_review/LV-1998-00097_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+| NIX-LV-1998-00098 | 16.03s | 320x240 | yes | projects/c5_review/LV-1998-00098_512kb_contact_sheet.jpg | (empty — owner) | (empty — owner) | (empty — owner) |
+
+**Total CID footage:** ~286 s (~4.8 min) across 11 clips; all at 320x240. Two Dryden clips (NIX-EM-*) have no audio track; nine Langley clips have audio.
+
+Owner rule (restated): any third-party credit = REJECT regardless of review. All eleven clips have no third-party credit in metadata → pending flag review (person/logo/insignia) only.
+
+---
+
+## Coverage map — narrative beats (Milestone C6 step 3)
+
+**Method:** metadata title/description + ffprobe only; no pixel judging. Beat assigned from description text.
+
+| beat | clips covering it | clip ids |
+|---|---|---|
+| preparation | 0 | (none) |
+| remote piloting | 1 | NIX-LV-1998-00095 (cockpit interior, pilot during impact) |
+| flight | 0 | (none) |
+| impact | 11 | all 11 (every title/description references the impact) |
+| fire | 5 | NIX-LV-00092 (fireball), 00093 (AMK burn), 00094 (AMK flowing), 00096 (impact montage), 00098 (fireball realtime) |
+| aftermath | 0 | (none) |
+| other | 1 | NIX-LV-1998-00093 (AMK "fail and then burn" explanation) |
+| unclear | 0 | (none) |
+
+**Distinct beats covered:** 4 (remote piloting, impact, fire, other)
+**Beats with zero clips:** 3 (preparation, flight, aftermath)
+
+**PROPOSED (not applied) viability-gate wording — narrative-beat coverage:**
+> In addition to the raw clip count (>= 10 usable clips), the stage 0 topic viability gate requires coverage of >= 6 distinct narrative beats with >= 1 usable clip per beat. Beats: preparation, remote piloting, flight, impact, fire, aftermath. A topic lacking >= 6 beats is NOT_GATE_READY regardless of clip count.
+
+**Applied to CID:** CID covers only 4 of 7 beats (missing preparation, flight, aftermath) → under this proposed wording CID would be NOT_GATE_READY on narrative coverage despite having 11 usable-pending-review clips. This wording is a proposal only; it is NOT applied to any gate.
+
+---
+
+## Voice decision summary (Milestone C6 step 4)
+
+**Source:** `docs/openmontage/TOOLING_DECISIONS.md` §12.2 (D1 voice-license table) — read-only, no new claims.
+
+| Engine | Code license | Weights/voice license | Commercial use | Evidence |
+|---|---|---|---|---|
+| Piper engine | GPL-3.0-or-later | n/a (engine) | permitted (copyleft) | piper_tts-1.8.0.dist-info/METADATA (local) |
+| Piper voice `en_US-lessac-medium` | n/a | **UNKNOWN** — sidecar has `"dataset": "lessac"`, no license field | UNKNOWN | `~/.local/share/piper/voices/en_US-lessac-medium.onnx.json` (local, read) |
+| Kokoro | **UNKNOWN** — not installed locally | **UNKNOWN** | UNKNOWN | none local |
+
+**Decision / blocker:** Piper `en_US-lessac-medium` is the locally-installed TTS engine already used in the P1 pilot (18 segments, 84.975 s measured). Its voice license is **UNKNOWN** — the pilot manifest asserts `CC-BY-4.0 (lessac dataset voice)` but no license text exists in the repo, README, `tools/audio/piper_tts.py`, or the voice sidecar `.onnx.json`. Kokoro is not installed and its license is UNKNOWN. Until a voice license is confirmed (or a licensed alternative selected), commercial publication is **blocked** — the "voice license known" Go/No-Go gate (plan v3.2) cannot pass. Voice synthesis smoke test was technical only (RTF 0.21, real-time factor ~4.7× faster than real-time on CPU) and is NOT a commercial-use approval.
+
+**Notes:** ffmpeg 6.1.1 (Ubuntu build) license UNKNOWN from repo files. No music used in pilot (music gate-blocked, library empty). Audio finishing prototype verified via ebur128 (-13.8 LUFS / -5.2 dBTP) but used synthetic test-tone bed, not licensed music.
+
 

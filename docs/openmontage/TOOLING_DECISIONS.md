@@ -84,3 +84,87 @@ any YouTube-video downloader. Only the 7 skills in §4 were copied. Upstream
 Delete `.kilo/skills/<name>/` (single `rm -rf`; skills are leaf copies, nothing
 else references them). Upstream repos untouched (cloned to /tmp, since removed).
 `git revert <commit>` restores pre-install state exactly.
+
+## 8. Remaining pipeline stages — tooling audit (not used by the P1 pilot)
+
+Stages the P1 pilot did not touch. One row per remaining stage: existing tool in
+repo (exact path) or MISSING, license, $0 check, unknown. Rule: license and $0
+check are "n/a — no tool" rather than assumed free when nothing exists; unknowns
+are recorded, not guessed.
+
+| # | Stage (pipeline stage) | Existing tool in repo (path) or MISSING | License | $0 check | Unknown |
+|---|---|---|---|---|---|
+| 1 | Primary-document research (research / stage 2) | MISSING — no research, NTRS, or web-search tool in `tools/`; NTRS usage exists only in a throwaway probe script (`/tmp`, deleted after use) and in `docs/openmontage/audit/VIABILITY_PROBE_2026-10-16.md` | n/a — no tool | n/a — no tool to price; NTRS is a keyless GET but no $0 check can be run on absent tooling | NTRS document fields (id, title, center, date, PDF URL) and rate limits not yet recorded; probe attempted, both direct requests timed out → ERROR, not zero results (§11) |
+| 2 | Claim ledger (evidence / stage 3) | MISSING tool; schema exists: `schemas/artifacts/evidence_ledger.schema.json`; cross-artifact ID resolution in `lib/artifact_ids.py` (lib functions, not a registry tool) | n/a for tool; schema files are repo AGPL-3.0 | Local schema validation is $0; no synthesis/download | Stable `evidence_id` derivation (`EV-<slug>` from source + claim) not implemented as a tool; ledger assembly is manual |
+| 3 | Storyboard ID validation (storyboard / stage 6) | MISSING tool; schema `schemas/artifacts/scene_plan.schema.json` exists; `scene_id` resolution via `lib/artifact_ids.py` | n/a for tool; schema AGPL-3.0 | n/a — local validation would be $0 | scene_id / dangling-reference validation is a lib function, not a registry tool; no "validate storyboard IDs" entry point |
+| 4 | Packaging — title/description/chapters/thumbnail (publish / stage 12) | `tools/publishers/export_bundle.py` (ExportBundle; `publish` capability, local, BETA) | repo AGPL-3.0 | $0 — local filesystem only; `free: True`, `network_required: False`, `supports.uploads: False` | Thumbnail handled as concept JSON unless a real image path is supplied; no thumbnail generation tool |
+| 5 | Upload (not a pipeline stage; publish never uploads) | MISSING — `export_bundle` explicitly does not upload (`supports.uploads: False`); no YouTube/uploader tool in `tools/publishers/` | n/a | n/a | none — decision recorded in §9 |
+| 6 | Analytics review (not a pipeline stage) | MISSING — no analytics tool anywhere in `tools/` | n/a | n/a | Analytics source undefined; YouTube Studio API would need a key/OAuth, barred by §9 |
+
+Row 4 is the only remaining stage with an existing repo tool. Rows 1–3 and 5–6
+have no tool, so nothing was priced, licensed, or assumed.
+
+## 9. Upload decision — YouTube
+
+- Publish path: **manual publish in YouTube Studio by a human**. The pipeline produces
+  a reviewable export bundle (`tools/publishers/export_bundle.py`, status
+  `"exported"`) plus a schema-valid `publish_package` with an explicit
+  `manual_approval.status`. `publish_package.manual_approval.upload_target` stays
+  `null` until a human sets it; the artifact never triggers an upload.
+  `publish-director`: "The pipeline never uploads." Manifest review focus:
+  "No YouTube upload was attempted."
+- API upload: **only as a private draft, and only later** — unverified API
+  projects are forced private by YouTube. Not part of this milestone.
+- **No OAuth setup, no credentials requests, no network upload tool** added or
+  planned in this milestone.
+
+## 10. Reference-only: OpenVids (bazodev/open-vids, Apache-2.0)
+
+Reached via GitHub raw/tree only (read-only). **No code copied, no app installed,
+no OpenVids service calls.** License read verbatim from `LICENSE`: Apache-2.0,
+"Copyright 2026 The OpenVids Authors / HeyGen, Inc. (HyperFrames, the original
+work OpenVids is derived from)".
+
+**Trusted-source list** — `packages/studio-server/src/research/sources/builtins.ts`
+(`BUILT_IN_SOURCES`, `TrustedSource` type from `@hyperframes/agent-protocol`).
+Fields per source record: `id`, `name`, `builtIn`, `enabled`, `connector`,
+`domains[]`, `kinds[]` (video / picture / audio), `description`, `licenseNote`,
+`homepage`, `apiKey` (null | `{ signupUrl, configured }`). Domain validation in
+`domains.ts` (`normalizeDomain`): rejects IP addresses, localhost, and shared
+suffixes (e.g. github.io, gitlab.io, pages.dev, vercel.app, netlify.app,
+herokuapp.com, wordpress.com); a trusted source must name one organization's
+site.
+
+**License-record fields** — `packages/studio/src/research/licenseLabels.ts`:
+`LicenseStatus` {clear, attribution, restricted, unknown},
+`LicenseConfidence` {high, medium, low, none}, `ProvenanceMediaKind`
+{video, picture, audio, font, animation, file}, `AssetProvenance.retrievedBy`
+{ agent, model, turnId }.
+
+**Fields worth copying into our `asset_record`** (asset_manifest asset entries /
+provenance), field names and semantics only — no code:
+- source `id` + `name` + `connector` (which adapter surfaced the asset),
+- original URL plus a validated host (same rules as `normalizeDomain`),
+- media kind (`video` / `picture` / `audio` / …),
+- license status + confidence + human-readable `licenseNote`,
+- `homepage` / key sign-up URL for key-gated sources,
+- `retrievedBy` provenance (who fetched it: agent / user, model, turn id),
+- URL validation rules for trusted sources (no IPs, no localhost, no shared suffixes).
+
+## 11. Milestone B probe item — NTRS client (not implemented)
+
+- Repo check: no NTRS (NASA Technical Reports Server) client in `tools/` — grep
+  for ntrs/NTRS hits only docs (`docs/openmontage/NICHE_PROFILE_SPEC.md`,
+  `docs/openmontage/audit/VIABILITY_PROBE_2026-10-16.md`). Client **not written**
+  (out of scope for this milestone).
+- Probe item (Milestone B): test the public NTRS API without a key —
+  `GET https://ntrs.nasa.gov/api/citations/search` — record HTTP status codes,
+  rate limits (including 429), and the document fields available per record:
+  id, title, center, date, PDF URL
+  (`https://ntrs.nasa.gov/api/citations/<id>/downloads/<id>.pdf`).
+- Execution status this session: direct reachability attempted twice; both
+  requests timed out at the network layer (no HTTP response received). Per the
+  probe rule, **any failure is ERROR, not zero results** — recorded as ERROR
+  (network unreachable), not EMPTY. No status codes, rate limits, or field
+  inventory obtained yet; probe remains pending.
+- See also §8 row 1 (primary-document research).

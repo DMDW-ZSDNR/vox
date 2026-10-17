@@ -220,7 +220,26 @@ FAA/NTSB: no exact-URL docs retrieved; CAROL blocked (see §1d).
   unverified for the KSC-catalog NASA clips (bare-number titles); (c) provenance unknown
   on the three 59xxx compilations; (d) zero FAA/NTSB exact-URL docs.
 
+
 ---
+
+## Probe 4 — NTRS client (Milestone B probe item)
+
+**Status:** probe item recorded, not executed. No NTRS client exists in `tools/`
+(grep for ntrs/NTRS hits only docs) and none was written — this milestone only
+records the probe item.
+
+**Test:** `GET https://ntrs.nasa.gov/api/citations/search` without an API key.
+Record: HTTP status codes, rate limits (including 429 responses), and the
+document fields available per record — id, title, center, date, PDF URL
+(`https://ntrs.nasa.gov/api/citations/<id>/downloads/<id>.pdf`).
+
+**Execution status this session:** direct reachability was attempted twice;
+both requests timed out at the network layer (no HTTP response received). Per
+the probe rule, any failure is recorded as ERROR, not as zero results: the
+outcome is ERROR (network unreachable), not EMPTY. No status codes, rate
+limits, or field inventory were obtained; the probe remains pending. See
+`docs/openmontage/TOOLING_DECISIONS.md` §8 row 1 and §11.
 
 ## Cross-topic summary
 

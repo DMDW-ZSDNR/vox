@@ -38,11 +38,12 @@ _ERROR_SUMMARY_LIMIT = 1500
 def _compact_execution_error(payload: Any) -> str:
     """Summarize a ComfyUI execution error without echoing its whole payload.
 
-    ``/history`` returns ``status.messages`` as a list of typed events, and
-    the websocket ``execution_error`` event carries the same ``data`` shape.
-    An ``execution_error`` embeds the full traceback, current inputs, and
-    outputs — hundreds of lines that an operator cannot act on. Extract the
-    node, exception type, and first line of the exception message instead.
+    ComfyUI records history ``status.messages`` as ``(event, data)`` pairs
+    (JSON arrays), while the websocket emits ``{"type", "data"}`` objects.
+    Both carry an ``execution_error`` event whose data embeds the full
+    traceback, current inputs, and outputs — hundreds of lines that an
+    operator cannot act on. Extract the node, exception type, and first line
+    of the exception message instead.
 
     Falls back to a bounded JSON rendering for unknown shapes.
     """
@@ -51,11 +52,16 @@ def _compact_execution_error(payload: Any) -> str:
         data = payload
     elif isinstance(payload, list):
         for message in payload:
-            if isinstance(message, dict) and message.get("type") == "execution_error":
+            if isinstance(message, dict):
+                event = message.get("type")
                 candidate = message.get("data")
-                if isinstance(candidate, dict):
-                    data = candidate
-                    break
+            elif isinstance(message, (list, tuple)) and len(message) == 2:
+                event, candidate = message
+            else:
+                continue
+            if event == "execution_error" and isinstance(candidate, dict):
+                data = candidate
+                break
 
     if data is not None and any(
         data.get(key)

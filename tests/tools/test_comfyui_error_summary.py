@@ -29,7 +29,11 @@ EXECUTION_ERROR = {
 
 
 def test_history_messages_are_compacted():
-    summary = _compact_execution_error([{"type": "execution_start", "data": {}}, EXECUTION_ERROR])
+    # ComfyUI stores history messages as (event, data) pairs, serialized as
+    # JSON arrays — not as {"type", "data"} objects.
+    summary = _compact_execution_error(
+        [["execution_start", {}], ["execution_error", EXECUTION_ERROR["data"]]]
+    )
 
     assert summary == "KSampler: ValueError: expected float tensor"
     assert "traceback" not in summary
@@ -38,6 +42,14 @@ def test_history_messages_are_compacted():
 
 def test_websocket_payload_is_compacted():
     summary = _compact_execution_error(EXECUTION_ERROR["data"])
+
+    assert summary == "KSampler: ValueError: expected float tensor"
+
+
+def test_dict_style_message_list_is_tolerated():
+    summary = _compact_execution_error(
+        [{"type": "execution_start", "data": {}}, EXECUTION_ERROR]
+    )
 
     assert summary == "KSampler: ValueError: expected float tensor"
 
@@ -68,7 +80,10 @@ def test_history_entry_raises_compact_error_and_keeps_prompt_id(monkeypatch):
                 "p-1": {
                     "status": {
                         "status_str": "error",
-                        "messages": [EXECUTION_ERROR],
+                        "messages": [
+                            ["execution_start", {}],
+                            ["execution_error", EXECUTION_ERROR["data"]],
+                        ],
                     }
                 }
             }

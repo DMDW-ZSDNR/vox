@@ -2,7 +2,34 @@
 
 ---
 
-### 2026-10-17 — Milestone Q1 (v2): media-level QC tool per QA_SPEC.md, test-first (code + tests + docs)
+### 2026-10-17 — Milestone C5 (v2): archive.org download diagnosis + owner review list (docs only)
+- **Goal:** metadata + real file list per CID item; HEAD/ranged GET download diagnosis; contact sheets; numbered owner list; NASA Facts doc added to evidence; sequential-ID analysis. Docs/reports only: no code, no installs, no process/lock changes. Max 10 network requests, 20s timeout each; ERROR/HTTP status/EMPTY as separate states. Roles executed inline, said so.
+- **Preflight observed:** git status clean; HEAD `59cdf6a` on `factory/business-documentary-pilot`; ffmpeg 6.1.1, curl available.
+- **Network requests (10/10 cap reached):**
+  1. metadata NIX-EM-0004-01 → HTTP 200, real file list obtained (EM-0004-01.mp4 3052294 bytes len 36.56s, EM-0004-01.mov original, 7 thumbnails)
+  2. metadata NIX-LV-1998-00090 → HTTP 200, real file list obtained (LV-1998-00090.mp4 1740303 bytes len 16.93s, LV-1998-00090.mov original, __ia_thumb.jpg 5939 bytes)
+  3. HEAD thumbnail LV-00090 → HTTP 302 redirect to dn710909.ca.archive.org, content-type image/jpeg, accept-ranges: bytes
+  4. HEAD smallest video LV-00090_512kb.mp4 → HTTP 302 redirect to dn801201.us.archive.org, content-type video/mp4
+  5. ranged GET thumbnail (first 64KB) → HTTP 206, 5939 bytes, valid JPEG 180x124
+  6. ranged GET video (first 64KB) → HTTP 206, 65536 bytes, valid MP4
+  7. metadata NIX-EM-0004-02 → HTTP 200 (title/creator/date obtained)
+  8. metadata NIX-LV-1998-00091 → HTTP 200 (title/creator/date obtained)
+  9. full download EM-0004-01_512kb.mp4 → HTTP 200, 2,236,128 bytes, valid MP4
+  10. full download LV-1998-00090_512kb.mp4 → HTTP 200, 405,589 bytes, valid MP4
+- **Diagnosis:** archive.org download WORKS when following HTTP 302 redirects (`curl -L`). Earlier C4 "0 bytes / HTML" results were caused by missing `-L` (got 302 with empty body), not by access restriction/blocking. Not wrong URL, not access-restricted, not blocked egress, not hotlink — valid MP4/JPEG returned.
+- **Step 3 (contact sheets):** working URL found → downloaded preview derivatives into gitignored `projects/c5_review/` (~2.6MB total, under 200MB cap, never committed). Built ffmpeg contact sheets (~12 frames): EM-0004-01_contact_sheet.jpg (39,784 bytes), LV-1998-00090_contact_sheet.jpg (28,423 bytes). Remaining 9 items not downloaded within 10-request cap (metadata file names needed first).
+- **Step 4 (owner list):** printed numbered list of 11 archive.org item URLs to terminal AND wrote to REVIEW_QUEUE.md (descriptions + durations from metadata; durations n/a where file list not re-fetched within cap). Note: pt 1/10 implies 10 parts but only 9 (00090-00098) located.
+- **Step 5:** added NASA Facts FS-2009-02-003-CID PDF (rosap/nasa.gov) to EVIDENCE_CID_PRIMARY_DOCS.md as EXTERNALLY_VERIFIED_METADATA (web search 2026-10-17, not agent-verified). Primary docs count now 7.
+- **Step 6 (sequential IDs):** NIX-LV-1998-00090…00098 = 9 of 10 implied parts (pt 1/10–pt 9/10), same creator/date/event, different camera angles of same impact → likely separate angles with temporal overlap, not one linear reel. Viewing needed to confirm overlap/duplicates and whether a 10th part exists elsewhere.
+- **Delegation note:** `.kilo/agents` subagents exist but `task` tool exposes only explore/general; no separate subagent process available. All footage-scout work executed inline by orchestrator, attributed by domain. "inline, not independent."
+- **Files changed:** docs/openmontage/audit/REVIEW_QUEUE.md (appended C5 owner list + contact-sheet correction + sequential-ID analysis), docs/openmontage/audit/EVIDENCE_CID_PRIMARY_DOCS.md (added entry 7), docs/OPENMONTAGE_WORK_LOG.md (this entry).
+- **Media:** projects/c5_review/ (downloaded MP4s + contact sheets) is gitignored (`projects/` in .gitignore), NOT committed, under 200MB cap.
+- **Tests actually run:** none (docs/report milestone; ffmpeg contact-sheet generation observed exit 0).
+- **Budget / provider verification:** strict $0 held. 10/10 keyless archive.org requests used (at cap). No API keys, no model downloads. No installs.
+- **Git status / user changes preserved:** tree clean at start; only agent docs staged; no destructive commands, no force-push.
+- **Next smallest step:** commit + push C5 docs; then proceed to next milestone per plan.
+
+---
 - **Goal:** tools/qa/qc.py QC module + tests/tools/test_qc_tool.py (TDD, 11 tests) + config/qc_thresholds.json; smoke test on pilot MP4; wire qa-reviewer.md + AGENTS.md; work log. Stdlib + ffmpeg/ffprobe only, no network, no new deps, no process/lock changes. Execute roles inline, say so.
 - **Preflight observed:** git status clean; HEAD `a36ea23` on `factory/business-documentary-pilot`; ffmpeg 6.1.1, ffprobe 6.1.1, pytest 9.1.1, Python 3.14.2; ruff NOT installed (used py_compile as lint substitute).
 - **TDD:** wrote 11 failing tests first (good clip, black segment, silent segment, frozen segment, no audio, wrong resolution, corrupt/truncated, subtitle drift, tool-missing BLOCKED, NOT_RUN when inputs absent, report schema). Ran red → confirmed import failure. Implemented tools/qa/qc.py. Ran green → all 11 passed.

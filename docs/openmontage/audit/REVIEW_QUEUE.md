@@ -141,10 +141,17 @@ Owner rule: any third-party credit = REJECT regardless of review. All three abov
 | File:Controlled Impact Demonstration.webm | third-party uploader (Askeuhd) → third-party credit → REJECT |
 
 ### Contact-sheet evidence
-- archive.org `__ia_thumb.jpg` downloads: 0 bytes (blocked).
-- Individual `.thumbs/*.jpg` frame downloads: return HTML (not images).
-- MP4 derivative downloads: 0 bytes (blocked).
-- **Result:** no preview/thumbnail media could be downloaded in this sandbox; `projects/c4_review/previews/` is empty; per-clip contact sheets (ffmpeg tile of ~12 frames) **not generated**. Media cap 200 MB not reached (0 bytes downloaded). Defer contact-sheet generation to an environment that can reach archive.org asset hosts.
+
+- archive.org download works when following HTTP 302 redirects (`curl -L`); earlier C4 "0 bytes / HTML" results were missing `-L` (got the 302 redirect with no body).
+- Verified (C5 step 2): HEAD + ranged GET (first 64 KB) of `__ia_thumb.jpg` and `LV-1998-00090_512kb.mp4` both returned HTTP 206 with correct content-types (image/jpeg, video/mp4) and valid file magic.
+- Downloaded preview-size derivatives into gitignored `projects/c5_review/` (cap 200 MB not reached; ~2.6 MB total):
+  - `projects/c5_review/EM-0004-01_512kb.mp4` (2,236,128 bytes, HTTP 200)
+  - `projects/c5_review/LV-1998-00090_512kb.mp4` (405,589 bytes, HTTP 200)
+- Built per-clip contact sheets (~12 frames, ffmpeg `select='not(mod(n,90))',scale=320:240,tile=3x4`):
+  - `projects/c5_review/EM-0004-01_contact_sheet.jpg` (39,784 bytes)
+  - `projects/c5_review/LV-1998-00090_contact_sheet.jpg` (28,423 bytes)
+- Contact sheets for the remaining 9 items were not generated within the 10-request cap (metadata file names needed before constructing download URLs).
+
 
 ### One-line owner checklist per CID NEEDS_REVIEW clip
 
@@ -163,3 +170,46 @@ Owner rule: any third-party credit = REJECT regardless of review. All three abov
 | NIX-LV-1998-00098 | unclear | unclear | no |
 
 Owner rule: any third-party credit = REJECT regardless of review. All eleven above have no third-party credit in metadata → pending flag review only.
+
+---
+
+## CID owner review list — archive.org item pages (Milestone C5)
+
+**Purpose:** numbered list the owner can open on a phone. URLs constructed as `https://archive.org/details/<identifier>` (no network needed to list). Descriptions/durations from archive.org metadata fetched in C4 + C5.
+
+| # | Item page URL | One-line description | Org | Date | Duration |
+|---|---|---|---|---|---|
+| 1 | https://archive.org/details/NIX-EM-0004-01 | CID flight video montage | NASA/Dryden | 12/2/1988 | 36.56s |
+| 2 | https://archive.org/details/NIX-EM-0004-02 | CID tail camera video | NASA/Dryden | 12/2/1988 | 35.22s |
+| 3 | https://archive.org/details/NIX-LV-1998-00090 | Crash Impact Demonstration pt 1/10 | NASA/Langley | 12/2/1988 | 16.93s |
+| 4 | https://archive.org/details/NIX-LV-1998-00091 | Crash Impact Demonstration pt 2/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 5 | https://archive.org/details/NIX-LV-1998-00092 | Crash Impact Demonstration pt 3/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 6 | https://archive.org/details/NIX-LV-1998-00093 | Crash Impact Demonstration pt 4/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 7 | https://archive.org/details/NIX-LV-1998-00094 | Crash Impact Demonstration pt 5/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 8 | https://archive.org/details/NIX-LV-1998-00095 | Crash Impact Demonstration pt 6/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 9 | https://archive.org/details/NIX-LV-1998-00096 | Crash Impact Demonstration pt 7/10 | NASA/Langley | 12/2/1988 | 38.69s |
+| 10 | https://archive.org/details/NIX-LV-1998-00097 | Crash Impact Demonstration pt 8/10 | NASA/Langley | 12/2/1988 | duration n/a |
+| 11 | https://archive.org/details/NIX-LV-1998-00098 | Crash Impact Demonstration pt 9/10 | NASA/Langley | 12/2/1988 | duration n/a |
+
+**Note:** titles use "pt N/10" (implies 10 parts) but only 9 parts (00090-00098) are located under NIX-LV-1998-*. Durations marked n/a = metadata file list not re-fetched within the 10-request cap (C5 step 1). Contact sheets built for items 1 and 3 (`projects/c5_review/`).
+
+---
+
+## Sequential-ID analysis — NIX-LV-1998-00090…00098 (Milestone C5 step 6)
+
+**Metadata observation (from C4 + C5 fetches):**
+- All 9 items share creator = NASA/Langley Research Center (NASA-LaRC), date = 12/2/1988, mediatype = movies.
+- Titles are sequential parts: "Crash Impact Demonstration. (pt 1/10)" through "(pt 9/10)".
+- Descriptions each describe a different camera angle / view of the same CID impact (front long shot, tail camera, cockpit interior, wide shot, fireball, high-speed slow-motion, etc.).
+- `pt 1/10` implies a 10th part exists but is not located under NIX-LV-1998-* (only 00090-00098 = 9 parts found).
+
+**Are they segments of one reel with possible overlapping footage?**
+- They are segments of the same CID event (December 1 1984, Edwards AFB) but appear to be **separate camera angles**, not sequential slices of a single continuous reel.
+- Because multiple cameras recorded the same impact simultaneously, different parts likely **overlap in time** (same impact moment from different angles) rather than being strictly sequential non-overlapping segments.
+- The "pt N/10" numbering suggests a produced multi-camera edit, not a single linear reel.
+
+**What viewing is needed to confirm:**
+- Frame/pixel review of each part to (a) confirm whether any two parts show the exact same impact moment (overlap) and (b) identify which parts contain unique footage vs. duplicates.
+- Compare timestamps/impact-onset across parts to detect temporal overlap.
+- Confirm whether a 10th part exists elsewhere (not under NIX-LV-1998-*).
+

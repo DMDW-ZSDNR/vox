@@ -2,6 +2,25 @@
 
 ---
 
+### 2026-10-17 — Milestone C4 (v2): CID (Boeing 720, 1 Dec 1984) focus (docs only)
+- **Goal:** EVIDENCE_CID_PRIMARY_DOCS.md (6 primary docs, EXTERNALLY_VERIFIED_METADATA); metadata-only classification of 11 Boeing NEEDS_REVIEW + 1 REJECT clips; gate recompute under written gate (no lowering 10-clip); owner review pack + contact-sheet evidence; proposed (not applied) incidental-insignia wording (owner decision); plan/work log update (CID slice/pilot candidate + fallbacks). Docs/reports only: no code, no installs, no process/lock changes. Inline, not independent.
+- **Preflight observed:** git status clean; HEAD `9c6a0c71bcaef7ed916db0182d2a360f1d2921f8` on `factory/business-documentary-pilot`; all four `.kilo/agents` subagents present in `kilo agent list`.
+- **Delegation note (honest):** subagents exist but `task` tool exposes only explore/general; no separate `.kilo/agents` subagent process available. All footage-scout/evidence-checker/qa-reviewer work executed inline by orchestrator, attributed by domain. RIGHTS_MODEL.md not loosened.
+- **Step 1 (primary docs):** 6 entries in EVIDENCE_CID_PRIMARY_DOCS.md (NASA-TP-2589/19860021249, NASA-TM-89642/19880000639, NASA-TM-85925/19850015486, NASA TM 4084/19890006539 PDF, Hayduk/19860012463, FAA/DOT dot_92854). All EXTERNALLY_VERIFIED_METADATA via web search 2026-10-17; NTRS unreachable from sandbox (TCP 443 block, C3); NOT agent-verified; PDF retrieval not confirmed; no document text pasted.
+- **Step 2 (clip classification):** archive.org metadata API for 11 NIX clips (NIX-EM-0004-01/02, NIX-LV-1998-00090…00098). All creator=NASA center (Dryden/Langley), rights=None, licenseurl=None, no third-party credit → source_policy_us_gov under written rule; flags UNKNOWN → NEEDS_REVIEW. All 11 on-topic (depict CID impact/fire). No duplicates (distinct part numbers/titles). 1 REJECT: youtube-Jpc32JQXT_0 (third-party credit "The Federal File"). File:Controlled Impact Demonstration.webm also REJECT (third-party uploader Askeuhd). Durations confirmed for 4 of 11 (36.56s, 35.22s, 16.93s, 38.69s).
+- **Step 3 (gate recompute):** usable-pending-review=11 (>=10 ✓), primary docs=6 (>=3 ✓) → counts met, but clips are NEEDS_REVIEW (flags unreviewed) and docs NTRS-unreachable → full-video gate NEEDS_OWNER_REVIEW, not clean PASS. 30-60s slice (3-6 clips) MET (11 on-topic available). C3 inconsistency resolved: C3 step 6 omitted Boeing 720 from gate check; C4 includes it.
+- **Step 4 (owner review pack):** REVIEW_QUEUE.md appended CID section (11 NEEDS_REVIEW clips CID-1..CID-11, 2 REJECT, owner checklist per clip). Contact sheets NOT generated: archive.org `__ia_thumb.jpg`=0 bytes blocked, individual `.thumbs/*.jpg`=HTML not images, MP4 derivatives=0 bytes blocked; projects/c4_review/previews/ empty, 0 bytes downloaded (200MB cap not reached). Defer contact sheets to environment reaching archive.org asset hosts.
+- **Step 5 (incidental insignia wording):** PROPOSED not applied; owner decision. Re-quoted NASA exception categories (insignia/logotype not PD, third-party material, identifiable persons, no endorsement, no NFT/crypto, AI limits). Wording drafted for incidental insignia on vehicles in CID footage.
+- **Step 6 (plan/work log):** Slice/pilot candidate = CID 1984 (only topic >=10 usable-pending-review clips). Fallbacks: X-15 (2 clips), Shuttle/Edwards ALT (1 ALT-specific). Observed vs assumed recorded.
+- **Files created:** docs/openmontage/audit/EVIDENCE_CID_PRIMARY_DOCS.md, docs/openmontage/audit/C4_CID_FOCUS_REPORT.md.
+- **Files modified:** docs/openmontage/audit/REVIEW_QUEUE.md (appended CID section), docs/OPENMONTAGE_WORK_LOG.md (this entry).
+- **Tests actually run:** none (docs/report only; archive.org metadata API observed working; asset downloads observed blocked; ffmpeg contact-sheet not generated).
+- **Budget / provider verification:** strict $0 held. Keyless archive.org metadata API worked; archive.org asset downloads blocked; NTRS persistent ERROR. No paid call, generation, upload, publish. No installs.
+- **Git status / user changes preserved:** tree clean at start; only agent docs staged; no destructive commands, no force-push.
+- **Next smallest step:** commit + push C4 docs; then obtain owner flag review for 11 CID clips + insignia-clearance decision before milestone D/Q.
+
+---
+
 ### 2026-10-17 — Milestone C3 (v2): rights classification diagnosis + NTRS network diagnosis (docs only)
 - **Goal:** R1 sub-reason breakdown vs written RIGHTS_MODEL.md; fix third-party-credit → REJECT inconsistency; NTRS network diagnosis (max 8 requests); candidate sweep Shuttle/Edwards + X-15; update REVIEW_QUEUE.md (corrected NEEDS_REVIEW only); gate check + pivot recommendation. Docs/reports only: no code, no installs, no process/lock changes. Free keyless access only; ERROR/429/EMPTY separate states; inline not independent.
 - **Preflight observed:** git status clean; HEAD `447ee6085bb90fe42c7c75ddd82c7b31be4a3c6d` on `factory/business-documentary-pilot`; all four `.kilo/agents` subagents present in `kilo agent list`.

@@ -110,3 +110,56 @@ All other clips are REJECT (third-party credit or rights_basis=unknown/not NASA-
 | ksc_121704_b52_retires | unclear | unclear | no |
 
 Owner rule: any third-party credit = REJECT regardless of review. All three above have no third-party credit in metadata → pending flag review only.
+
+---
+
+## CID section — Boeing 720 Controlled Impact Demonstration (Milestone C4)
+
+**Topic candidate:** CID 1984 (Boeing 720, December 1 1984, Edwards AFB / Rogers Dry Lake).
+**Source:** archive.org NIX items (creator = NASA/Dryden or NASA/Langley), metadata only; asset downloads blocked (0 bytes / HTML) in this sandbox — contact sheets not generated.
+
+### Corrected NEEDS_REVIEW list (sole open issue = identifiable_persons/logo_visible; NO third-party credit; rights_basis = source_policy_us_gov under written rule)
+
+| # | nasa_id / asset | URL | rights_basis | duration | sole open issue |
+|---|---|---|---|---|---|
+| CID-1 | NIX-EM-0004-01 | archive.org/details/NIX-EM-0004-01 | source_policy_us_gov (creator=NASA/Dryden) | 36.56s | identifiable_persons/logo_visible |
+| CID-2 | NIX-EM-0004-02 | archive.org/details/NIX-EM-0004-02 | source_policy_us_gov (creator=NASA/Dryden) | 35.22s | identifiable_persons/logo_visible |
+| CID-3 | NIX-LV-1998-00090 | archive.org/details/NIX-LV-1998-00090 | source_policy_us_gov (creator=NASA/Langley) | 16.93s | identifiable_persons/logo_visible |
+| CID-4 | NIX-LV-1998-00091 | archive.org/details/NIX-LV-1998-00091 | source_policy_us_gov (creator=NASA/Langley) | n/a (metadata only) | identifiable_persons/logo_visible |
+| CID-5 | NIX-LV-1998-00092 | archive.org/details/NIX-LV-1998-00092 | source_policy_us_gov (creator=NASA/Langley) | n/a | identifiable_persons/logo_visible |
+| CID-6 | NIX-LV-1998-00093 | archive.org/details/NIX-LV-1998-00093 | source_policy_us_gov (creator=NASA/Langley) | n/a | identifiable_persons/logo_visible |
+| CID-7 | NIX-LV-1998-00094 | archive.org/details/NIX-LV-1998-00094 | source_policy_us_gov (creator=NASA/Langley) | n/a | identifiable_persons/logo_visible |
+| CID-8 | NIX-LV-1998-00095 | archive.org/details/NIX-LV-1998-00095 | source_policy_us_gov (creator=NASA/Langley) | n/a | identifiable_persons/logo_visible |
+| CID-9 | NIX-LV-1998-00096 | archive.org/details/NIX-LV-1998-00096 | source_policy_us_gov (creator=NASA/Langley) | 38.69s | identifiable_persons/logo_visible |
+| CID-10 | NIX-LV-1998-00097 | archive.org/details/NIX-LV-1998-00097 | source_policy_us_gov (creator=NASA/Langley) | n/a | identifiable_persons/logo_visible |
+| CID-11 | NIX-LV-1998-00098 | archive.org/details/NIX-LV-1998-00098 | source_policy_us_gov (creator=NASA/Langley) | n/a | identifiable_persons/logo_visible |
+
+### REJECT (CID)
+| nasa_id | reason |
+|---|---|
+| youtube-Jpc32JQXT_0 | third-party credit ("The Federal File" re-upload) + no license statement → rights_basis=unknown → REJECT |
+| File:Controlled Impact Demonstration.webm | third-party uploader (Askeuhd) → third-party credit → REJECT |
+
+### Contact-sheet evidence
+- archive.org `__ia_thumb.jpg` downloads: 0 bytes (blocked).
+- Individual `.thumbs/*.jpg` frame downloads: return HTML (not images).
+- MP4 derivative downloads: 0 bytes (blocked).
+- **Result:** no preview/thumbnail media could be downloaded in this sandbox; `projects/c4_review/previews/` is empty; per-clip contact sheets (ffmpeg tile of ~12 frames) **not generated**. Media cap 200 MB not reached (0 bytes downloaded). Defer contact-sheet generation to an environment that can reach archive.org asset hosts.
+
+### One-line owner checklist per CID NEEDS_REVIEW clip
+
+| nasa_id | identifiable person? | logo/insignia visible (NASA, FAA, Boeing, other)? | third-party credit? (yes => REJECT) |
+|---|---|---|---|
+| NIX-EM-0004-01 | unclear | unclear | no |
+| NIX-EM-0004-02 | unclear | unclear | no |
+| NIX-LV-1998-00090 | unclear | unclear | no |
+| NIX-LV-1998-00091 | unclear | unclear | no |
+| NIX-LV-1998-00092 | unclear | unclear | no |
+| NIX-LV-1998-00093 | unclear | unclear | no |
+| NIX-LV-1998-00094 | unclear | unclear | no |
+| NIX-LV-1998-00095 | unclear | unclear | no |
+| NIX-LV-1998-00096 | unclear | unclear | no |
+| NIX-LV-1998-00097 | unclear | unclear | no |
+| NIX-LV-1998-00098 | unclear | unclear | no |
+
+Owner rule: any third-party credit = REJECT regardless of review. All eleven above have no third-party credit in metadata → pending flag review only.

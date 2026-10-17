@@ -32,6 +32,55 @@ class ComfyUIError(Exception):
         self.prompt_id = prompt_id
 
 
+_ERROR_SUMMARY_LIMIT = 1500
+
+
+def _compact_execution_error(payload: Any) -> str:
+    """Summarize a ComfyUI execution error without echoing its whole payload.
+
+    ``/history`` returns ``status.messages`` as a list of typed events, and
+    the websocket ``execution_error`` event carries the same ``data`` shape.
+    An ``execution_error`` embeds the full traceback, current inputs, and
+    outputs — hundreds of lines that an operator cannot act on. Extract the
+    node, exception type, and first line of the exception message instead.
+
+    Falls back to a bounded JSON rendering for unknown shapes.
+    """
+    data: dict[str, Any] | None = None
+    if isinstance(payload, dict):
+        data = payload
+    elif isinstance(payload, list):
+        for message in payload:
+            if isinstance(message, dict) and message.get("type") == "execution_error":
+                candidate = message.get("data")
+                if isinstance(candidate, dict):
+                    data = candidate
+                    break
+
+    if data is not None and any(
+        data.get(key)
+        for key in ("exception_message", "exception_type", "node_type", "node_id")
+    ):
+        node = data.get("node_type") or data.get("node_id") or "unknown node"
+        exception_type = data.get("exception_type") or "Error"
+        exception_message = str(data.get("exception_message") or "").strip()
+        first_line = (
+            exception_message.splitlines()[0]
+            if exception_message
+            else "no exception message"
+        )
+        summary = f"{node}: {exception_type}: {first_line}"
+    else:
+        try:
+            summary = json.dumps(payload, ensure_ascii=False, default=str)
+        except Exception:
+            summary = str(payload)
+
+    if len(summary) > _ERROR_SUMMARY_LIMIT:
+        summary = summary[: _ERROR_SUMMARY_LIMIT - 3] + "..."
+    return summary
+
+
 class ComfyUIClient:
     """Client for the ComfyUI REST API.
 
@@ -231,7 +280,10 @@ class ComfyUIClient:
         status = entry.get("status", {})
         if status.get("status_str") == "error":
             msgs = status.get("messages", [])
-            raise ComfyUIError(f"Execution error: {msgs}", prompt_id=prompt_id)
+            raise ComfyUIError(
+                f"Execution error: {_compact_execution_error(msgs)}",
+                prompt_id=prompt_id,
+            )
         return entry
 
     def _history_entry_if_reachable(self, prompt_id: str) -> dict | None:
@@ -314,7 +366,10 @@ class ComfyUIClient:
                     if on_progress:
                         on_progress(data)
                 elif msg_type == "execution_error":
-                    raise ComfyUIError(f"Execution error: {data}", prompt_id=prompt_id)
+                    raise ComfyUIError(
+                        f"Execution error: {_compact_execution_error(data)}",
+                        prompt_id=prompt_id,
+                    )
                 elif msg_type == "executing" and data.get("node") is None:
                     finished = True
                     break

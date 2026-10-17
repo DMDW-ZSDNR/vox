@@ -75,7 +75,7 @@ options:
   --accelerator ACC     Specify the type of accelerator to use for the kernel run
 ```
 
-**Observed:** `push` supports `--accelerator ACC` and `-t/--timeout TIMEOUT`. It does **NOT** support `--no-run` — push always pushes code *and* runs the kernel. There is no "dry-run" push option.
+**Observed:** `push` supports `--accelerator ACC` and `-t/--timeout TIMEOUT`. It does **NOT** support `--no-run` — push always pushes code *and* runs the kernel. There is no "dry-run" push option. Also observed live: the kernel-metadata `title` must slugify to match the `id` suffix; otherwise push returns `409 Client Error: Conflict ... Your kernel title does not resolve to the specified id.` Set `title` to a value whose slug equals the kernel name (e.g. id `forts845/of-bridge-runner` with title `Of Bridge Runner`).
 
 ### `kaggle kernels status --help`
 
@@ -120,7 +120,11 @@ usage: kaggle kernels list [-h] [-m] [--page-token PAGE_TOKEN]
 --sort-by SORT_BY     hotness, commentCount, dateCreated, dateRun, relevance, ...
 ```
 
-**Status strings:** `status --help` does **not** enumerate the exact status strings returned by `status` (e.g. `complete`, `error`, `timeout`). These must be observed from live output once auth is configured; they are marked UNVERIFIED below and must not be hard-coded.
+**Status strings:** `status --help` does **not** enumerate the exact status strings. Observed live on `forts845/of-bridge-runner` (Milestone K1 step 4): `kernels status <slug>` returns a line of the form
+
+    <owner>/<kernel-name> has status "KernelWorkerStatus.<STATUS>"
+
+The only terminal status observed was `KernelWorkerStatus.COMPLETE` (the run completed during push, so it was COMPLETE at the first poll). Other statuses (e.g. `KernelWorkerStatus.RUNNING`, `KernelWorkerStatus.QUEUED`, `KernelWorkerStatus.ERROR`) are not yet observed — do not hard-code them; parse the `"KernelWorkerStatus.<STATUS>"` token generically and treat anything not explicitly `COMPLETE` as non-terminal unless it contains `error`/`fail`.
 
 ---
 
@@ -230,13 +234,14 @@ The runner kernel writes, per job, exactly:
 
 **Fail-closed rule:** any status not explicitly `PASS`/`complete` with verified sha256 and passing QC -> BLOCKED/FAILED/REJECT, never silently treated as success.
 
-### 5.5 Constraints (UNVERIFIED — must be confirmed against Kaggle docs/live account)
+### 5.5 Constraints (mix of observed and UNVERIFIED)
 
-- GPU quota: **30 h/week** (UNVERIFIED).
+- GPU quota: **30 h/week** (UNVERIFIED — K1 used CPU only).
 - Session max: **12 h** per kernel run (UNVERIFIED; `-t` cannot exceed global max).
 - Phone verification: may be required before GPU/internet (UNVERIFIED).
-- Internet toggle: `enable_internet` may be false for free/private kernels (UNVERIFIED).
-- Private kernel + serialized jobs: a single runner kernel processing jobs one at a time via `job.json` queue (UNVERIFIED that Kaggle permits this usage pattern).
+- Internet toggle: `enable_internet: false` **confirmed works** on a private CPU kernel (K1 step 4).
+- Private kernel + serialized jobs: a single runner kernel processing jobs one at a time via `job.json` queue (UNVERIFIED that Kaggle permits this usage pattern; only one kernel was pushed in K1).
+- Title/slug constraint: **confirmed** — push returns 409 if `title` does not slugify to the `id` suffix.
 
 ### 5.6 Secrets rule
 
@@ -264,14 +269,32 @@ No implementation in K0; both are design proposals only.
 
 ---
 
+## Step 6.5 — Live smoke job results (Milestone K1, observed)
+
+**Kernel:** `forts845/of-bridge-runner` (private, CPU only, `enable_gpu=false`, `enable_internet=false`), created via `kaggle kernels push`.
+
+**Push:** `kaggle kernels push -p jobs/hello-1 -t 3600 --accelerator cpu` → `Kernel version 1 successfully pushed.` Elapsed 2.4s. Requires `title` to slugify to the `id` suffix (else 409 Conflict).
+
+**Status:** `kernels status forts845/of-bridge-runner` → `forts845/of-bridge-runner has status "KernelWorkerStatus.COMPLETE"`. COMPLETE at first poll after push (run completed during push). Single distinct status string observed.
+
+**Output:** `kaggle kernels output forts845/of-bridge-runner -p <dest>` → `hello.txt` (6 bytes), `manifest.json` (186 bytes), `of-bridge-runner.log` (kernel log).
+
+**Verify:** recomputed sha256 of `hello.txt` = `5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03` matches `manifest.json` sha256. Manifest fields: `job_id=hello-1`, `bytes=6`, `created_utc`, `python_version=3.13.15`.
+
+**Verdict: PASS.**
+
+Result JSON written to `/tmp/k1_result.json`.
+
+---
+
 ## Step 7 — Observed vs assumed
 
-**Observed:** kaggle.com/api.kaggle.com reachable (HTTP/2 404 on root = service up); kaggle CLI 2.2.4 installed (1.3 MB); `push` supports `--accelerator`/`-t` but not `--no-run`; `status`/`output`/`list` take kernel URL suffixes; `--page-size` max 200; `KAGGLE_API_TOKEN` not set (auth test stopped per rules); `/workspaces` 3.2 GB free.
+**Observed:** kaggle.com/api.kaggle.com reachable (HTTP/2 404 on root = service up); kaggle CLI 2.2.4 installed (1.3 MB); `push` supports `--accelerator`/`-t` but not `--no-run`; `status` returns `<slug> has status "KernelWorkerStatus.<STATUS>"` (observed `KernelWorkerStatus.COMPLETE`); `output` downloads kernel output files; `list --mine` works with `KAGGLE_API_TOKEN` set; `--page-size` max 200; `/workspaces` 3.2 GB free. Live smoke job `forts845/of-bridge-runner` (CPU, no GPU/internet) pushed, ran COMPLETE, output fetched, sha256 verified → verdict PASS (result JSON at `/tmp/k1_result.json`). Title must slugify to the `id` suffix (else 409 Conflict). `enable_internet=false` confirmed works on a private CPU kernel.
 
-**Assumed (not verified):** exact `status` terminal strings; GPU 30 h/week; 12 h session max; phone verification; internet toggle; single-runner serialized-jobs pattern permitted by Kaggle; private kernel slug availability. All marked UNVERIFIED and must be confirmed live after auth is configured.
+**Assumed (not verified):** GPU 30 h/week; 12 h session max; phone verification; single-runner serialized-jobs pattern permitted by Kaggle (only one kernel pushed in K1). All other constraints still UNVERIFIED.
 
-**Tests actually run:** none live (auth blocked by missing token); CLI `--help` reads are read-only and observed.
+**Tests actually run:** 16 unit tests in `tests/tools/test_kaggle_bridge.py` (fake `kaggle`, no network) all pass; existing `tests/tools/test_qc_tool.py` (11) still pass. Live smoke job `forts845/of-bridge-runner` ran on real Kaggle (CPU).
 
-**Budget / provider verification:** strict $0 held. pip install kaggle (PyPI, free). No Kaggle API calls made (token not set). No paid routes, no keys handled. No process/lock changes.
+**Budget / provider verification:** strict $0 held. pip install kaggle (PyPI, free). Kaggle API calls made via CLI with `KAGGLE_API_TOKEN` set (no token value logged/committed). No paid routes. No process/lock changes.
 
-**Next smallest step:** owner creates `KAGGLE_API_TOKEN` Codespaces secret and restarts codespace; then run `kaggle kernels list --mine --page-size 5` to confirm auth, then proceed to K1.
+**Next smallest step:** proceed to K1/K2 per plan — K1 bridge code is complete; K2 = Kokoro job end-to-end.

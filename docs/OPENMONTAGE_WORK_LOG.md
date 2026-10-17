@@ -2,7 +2,19 @@
 
 ---
 
-### 2026-10-17 — Milestone D1: audio + editing toolchain (docs + skills, /tmp scripts only)
+### 2026-10-17 — Milestone P+: master plan v3.2 + REAL Kilo agent team + QA spec (docs only)
+- **Goal:** create four Kilo subagents (editor, qa-reviewer, evidence-checker, footage-scout), write docs/openmontage/QA_SPEC.md, append Plan v3.2 to master plan, update AGENTS.md roster/permissions/rules, update work log; commit docs + agent files only. Time-box 35 min. No code, no installs, no network except reading Kilo docs.
+- **Observed:** Kilo 7.8.12 (`kilo --version`); `kilo agent --help` -> `create`/`list`; `kilo agent list` preflight showed built-in agents only (no `.kilo/agents/` dir existed). Agent-file schema learned from a `kilo agent create` smoke test: markdown with YAML frontmatter (`description`, `mode`, `permission:` map) + body prompt; invoked by `@name`. `.kilo/agents/` created. All four agents verified present in `kilo agent list` output.
+- **Observed (versions/hashes):** git status clean; HEAD `74ee25a` on `factory/business-documentary-pilot`. Milestone A `dad575d`, B `79b2cfc`, S `ff35182`, D1 `74ee25a` (working branch tip).
+- **Files created:** `.kilo/agents/editor.md`, `.kilo/agents/qa-reviewer.md`, `.kilo/agents/evidence-checker.md`, `.kilo/agents/footage-scout.md`; `docs/openmontage/QA_SPEC.md`; `docs/OPENMONTAGE_PLAN_V3_2.md`.
+- **Files modified:** `docs/OPENMONTAGE_FACTORY_MASTER_PLAN_RU (1).md` (added SUPERSEDED-by-v3.2 header note + appended v3.2 changelog entry); `AGENTS.md` (added agent roster, permissions summary, orchestrator rule).
+- **Tests actually run:** none (docs/agent milestone only; no application code, no tests with side effects).
+- **Budget / provider verification:** strict $0 mode held. No paid API call, no generation, no upload, no YouTube publish. No installs.
+- **Git status / user changes preserved:** only agent-authored docs + agent files staged; working tree clean at start; no destructive commands, no force-push.
+- **Permissions note:** Kilo 7.8.12 does not isolate agent permissions at runtime (single consolidated permission model); roles are enforced by convention in AGENTS.md, not by isolated agent sandboxes. Marked as sequential convention, not hard isolation.
+- **Next smallest step:** commit + push docs + agent files on working branch; resume C1 (rights/clips) scope.
+
+---
 - **Goal:** audio/editing toolchain audit + decision + minimal skill install; 40-min time-box;
   no paid routes, no keys, no process/lock changes; max 2 attempts per blocker then BLOCKED.
 - **Observed:** preflight clean (`git status` clean, HEAD b5adfc1 on factory branch; no user

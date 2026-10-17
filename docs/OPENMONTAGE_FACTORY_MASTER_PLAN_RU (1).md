@@ -2,7 +2,9 @@
 
 **Версия:** 1.0  
 **Последнее обновление:** 2026-10-14  
-**Назначение:** единый источник истины для разработки фабрики англоязычных документальных видео.  
+**Назначение:** единый источник истины для разработки фабрики англоязычных документальных видео.
+
+> **SUPERSEDED by v3.2:** Plan v3.2 (`docs/OPENMONTAGE_PLAN_V3_2.md`) supersedes this master plan for milestone ordering, stack limits (max 3 runtime repos), asset_record fields, stage 0 topic viability gate, Go/No-Go gates, publishing rules, speed rules, and zero-secrets rule. This file is retained for history only; v3.2 is authoritative going forward.  
 **Рабочая ниша:** *The Hidden Business Behind Everyday Things* — как малоизвестные отрасли, компании и цепочки поставок зарабатывают деньги, производят привычные товары и что происходит, когда системы ломаются.
 
 > Важно о достоверности статуса: раздел «Состояние по отчёту Kilo» основан на скриншоте отчёта Kilo Code от 2026-10-14, а не на независимом чтении рабочего каталога. Отчёт заявляет об успешных компонентах, но полный запуск `pytest tests/factory/` завершился тайм-аутом через 180 секунд без вывода. Поэтому «Kilo сообщил, что работает» НЕ означает «всё проверено». Текущие файлы и git diff нужно перепроверить перед следующими правками.
@@ -491,3 +493,17 @@ Kilo сообщил о Mermaid → анимированный MP4. Провер�
 - Niche decided (CONFIG, not hardcoded): "Aviation & spaceflight test history".
   Spec: `docs/openmontage/NICHE_PROFILE_SPEC.md`; decision: `docs/openmontage/NICHE_DECISION.md`.
 - No code changes, no installs, no model runs, no process/lock changes in this milestone.
+
+### v3.2 — 2026-10-16 — Milestone P+ (docs + agent team + QA spec)
+- Plan v3.2: `docs/OPENMONTAGE_PLAN_V3_2.md` — niche (aviation & spaceflight test history), max-3-runtime stack (OpenMontage AGPL-3.0, HyperFrames Apache-2.0, Kokoro-82M), fail-closed QC gates, EDL rationale, pacing lint, 3-concepts->1-selected idea stage.
+- `asset_record`: added rights_basis, identifiable_persons, logo_visible, third_party_credit, archive_id, archive_caption; unknown => not usable.
+- New stage 0 topic viability gate (>=10 usable licensed clips, >=3 primary docs) + footage-aware scripting.
+- Go/No-Go: added "added value" gate and "voice license known" gate.
+- Publishing: manual only; unaudited API projects force private.
+- Speed: per-stage wall time/resource logging, draft-render mode, contact-sheet review; no premature optimization.
+- Zero-secrets rule for v1.
+- Milestone order: P+ -> C1 -> D1 -> Q -> E -> F. Marked A (`dad575d`), B (`79b2cfc`), S (`ff35182`) done with real git hashes.
+- Open risks: Piper voice license, NASA clip rights basis, Content ID for music, competition unmeasured, monetization eligibility.
+- Created `.kilo/agents/{editor, qa-reviewer, evidence-checker, footage-scout}.md` (mode: subagent, permission rules per Kilo 7.8.12).
+- Created `docs/openmontage/QA_SPEC.md` (hard checks, qa_report.json schema, thresholds INITIAL GUESSES, gate mapping, added-value metrics).
+- No application code, no installs, no network except reading Kilo docs.

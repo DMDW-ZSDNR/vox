@@ -111,10 +111,17 @@ def _loudnorm_measure(input_path: str) -> dict[str, float]:
     m_thresh = re.search(r'"input_thresh"\s*:\s*"?([-\d.]+)"?', text)
     if not (m_i and m_lra and m_tp):
         raise RuntimeError(f"loudnorm measurement unparsable: {text[-500:]}")
+
+    def _to_float(g):
+        v = g.group(1)
+        if v in ("-", ""):
+            return -60.0  # treat silence/minus-infinity as a very low level
+        return float(v)
+
     return {
-        "input_i": float(m_i.group(1)),
-        "input_lra": float(m_lra.group(1)),
-        "input_tp": float(m_tp.group(1)),
+        "input_i": _to_float(m_i),
+        "input_lra": _to_float(m_lra),
+        "input_tp": _to_float(m_tp),
         "input_thresh": float(m_thresh.group(1)) if m_thresh else -30.0,
     }
 

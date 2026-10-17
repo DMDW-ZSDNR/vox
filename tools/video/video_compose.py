@@ -203,6 +203,15 @@ class VideoCompose(BaseTool):
                     "networks). The subprocess timeout is widened to match."
                 ),
             },
+            "remotion_browser_executable": {
+                "type": "string",
+                "description": (
+                    "Absolute path to the browser executable Remotion should use "
+                    "for this render, passed through as `--browser-executable`. "
+                    "Omit to let Remotion resolve its default browser. Useful on "
+                    "offline or locked-down machines that cannot download Chromium."
+                ),
+            },
         },
     }
 
@@ -1668,6 +1677,10 @@ class VideoCompose(BaseTool):
             # would only take effect on a direct _remotion_render() call.
             if inputs.get("remotion_timeout_ms") is not None:
                 remotion_inputs["remotion_timeout_ms"] = inputs["remotion_timeout_ms"]
+            if inputs.get("remotion_browser_executable") is not None:
+                remotion_inputs["remotion_browser_executable"] = inputs[
+                    "remotion_browser_executable"
+                ]
             if inputs.get("public_dir") is not None:
                 remotion_inputs["public_dir"] = inputs["public_dir"]
             render_result = self._remotion_render(remotion_inputs)
@@ -1966,6 +1979,25 @@ class VideoCompose(BaseTool):
         # Absolutise so the CLI can resolve the output regardless of cwd.
         output_path = output_path.resolve()
 
+        # Validate a caller-supplied browser before staging media or starting
+        # Remotion. A bad path otherwise surfaces mid-render as an opaque
+        # headless-browser failure.
+        browser_executable = inputs.get("remotion_browser_executable")
+        browser_path: Path | None = None
+        if browser_executable:
+            browser_path = Path(str(browser_executable)).expanduser()
+            if not browser_path.is_file():
+                return ToolResult(
+                    success=False,
+                    error=(
+                        f"remotion_browser_executable does not point to a file: "
+                        f"{browser_path}. Pass an existing Chrome/Chromium/Edge "
+                        "binary, or omit the option to let Remotion resolve its "
+                        "default browser."
+                    ),
+                )
+            browser_path = browser_path.resolve()
+
         # Deep-copy props so we don't mutate the original
         props = json.loads(json.dumps(composition_data))
 
@@ -2061,6 +2093,8 @@ class VideoCompose(BaseTool):
             ]
             if public_dir is not None:
                 cmd.append(f"--public-dir={public_dir}")
+            if browser_path is not None:
+                cmd.append(f"--browser-executable={browser_path}")
 
             # Apply media profile dimensions
             if profile_name:

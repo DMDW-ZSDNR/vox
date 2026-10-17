@@ -2,6 +2,22 @@
 
 ---
 
+### 2026-10-17 — Milestone D2 (v2): audio finishing module, test-first, verified by QC tool (code + tests + docs)
+- **Goal:** tools/audio/finish_audio.py + tests/tools/test_finish_audio.py (TDD, 5 tests) + docs/openmontage/AUDIO_FINISHING.md; smoke test on pilot MP4 audio into /tmp; work log. Stdlib + ffmpeg/ffprobe only, no network, no model downloads, no new deps, no process/lock changes. Roles inline, said so. NOT wired into render pipeline yet (proposed integration point only).
+- **Preflight observed:** git status clean; HEAD `0610da1` on `factory/business-documentary-pilot`; ffmpeg 6.1.1 with loudnorm/sidechaincompress/alimiter/ebur128 filters; piper-tts 1.8.0 + onnxruntime + numpy installed.
+- **TDD:** wrote 5 failing tests first (voice loudness+true-peak, music ducking, no-music, mono/stereo+22050/44100 Hz, failure-path BLOCKED). Fixtures via ffmpeg lavfi in tmp dirs, no committed media. Ran red → confirmed import failure. Implemented tools/audio/finish_audio.py. Ran green → all 5 passed.
+- **Checks implemented:** two-pass loudnorm (measure → apply with measured values) + alimiter true-peak safety + optional sidechaincompress ducking. Targets I=-14, TP=-1.5, LRA=11 from config/qc_thresholds.json (INITIAL GUESSES). Fail-closed: loudnorm unparsable / filter missing → BLOCKED.
+- **Implementation notes:** pcm_f32le→aac and s16→aac-after-limiter are broken in this ffmpeg build (produce -70 LUFS / silence), so finish outputs pcm_s16le wav directly (loudnorm+limiter in one pass2 chain); ebur128 reads wav fine. sidechaincompress threshold is linear 0-1 (not dB), attack/release take seconds (not ms), sidechain is 2nd input (no `sidechain=` option), detection takes int not string, ratio max 20.
+- **Tests actually run:** tests/tools/test_finish_audio.py (5 passed, ~30 s). py_compile on changed files OK. test_07_playbook_intelligence.py collects 0 pytest items (script, not pytest functions).
+- **Smoke test:** extracted pilot MP4 audio (projects/pallets-hidden-business/renders/pallets-hidden-business.mp4, 44100 Hz mono, 84.99 s) to /tmp; BEFORE I=-17.2 LUFS / TP=-0.0 dBFS (clipping); AFTER I=-15.3 LUFS / TP=-4.5 dBFS; QC tool ebur128 PASS + full_decode PASS. Original NOT overwritten; internal test only, not a publishability claim.
+- **Docs:** wrote docs/openmontage/AUDIO_FINISHING.md (what the tool does, targets, proposed integration point = EDITING_DOCTRINE step 5 audio normalize/music bed, voice license blocker from TOOLING_DECISIONS.md §12.2, owner question on -16..-14 LUFS).
+- **Files created:** tools/audio/finish_audio.py, tests/tools/test_finish_audio.py, docs/openmontage/AUDIO_FINISHING.md.
+- **Tests actually run:** 5 passed. py_compile OK.
+- **Budget / provider verification:** strict $0 held. No network, no API keys, no model downloads. No installs.
+- **Git status / user changes preserved:** tree clean at start; only agent-authored files staged; no destructive commands, no force-push.
+- **Next smallest step:** commit code+tests+docs and push; voice license resolution (UNKNOWN) remains a blocker before commercial publication; proceed to next milestone per plan.
+
+---
 ### 2026-10-17 — Milestone C6 (v2): finish contact sheets for all 11 CID clips + durations + coverage map + voice decision summary (docs only)
 - **Goal:** fetch metadata + download smallest video derivative + build ffmpeg contact sheets (~12 frames) for all 11 CID clips; per-clip duration/resolution/audio table + owner checklist; coverage map of narrative beats; proposed (not applied) viability-gate wording on beat coverage; voice decision summary from TOOLING_DECISIONS.md. Docs/reports only: no code, no installs, no process/lock changes. Use curl -L. Cap: 30 network requests, 20 s timeout each; downloads <= 200 MB into gitignored projects/c5_review/ (never committed). ERROR/HTTP status/EMPTY separate states. Roles inline, said so.
 - **Preflight observed:** git status clean; HEAD `21291dc` on `factory/business-documentary-pilot`; ffmpeg 6.1.1, curl available.

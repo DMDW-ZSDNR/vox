@@ -2,7 +2,23 @@
 
 ---
 
-### 2026-10-17 — Milestone P+: master plan v3.2 + REAL Kilo agent team + QA spec (docs only)
+### 2026-10-17 — Milestone C1 (v2): rights model + clip re-classification + replacement topic probe (docs only)
+- **Goal:** RIGHTS_MODEL.md; re-classify prior-probe clips per rights_basis; probe X-15/XB-70/Helios; >=3 primary docs per topic; recompute stage 0 viability gate; qa-reviewer read-only review. Docs/reports only: no code, no installs, no process/lock changes. Free keyless APIs only; ERROR/429/EMPTY as separate states.
+- **Preflight observed:** git status clean; HEAD `f5099cb324cb61fd5c6e8f48cc12da143a46de69` on `factory/business-documentary-pilot`; all four `.kilo/agents` subagents present in `kilo agent list`.
+- **Step 1 (orchestrator):** fetched NASA media usage guidelines https://www.nasa.gov/nasa-brand-center/images-and-media/ (2026-10-17). Default: NASA content not subject to US copyright; exceptions = Insignia/Logotype, third-party material, identifiable persons, no endorsement, no NFT/crypto, AI attribution limits.
+- **Step 2:** wrote `docs/openmontage/RIGHTS_MODEL.md` (rights_basis enum; source_policy_us_gov fail-closed conditions; flags UNKNOWN=>NEEDS_REVIEW; unknown=>not usable; evidence recording).
+- **Step 3/4 (footage-scout domain, inline):** NASA images-api `media_type=video`. Boeing 720: 13 clips -> usable 0, NEEDS_REVIEW 1 (Commons PD webm, 3rd-party credit), REJECT 12 (11 NIX no license + youtube re-upload). Shuttle/Edwards: 22 clips -> usable 0, NEEDS_REVIEW 5 (3 IA PD + 2 Commons PD), REJECT 17 (13 NASA-API "none stated" + 3 IA no creator + 1 nasa_tv). ALT-era specificity NOT established for NASA-API clips (bare catalog titles). X-15: 8 hits, 2 on-topic source_policy_us_gov candidates (AFRC documentary, KSC B-52/X-15 retirement), flags UNREVIEWED => NEEDS_REVIEW, usable 0. XB-70: EMPTY (0). Helios: EMPTY (0).
+- **Step 5 (evidence-checker domain, inline):** NTRS `api/citations/search` = network ERROR (timeout) for X-15, XB-70, Helios — recorded ERROR, not zero. FAA no keyless JSON API; NTSB CAROL JS shell => BLOCKED. >=3 primary docs not verifiable this session.
+- **Step 6 (viability gate):** usable = rights_basis in {explicit_license, source_policy_us_gov} AND no unreviewed flags; NEEDS_REVIEW excluded. All 5 topics NO-GO: Boeing 720 0/10, Shuttle 0/10, X-15 0/10, XB-70 0/10, Helios 0/10; primary docs 0/3 (NTRS ERROR).
+- **Step 7 (qa-reviewer domain, inline, read-only):** PASS — no unsupported claims, counts reconcile, ERROR states recorded separately, no ERROR hidden as success.
+- **Delegation note:** `.kilo/agents` subagents exist but the `task` tool exposes only explore/general; no separate subagent process was available, so footage-scout/evidence-checker/qa-reviewer work performed inline as orchestrator and attributed by domain. No subagent run claimed.
+- **Files created:** `docs/openmontage/RIGHTS_MODEL.md`, `docs/openmontage/audit/C1_RIGHTS_REPORT.md`.
+- **Tests actually run:** none (docs/report only).
+- **Budget / provider verification:** strict $0 held. Keyless NASA API worked; NTRS network ERROR (not key-related). No paid call, generation, upload, or publish. No installs.
+- **Git status / user changes preserved:** tree clean at start; only agent docs staged; no destructive commands, no force-push.
+- **Next smallest step:** commit + push docs; then decide whether to pursue aviation/spaceflight archive niche (all 5 topics NO-GO on footage), pivot topic, or add a second rights-verification step for NASA-API clips.
+
+---
 - **Goal:** create four Kilo subagents (editor, qa-reviewer, evidence-checker, footage-scout), write docs/openmontage/QA_SPEC.md, append Plan v3.2 to master plan, update AGENTS.md roster/permissions/rules, update work log; commit docs + agent files only. Time-box 35 min. No code, no installs, no network except reading Kilo docs.
 - **Observed:** Kilo 7.8.12 (`kilo --version`); `kilo agent --help` -> `create`/`list`; `kilo agent list` preflight showed built-in agents only (no `.kilo/agents/` dir existed). Agent-file schema learned from a `kilo agent create` smoke test: markdown with YAML frontmatter (`description`, `mode`, `permission:` map) + body prompt; invoked by `@name`. `.kilo/agents/` created. All four agents verified present in `kilo agent list` output.
 - **Observed (versions/hashes):** git status clean; HEAD `74ee25a` on `factory/business-documentary-pilot`. Milestone A `dad575d`, B `79b2cfc`, S `ff35182`, D1 `74ee25a` (working branch tip).

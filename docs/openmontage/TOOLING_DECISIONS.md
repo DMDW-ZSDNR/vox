@@ -168,3 +168,108 @@ provenance), field names and semantics only — no code:
   (network unreachable), not EMPTY. No status codes, rate limits, or field
   inventory obtained yet; probe remains pending.
 - See also §8 row 1 (primary-document research).
+
+## 12. Milestone D1 — audio + editing toolchain audit & decision (2026-10-16)
+
+**Time-box:** 40 min. **Rules:** docs + skills into `.kilo/skills/` + throwaway scripts in
+`/tmp` only. No paid routes, no keys, no process/lock changes. Max 2 attempts per blocker,
+then record BLOCKED.
+
+### 12.1 Preflight (look only)
+
+- `git status --short` clean; HEAD `b5adfc1` on `factory/business-documentary-pilot`; no
+  user processes touched; nothing deleted or reset.
+- ffmpeg 6.1.1-3ubuntu5 (`/usr/bin/ffmpeg`). All required filters **present and observed**:
+  sidechaincompress, loudnorm, acrossfade, xfade, amix, alimiter, ebur128.
+- Python libs observed via `pip list`: numpy 2.5.4, onnxruntime 1.31.0, piper-tts 1.8.0.
+  **No** stable-ts / whisper / torch initially installed.
+
+### 12.2 Voice-license table (from each repo's own LICENSE/model-card files, not blogs)
+
+| Engine | Code license | Weights/voice license | Commercial use | Evidence |
+|---|---|---|---|---|
+| Piper engine | GPL-3.0-or-later | n/a (engine) | permitted (copyleft) | `piper_tts-1.8.0.dist-info/METADATA` (local) |
+| Piper voice `en_US-lessac-medium` | n/a | **UNKNOWN** — sidecar has `"dataset": "lessac"`, no license field | UNKNOWN | `~/.local/share/piper/voices/en_US-lessac-medium.onnx.json` (local, read) |
+| Kokoro | **UNKNOWN** — not installed locally, no local model card | **UNKNOWN** | UNKNOWN | none local |
+| Chatterbox | **UNKNOWN** — not installed locally, no local model card | **UNKNOWN** | UNKNOWN | none local |
+
+Piper is the only locally-installed TTS engine (already used in the P1 pilot). Kokoro and
+Chatterbox are not installed and were not installed (out of scope, no keys).
+
+### 12.3 Voice synthesis smoke test (piper — ALLOWED candidate, installed & free)
+
+Same script synthesized on CPU; saved to `/tmp/opencode/d1_60s_piper.wav` (and a duplicate
+`_b.wav` for timing). Measured: audio **26.98 s** (text renders shorter than 60 s at this
+voice's pace — real duration reported, not claimed), wall **5.74 s** → real-time factor
+**0.21** (≈4.7× faster than real-time on CPU). `needs human listening`; technical smoke test
+only — voice license UNCONFIRMED, so not a commercial-use approval.
+
+### 12.4 Forced alignment — stable-ts (installed, attempt 2)
+
+`pip install stable-ts` attempt 1 timed out (300 s); attempt 2 succeeded → stable-ts 2.19.1 +
+torch + openai-whisper installed into system site-packages (no repo change, no lock change).
+Imported as `stable_whisper` (not `stable_ts`).
+
+Test: tiny Whisper model downloaded from HF (72.1 MB — network works), transcribed
+`d1_60s_piper.wav` with `word_timestamps=True` → **82 word-timestamps for 80 reference words**
+(~100% coverage) in ~7.3 s (RTF ≈ 0.27).
+
+Known-text forced alignment: **no `result.align`/`align_words`/`force_align` method found** on
+`WhisperResult` in this stable-ts API (one method-name set tried) — not directly exercised.
+Piper segment fallback: **0% word timestamps** (piper emits none). Conclusion: stable-ts gives
+word-level timestamps where piper/segment fallback gives none; a clear improvement, but the
+install pulled torch and was not integrated into the repo.
+
+### 12.5 Audio finishing prototype (/tmp, no downloaded music)
+
+Voice + synthetic 440 Hz test-tone bed → sidechaincompress (music ducked under voice) → amix →
+two-pass loudnorm (`I=-14`, `TP=-1.5`, `LRA=11`; pass-1 measured input_i=-13.12 LUFS,
+input_tp=-4.55 dBTP, input_lra=1.20, target_offset=-0.16; pass-2 `linear=true` with measured
+values) → `/tmp/opencode/d1_finished.wav`.
+
+**Verification via ebur128:** integrated loudness **-13.8 LUFS** (target -14), true peak **-5.2
+dBFS** (target -1.5; good headroom), LRA 1.2 LU. Prototype validated; no downloaded music.
+
+### 12.6 Editing doctrine + pinned skills
+
+Upstream `agamm/video-agent` read read-only (MIT, pinned commit
+`cc00d2815869cbf2d708426a5082612f0c3b4dbf`; LICENSE read verbatim). The fork
+`rugelees/video-agent` is only a copy and was not consulted. **Not installed.** Did not use
+yt-dl, vfx-edit, or Remotion parts.
+
+SKILL.md files read (upstream): `editor`, `edl-edit`, `cutting-rhythm`, `audio-edit`,
+`video-transitions`, `captions`. Network/env/write profile: none of the ported skills makes
+network calls or requires env vars (optional upstream Grok VFX needs `XAI_API_KEY` — out of
+scope). Installed into `.kilo/skills/` (Linux-adapted, no mlx-whisper, no `h264_videotoolbox`,
+no `uv run video-agent` CLI): `cutting-rhythm`, `edl-edit`, `audio-edit` — each pinned to the
+upstream commit.
+
+Doctrine written: `docs/openmontage/EDITING_DOCTRINE.md` — rules to port (EDL with per-cut
+rationale; split edits/J–L cuts; pacing lint: shot-length variation ≥ ~15% INITIAL GUESS,
+pause gaps, cut-in-silence, beat-snap; transitions; captions `--clean`; audio ducking; universal
+order of operations), mapped to our real timeline schema
+`schemas/artifacts/edit_decisions.schema.json` (`cuts[].reason`, `transition_in/out`,
+`audio.music.ducking`, `overlays`, `subtitles`, `render_runtime`, `composition_mode`). All
+numeric thresholds marked INITIAL GUESSES to tune after human review.
+
+Music policy written: `docs/openmontage/MUSIC_POLICY.md` — pilot uses NO music unless license
+evidence is stored; allowed sources; required record fields (source_url, license_text, author,
+download_date, sha256, commercial_use_allowed, modification_allowed, attribution, license_url);
+Content ID risk noted as UNKNOWN.
+
+### 12.7 Blockers
+
+None hard. stable-ts forced-alignment-with-known-text via `result.align` was not available in
+the API (one method-name set tried; not retried — recorded as not exercised, not BLOCKED,
+since word-timestamps via transcribe were obtained).
+
+## 13. Milestone D1 summary — observed vs assumed
+
+**Observed:** ffmpeg filters all present; piper-tts 1.8.0 + en_US-lessac-medium installed
+(voice license UNKNOWN); stable-ts 2.19.1 installed and tested (word-timestamps ~100%);
+audio finishing prototype verified via ebur128 (-13.8 LUFS / -5.2 dBTP); three skills pinned
+into `.kilo/skills/`; EDITING_DOCTRINE.md and MUSIC_POLICY.md written.
+
+**Assumed (not verified):** piper voice commercial use (voice license unstated);
+stable-ts known-text forced alignment (method absent in API); long-form loudness targets for
+our delivery; human listening of the piper sample (not performed).

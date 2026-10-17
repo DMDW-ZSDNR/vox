@@ -2,6 +2,55 @@
 
 ---
 
+### 2026-10-17 — Milestone D1: audio + editing toolchain (docs + skills, /tmp scripts only)
+- **Goal:** audio/editing toolchain audit + decision + minimal skill install; 40-min time-box;
+  no paid routes, no keys, no process/lock changes; max 2 attempts per blocker then BLOCKED.
+- **Observed:** preflight clean (`git status` clean, HEAD b5adfc1 on factory branch; no user
+  processes touched). ffmpeg 6.1.1 all required filters present (sidechaincompress, loudnorm,
+  acrossfade, xfade, amix, alimiter, ebur128). Python: numpy 2.5.4, onnxruntime 1.31.0,
+  piper-tts 1.8.0; no stable-ts/whisper/torch initially.
+- **Voice license table:** Piper engine GPL-3.0-or-later (dist-info METADATA). Piper voice
+  en_US-lessac-medium license UNKNOWN (sidecar has "dataset":"lessac", no license field).
+  Kokoro/Chatterbox UNKNOWN (not installed, no local model cards). Piper is the only installed
+  TTS engine (already used in P1 pilot).
+- **Voice smoke test (piper, CPU):** script → /tmp/opencode/d1_60s_piper.wav; measured audio
+  26.98 s, wall 5.74 s → RTF 0.21 (~4.7× real-time). `needs human listening`; technical smoke
+  test only (voice license UNCONFIRMED — not a commercial-use approval).
+- **stable-ts forced alignment:** pip install attempt 1 timed out (300 s); attempt 2 OK
+  (stable-ts 2.19.1 + torch + openai-whisper, system site-packages, no repo/lock change).
+  tiny model downloaded from HF (72.1 MB). word_timestamps=True → 82 timestamps / 80 reference
+  words (~100% coverage) in ~7.3 s (RTF 0.27). Known-text `result.align` NOT present in API
+  (not exercised). Piper segment fallback: 0% word timestamps.
+- **Audio finishing prototype (/tmp, no downloaded music):** voice + synthetic 440 Hz bed →
+  sidechaincompress → amix → two-pass loudnorm (I=-14/TP=-1.5/LRA=11). ebur128 verify:
+  integrated -13.8 LUFS (target -14), true peak -5.2 dBFS (target -1.5), LRA 1.2 LU. Saved
+  /tmp/opencode/d1_finished.wav.
+- **Editing doctrine + pinned skills:** upstream agamm/video-agent read read-only (MIT,
+  pinned cc00d2815869cbf2d708426a5082612f0c3b4dbf; LICENSE read verbatim). Fork
+  rugelees/video-agent NOT consulted. NOT installed; no yt-dl/vfx-edit/Remotion. Six SKILL.md
+  read (editor, edl-edit, cutting-rhythm, audio-edit, video-transitions, captions). Three
+  installed into .kilo/skills/ (Linux-adapted, pinned): cutting-rhythm, edl-edit, audio-edit.
+  Docs: docs/openmontage/EDITING_DOCTRINE.md (mapped to schemas/artifacts/edit_decisions.schema.json;
+  thresholds INITIAL GUESSES), docs/openmontage/MUSIC_POLICY.md (no music unless license
+  evidence stored; required record fields incl. source_url/license_text/author/download_date/
+  sha256; Content ID risk UNKNOWN).
+- **Files changed:** docs/openmontage/TOOLING_DECISIONS.md (§12 D1), docs/openmontage/
+  EDITING_DOCTRINE.md (new), docs/openmontage/MUSIC_POLICY.md (new),
+  .kilo/skills/{cutting-rhythm,edl-edit,audio-edit}/SKILL.md (new), docs/OPENMONTAGE_RESUME.md,
+  docs/OPENMONTAGE_WORK_LOG.md (this entry). No code, installs into repo, model runs, or lock
+  changes (stable-ts went to system site-packages only).
+- **Tests actually run:** none (prototype/tool executions in /tmp only, no test suites).
+- **Git status / user changes preserved:** tree clean at start; only agent-authored files
+  staged; no destructive commands, no force-push.
+- **Blockers:** none hard. stable-ts known-text forced alignment not available in API (recorded
+  as not exercised, not BLOCKED).
+- **Known failures/uncertainty:** piper voice commercial use unstated; stable-ts known-text
+  alignment method absent; human listening of piper sample not performed.
+- **Next smallest step:** commit + push D1 docs/skills (this session); resume P2 scope
+  (primary sources, music library, web-search tool) per resume doc.
+
+---
+
 ### 2026-10-16 — Milestone S: tooling audit + minimal skill install
 - **Goal:** audit pilot tooling from artifacts + install 7 pinned skills; no paid
   routes, model downloads, or process/lock changes.

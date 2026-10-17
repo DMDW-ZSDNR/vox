@@ -207,10 +207,16 @@ decision d-001, "Then execute Phase 1 only"). The rendered MP4
 full decode: h264 1920×1080 30fps, aac 22050Hz mono, 84.975s, 32.16 MB. Stage 12 (`publish`)
 is **excluded** by the user directive and by the Master Plan's primary-source gate.
 
-**Next Action (exact):** nothing further in Phase 1. The remaining open items are P2 scope:
+**Milestone D1 (2026-10-16) — complete:** audio + editing toolchain audited; docs + skills
+only (no paid routes, no keys, no process/lock changes). See
+`docs/openmontage/TOOLING_DECISIONS.md` §12, `docs/openmontage/EDITING_DOCTRINE.md`,
+`docs/openmontage/MUSIC_POLICY.md`, and `.kilo/skills/{cutting-rhythm,edl-edit,audio-edit}/`.
+
+**Next Action (exact):** resume P2 scope:
 - Retrieve primary sources (IPPC ISPM 15 text, NWPCA/USDA statistics, pooler filings) before
-  any publish package — currently blocked by the Master Plan's evidence gate.
-- Populate `music_library/` with hand-verified licensed tracks for future renders.
+  any publish package — currently blocked by the Master Plan's primary-source gate.
+- Populate `music_library/` with hand-verified licensed tracks for future renders (see
+  MUSIC_POLICY.md required record fields).
 - Add a registered web-search tool so `research` does not depend on human-supplied URLs.
 
 ---

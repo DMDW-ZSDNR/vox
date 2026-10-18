@@ -80,25 +80,29 @@ def _parse_blackdetect(stderr: str, duration: float) -> float:
     return min(1.0, total_black / duration)
 
 
-def _parse_freezedetect(stderr: str, duration: float = 0.0) -> float:
-    """Max single freeze duration in seconds.
+def _parse_freezedetect(stderr: str, duration: float = 0.0) -> list[dict[str, float]]:
+    """List of freeze hits, each with start/end/duration in seconds.
 
     ffmpeg's freezedetect emits ``freeze_start`` when a frozen region begins and
     ``freeze_end``/``freeze_duration`` when it ends. For a clip that is frozen
     until its end, only ``freeze_start`` appears; treat the remainder of the
     clip as one frozen segment.
     """
-    best = 0.0
+    hits: list[dict[str, float]] = []
+    # Match pairs: freeze_start ... freeze_end / freeze_duration
+    starts = [float(m.group(1)) for m in re.finditer(r"freeze_start:\s*([\d.]+)", stderr)]
     durations = [float(m.group(1)) for m in re.finditer(r"freeze_duration:\s*([\d.]+)", stderr)]
+    ends = [float(m.group(1)) for m in re.finditer(r"freeze_end:\s*([\d.]+)", stderr)]
     if durations:
-        best = max(durations)
-    elif re.search(r"freeze_start:\s*", stderr):
-        # Frozen from freeze_start to end of clip (or a large fraction).
-        m = re.search(r"freeze_start:\s*([\d.]+)", stderr)
-        if m and duration > 0:
-            start = float(m.group(1))
-            best = max(best, duration - start)
-    return best
+        for i, d in enumerate(durations):
+            s = starts[i] if i < len(starts) else 0.0
+            e = ends[i] if i < len(ends) else (s + d)
+            hits.append({"start": s, "end": e, "duration": d})
+    elif starts:
+        # Frozen from freeze_start to end of clip
+        s = starts[0]
+        hits.append({"start": s, "end": duration if duration > 0 else s, "duration": max(0.0, (duration if duration > 0 else s) - s)})
+    return hits
 
 
 def _parse_silencedetect(stderr: str, duration: float) -> float:
@@ -241,6 +245,19 @@ class QCTool(BaseTool):
             "claim_ids_path": {"type": "string"},
             "rights_records_path": {"type": "string"},
             "edit_decisions_path": {"type": "string"},
+            "static_segments": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "start": {"type": "number"},
+                        "end": {"type": "number"},
+                        "reason": {"type": "string"},
+                        "static_by_design": {"type": "boolean"},
+                    },
+                    "required": ["start", "end"],
+                },
+            },
         },
     }
 
@@ -436,24 +453,82 @@ class QCTool(BaseTool):
                 fd = _run(
                     [ffmpeg_bin, "-i", input_path, "-vf", "freezedetect", "-f", "null", "-"],
                 )
-                freeze_dur = _parse_freezedetect(fd.stderr, duration)
+                freeze_hits = _parse_freezedetect(fd.stderr, duration)
                 thr = thresholds["freeze_duration_max"]
-                if freeze_dur <= thr:
+
+                # Collect static-by-design segments from inputs and/or edit_decisions.json
+                static_segments: list[dict[str, float]] = []
+                for seg in inputs.get("static_segments") or []:
+                    if seg.get("static_by_design", True):
+                        static_segments.append(
+                            {"start": float(seg["start"]), "end": float(seg["end"])}
+                        )
+                edit_path = inputs.get("edit_decisions_path")
+                if edit_path:
+                    try:
+                        edits = _load_json(edit_path)
+                        if isinstance(edits, dict):
+                            for seg in edits.get("static_segments") or []:
+                                if seg.get("static_by_design", True):
+                                    static_segments.append(
+                                        {"start": float(seg["start"]), "end": float(seg["end"])}
+                                    )
+                    except Exception:
+                        pass
+
+                def _static_coverage(start: float, end: float) -> float:
+                    """Total duration of [start, end] covered by static_by_design segments."""
+                    covered = 0.0
+                    for seg in static_segments:
+                        os_ = max(start, seg["start"])
+                        oe = min(end, seg["end"])
+                        if oe > os_:
+                            covered += oe - os_
+                    return min(covered, end - start)
+
+                if not freeze_hits:
                     report.append(
                         entry(
                             "freezedetect", "PASS",
-                            f"max freeze {freeze_dur:.2f}s <= {thr}s",
-                            freeze_dur, f"{thr}s",
+                            f"no freeze detected (<= {thr}s)",
+                            0.0, f"{thr}s",
                         )
                     )
                 else:
-                    report.append(
-                        entry(
-                            "freezedetect", "FAILED",
-                            f"max freeze {freeze_dur:.2f}s > {thr}s",
-                            freeze_dur, f"{thr}s",
-                        )
+                    max_dur = max(h["duration"] for h in freeze_hits)
+                    # Non-static portion of each freeze hit (not covered by static_by_design segments)
+                    max_non_static = max(
+                        h["duration"] - _static_coverage(h["start"], h["end"])
+                        for h in freeze_hits
                     )
+                    if max_dur <= thr:
+                        report.append(
+                            entry(
+                                "freezedetect", "PASS",
+                                f"max freeze {max_dur:.2f}s <= {thr}s",
+                                max_dur, f"{thr}s",
+                            )
+                        )
+                    elif max_non_static <= thr:
+                        # Freeze exceeds threshold but only within static_by_design segments
+                        seg_list = ", ".join(
+                            f"{h['start']:.2f}-{h['end']:.2f}s" for h in freeze_hits
+                        )
+                        report.append(
+                            entry(
+                                "freezedetect", "REVIEW",
+                                f"freeze(s) {seg_list} within static_by_design segment(s); max {max_dur:.2f}s > {thr}s",
+                                max_dur, f"{thr}s",
+                            )
+                        )
+                    else:
+                        report.append(
+                            entry(
+                                "freezedetect", "FAILED",
+                                f"max freeze {max_dur:.2f}s > {thr}s (non-static portion {max_non_static:.2f}s)",
+                                max_dur, f"{thr}s",
+                            )
+                        )
             except Exception as exc:  # noqa: BLE001
                 report.append(entry("freezedetect", "BLOCKED", f"freezedetect unrunnable: {exc}"))
 

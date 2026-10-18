@@ -42,3 +42,10 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Evidence: qc report at projects/slice_cid_v0/f3/qa_report_f3.json (gitignored, not committed).
 - Network/download budget: ~17/25 requests, ~7.6MB/300MB, curl -L, no installs, no AI upscaling, no paid routes, no secrets.
 - Rollback: `git revert` of the F3 commit on branch `factory/business-documentary-pilot`.
+
+## 2026-10-18 — F4 still-image-led slice + Kokoro narration
+- Accepted: rebuilt slice with Kokoro-82M narration (S1-S7 only, S8 BLOCKED/omitted, 46.0s) laid over stills-led visuals with zoompan, archive inserts in 2x framed layout, 2 original graphics cards; subtitles.srt regenerated; finish_audio PASS. Added static_by_design per-segment exemption to qc.py freezedetect (edit_decisions.json with cuts[] + static_segments[]); test-first 2 new tests (red→green); all 9 qc tests pass. qc.py run with all inputs: overall PASS, freezedetect REVIEW (static title cards), ebur128 PASS (I=-15.3 LUFS). rights_records.json + credits.txt updated. Contact sheet 12 frames.
+- Not accepted: qc.py thresholds NOT changed. S8 (CID-13) omitted (BLOCKED, load-bearing). AI upscaling NOT applied.
+- Evidence: qc report at projects/slice_cid_v0/f4/qa_report_f4.json (gitignored, not committed); tests pass (test_qc_tool 9/9, test_finish_audio 5/5, test_piper_tts 9/9, test_tts_kaggle 5/5, all exit 0).
+- Network/download budget: no new downloads for F4 (sources reused). curl -L. No new installs, no AI upscaling, no paid routes, no secrets.
+- Rollback: `git revert` of the F4 commit on branch `factory/business-documentary-pilot`.

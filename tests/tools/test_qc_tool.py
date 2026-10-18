@@ -215,6 +215,49 @@ def test_frozen_segment(tmp_path):
     assert entry["status"] in ("FAILED", "REVIEW"), entry
 
 
+def test_freeze_in_static_segment_review(tmp_path):
+    """Frozen clip with freeze inside a static_by_design segment -> freezedetect REVIEW (not FAILED)."""
+    vid = tmp_path / "frozen_in_static.mp4"
+    _gen_frozen(vid, duration=10)
+    edits = tmp_path / "edits.json"
+    edits.write_text(json.dumps({
+        "cuts": [],
+        "static_segments": [
+            {"start": 0.0, "end": 10.0, "reason": "title card", "static_by_design": True}
+        ]
+    }))
+    qc = QCTool()
+    report, _ = _write_report(qc, {
+        "input_path": str(vid),
+        "edit_decisions_path": str(edits),
+    }, tmp_path)
+    entry = _find(report, "freezedetect")
+    assert entry is not None, "freezedetect entry missing"
+    assert entry["status"] == "REVIEW", entry
+    assert "static" in entry["evidence"].lower(), entry
+
+
+def test_freeze_outside_static_segment_failed(tmp_path):
+    """Frozen clip with freeze outside static_by_design segments -> freezedetect FAILED."""
+    vid = tmp_path / "frozen_outside.mp4"
+    _gen_frozen(vid, duration=10)
+    edits = tmp_path / "edits.json"
+    edits.write_text(json.dumps({
+        "cuts": [],
+        "static_segments": [
+            {"start": 8.0, "end": 9.0, "reason": "brief title card", "static_by_design": True}
+        ]
+    }))
+    qc = QCTool()
+    report, _ = _write_report(qc, {
+        "input_path": str(vid),
+        "edit_decisions_path": str(edits),
+    }, tmp_path)
+    entry = _find(report, "freezedetect")
+    assert entry is not None, "freezedetect entry missing"
+    assert entry["status"] == "FAILED", entry
+
+
 def test_no_audio(tmp_path):
     """Video-only clip -> ffprobe_streams FAILED (audio missing)."""
     vid = tmp_path / "noaudio.mp4"

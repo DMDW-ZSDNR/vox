@@ -578,3 +578,20 @@
 - **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs staged; media never committed; no destructive commands, no force-push.
 - **Rollback:** `git revert` of the F3 commit on branch `factory/business-documentary-pilot`.
 - **Next smallest step:** owner reviews FOOTAGE_QUALITY.md (draft email + AI-upscale approval decision) and QC failures; then proceed to next milestone per plan.
+
+---
+
+### 2026-10-18 — Milestone F4 (v1): still-image-led slice + Kokoro narration (docs/code/tests only; media in gitignored projects/, never committed)
+- **Goal:** rebuild F3 slice with Kokoro narration (46s, S1-S7 only, S8 BLOCKED/omitted) laid over visuals; re-time visual beats to script sentences using timestamps; regenerate subtitles.srt; add static_by_design per-segment exemption to qc.py freezedetect (test-first, red→green); run qc.py with all inputs; contact sheet 12 frames. No installs, no new downloads, no threshold changes in qc.py. Max 25 network requests (none needed for F4 - sources reused), curl -L, downloads <= 300MB in gitignored projects/. Roles inline, said so.
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `550f3e9` on `factory/business-documentary-pilot`; `df -h /workspaces`: ~3.1 GB free (90%).
+- **Step 1 (narration):** Kokoro-82M (af_heart) generated S1-S7 individually, measured per-sentence durations, concatenated with 0.5s pauses + 1.0s intro + 1.3s trail = 46.0s. subtitles.srt with 7 sentence cues. narration_manifest.json (expected_duration 46.0s). finish_audio PASS.
+- **Step 2 (visuals):** stills primary with zoompan (max 1.15x, 1080p, letterboxed, no stretch); archive inserts clip02/clip03 in 2x framed layout; 2 original graphics cards; archive audio muted, narration over visuals. Visual beats re-timed to S1-S7. Total 46.0s.
+- **Step 3 (QC exemption):** Added static_by_design per-segment exemption to qc.py freezedetect. edit_decisions.json with cuts[] + static_segments[]. freezedetect: REVIEW inside static segments, FAILED outside. Test-first: 2 new tests (red→green). All 9 qc tests pass. Thresholds NOT changed.
+- **Step 4 (QC):** qc.py with ALL inputs provided. ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect REVIEW (static title cards), silencedetect PASS, ebur128 PASS (I=-15.3 LUFS, target -14+/-2), duration_vs_script PASS (drift 0.00s), subtitle_sync PASS, credits_complete PASS, claim_ids PASS (9/9), rights_basis PASS (8/8), added_value PASS. Overall: PASS. Measured LUFS: -15.3.
+- **Step 5 (contact sheet):** 12-frame contact sheet at projects/slice_cid_v0/contact_sheet_f4.jpg (gitignored, not committed).
+- **Tests actually run:** tests/tools/test_qc_tool.py (9/9, exit 0), test_finish_audio.py (5/5, exit 0), test_piper_tts.py (9/9, exit 0), test_tts_kaggle.py (5/5, exit 0).
+- **Budget / provider verification:** strict $0 held. No new downloads for F4 (sources reused from F3). No new installs, no AI upscaling, no paid routes, no secrets. Temp files deleted after commit.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs/code/tests staged; media never committed; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the F4 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner reviews F4 QC result (PASS with freezedetect REVIEW on static cards); then proceed to next milestone per plan.
+

@@ -68,3 +68,16 @@
 - **AGENTS.md:** untouched (owner's uncommitted modification preserved).
 - **Rollback:** `git revert` of the F3 commit on branch `factory/business-documentary-pilot`.
 - **Next action:** owner reviews FOOTAGE_QUALITY.md (draft email + AI-upscale approval decision) and QC failures; then proceed to next milestone.
+
+## F4 — still-image-led slice + Kokoro narration (2026-10-18)
+- **Status:** PARTIAL (docs/code/tests only; media in gitignored projects/, never committed)
+- **Step 1 (narration):** Kokoro-82M (af_heart) generated S1-S7 only (S8 BLOCKED, omitted). 46.0s total (1.0s intro + sentences + 0.5s pauses + 1.3s trail). subtitles.srt regenerated with sentence timestamps. narration_manifest.json recorded (expected_duration 46.0s). finish_audio PASS.
+- **Step 2 (visuals):** stills-led with zoompan (max 1.15x, 1080p, letterboxed, no upscale beyond source); archive clips clip02/03 as 3-6s inserts in 2x framed layout; 2 original graphics cards (flight-path/timeline + key-numbers with claim_ids); archive-clip audio muted, narration laid over visuals. Visual beats re-timed to S1-S7 sentences. Total 46.0s.
+- **Step 3 (QC exemption):** Added static_by_design per-segment exemption to qc.py freezedetect. edit_decisions.json includes cuts[] + static_segments[] (10 segments: intro, pauses, 2 title cards). freezedetect now reports REVIEW (not FAILED) for freezes inside static segments; FAILED outside them. Test-first: added test_freeze_in_static_segment_review (red→green) and test_freeze_outside_static_segment_failed. All 9 qc tests pass. Thresholds NOT changed in qc.py.
+- **Step 4 (QC):** qc.py run with ALL inputs (narration_manifest, subtitle_path, credits_path, claim_ids_path, rights_records_path, edit_decisions_path). Result: ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect REVIEW (static title cards), silencedetect PASS, ebur128 PASS (I=-15.3 LUFS, target -14+/-2), duration_vs_script PASS (drift 0.00s), subtitle_sync PASS, credits_complete PASS, claim_ids PASS (9/9), rights_basis PASS (8/8), added_value PASS. Overall: PASS. Measured LUFS: -15.3.
+- **Step 5 (contact sheet):** 12-frame contact sheet at projects/slice_cid_v0/contact_sheet_f4.jpg (gitignored, not committed).
+- **Records:** rights_records.json updated (5 stills + 3 archive inserts, sha256/resolution/role); credits.txt updated (F4 narration + layout). Media NOT committed (gitignored).
+- **Network/download budget:** ~17 requests total for F3+F4 (<25), ~7.6MB downloads (<300MB for F3, no new downloads for F4 - sources reused). curl -L. No new installs, no AI upscaling, no paid routes, no secrets. Temp files deleted after commit.
+- **AGENTS.md:** untouched (owner's uncommitted modification preserved).
+- **Rollback:** `git revert` of the F4 commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner reviews F4 QC result (PASS with freezedetect REVIEW on static cards); then proceed to next milestone per plan.

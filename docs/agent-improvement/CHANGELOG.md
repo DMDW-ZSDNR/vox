@@ -14,3 +14,10 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - No restating of task, no per-file lists or per-skill tables; use "details: <path>".
 - Never shorten honesty: keep "inline, not independent", real PASS/FAIL/NOT_CHECKED, blockers stated first.
 - Apply to every milestone from now on; commit docs only, push non-force; do not touch AGENTS.md.
+
+## 2026-10-18 — F1 fix slice footage quality
+- Accepted: rebuilt slice with real archive.org derivatives (clip01 NASA-logo placeholder replaced with real-footage segment 8.0-12.5s); lanczos 1080p+pad crf 18 30fps; finish_audio PASS; qc.py run; rights_records.json + credits.txt + qa_report.json updated; contact sheet 12 frames, logo_visible=false.
+- Not accepted: ebur128 FAILED (I=-17.0 LUFS, target -14+/-2, marginal 1 LU below range) → overall qc FAILED. Owner must decide whether to accept or re-run finish_audio.
+- Evidence: qc report at projects/slice_cid_v0/qa_report.json (gitignored, not committed); 12/12 checks accounted (PASS/NOT_RUN/1 FAILED).
+- Network/download budget: 8/20 requests, ~7.6MB/400MB, curl -L, no new installs, no paid routes, no secrets.
+- Rollback: `git revert` of the F1 commit on branch `factory/business-documentary-pilot`.

@@ -3,6 +3,23 @@
 
 ---
 
+### 2026-10-18 — Milestone F1 (v1): fix slice footage quality (docs/code only; media in gitignored projects/, never committed)
+- **Goal:** diagnose slice clips (placeholder vs real footage), replace clip01 NASA-logo placeholder with real footage derivative from archive.org, rebuild slice (lanczos 1080p+pad, crf 18, 30fps), run finish_audio + qc.py, contact sheet + logo detection, update rights_records/credits/qa_report. Max 20 network requests, curl -L, downloads <= 400MB in gitignored projects/. No new installs, no paid routes. Roles inline, said so.
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `528b9fe` on `factory/business-documentary-pilot`; `df -h /workspaces`: ~3.3 GB free (89%).
+- **Step 1 (diagnose):** ffprobe each clip0*_scaled.mp4. clip01 (272KB, 4.5s) = placeholder: first 3 frames identical (avg-hash hamming=0). clips 02-04 = real footage (hamming 1-11). clip01 → NIX-EM-0004-01, clip02 → NIX-LV-1998-00090, clip03 → NIX-LV-1998-00092, clip04 → NIX-LV-1998-00098 (per edit_decisions.json).
+- **Step 2 (best derivatives):** fetched archive.org metadata for 4 items (4 requests). Best h.264 mp4 per item: EM-0004-01.mp4 (3,052,294B, 320x240, sha256 13d2a7e4...), LV-1998-00090.mp4 (1,740,303B, sha256 ae128d36...), LV-1998-00092.mp4 (1,252,468B, sha256 abbd001b...), LV-1998-00098.mp4 (1,599,299B, sha256 522caadd...). Downloaded all 4 (~7.6MB, 4 requests). Total: 8/20 requests, ~7.6MB/400MB.
+- **Step 3 (rebuild):** lanczos scale 1920x1080 + pad (no stretch), crf 18, 30fps. clip01 source opens with 4s NASA logo → used real-footage segment 8.0-12.5s instead of 0-4.5s. Archive.org AAC malformed → audio via WAV/PCM. finish_audio PASS. Final: 45.8s, 1920x1080, h264/aac, 30fps.
+- **Step 4 (contact sheet + logo):** 12 frames at even timestamps; all high std dev (76-103) = varied real footage; blue=sky (f6-f8), red=fireball (f2-f5); NO NASA logo/title card → logo_visible=false, no clip REJECTed.
+- **Step 5 (records):** rights_records.json updated (sha256, source_file, size, resolution, used_segment); credits.txt updated (logo replacement noted); qa_report.json recorded. Media (final_slice.mp4, contact_sheet.jpg) in gitignored projects/, NOT committed.
+- **QC result:** ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect PASS, silencedetect PASS, ebur128 FAILED (I=-17.0 LUFS, target -14+/-2, marginal 1 LU below range), duration_vs_script NOT_RUN, subtitle_sync NOT_RUN, credits_complete PASS, claim_ids NOT_RUN, rights_basis PASS (4/4), added_value PASS. Overall: FAILED (ebur128 marginal).
+- **Tests actually run:** tests/tools/test_qc_tool.py (6/6, exit 0), test_finish_audio.py (5/5, exit 0), test_piper_tts.py (9/9, exit 0), test_tts_kaggle.py (5/5, exit 0) — all pre-existing, re-verified.
+- **Budget / provider verification:** strict $0 held. 8/20 network requests, ~7.6MB downloads. curl -L. No new installs, no paid routes, no secrets.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs staged; media never committed; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the F1 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner decides whether to accept marginal ebur128 FAILED (-17.0 LUFS) or re-run finish_audio; then proceed to next milestone per plan.
+
+---
+
 ### 2026-10-18 — Milestone M1 (v1): selective merge of KILO_CODE_YOUTUBE_FACTORY_MASTER.md into factory (docs + project-level skills only)
 - **Goal:** audit master file's 9 skills + 6 rule blocks against installed skills/docs/AGENTS.md/QA_SPEC.md/RIGHTS_MODEL.md/plan v3.2; write docs/openmontage/MERGE_AUDIT.md; seed docs/agent-improvement/{LESSONS.md,BACKLOG.md,EVALS.md,CHANGELOG.md}; adapt .kilo/skills/kilo-self-improvement/SKILL.md to reference EVALS.md (project-level only); stub youtube-publishing-analytics in docs/openmontage/; propose AGENTS.md additive rules block in docs/openmontage/AGENTS_PROPOSED_DIFF.md (not applied). Time-box 35 min. No MCP installs, no global Kilo config changes, no process/lock changes, no paid routes, no secrets. Roles inline, said so. Owner's uncommitted AGENTS.md modification preserved exactly (backed up to /tmp).
 - **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `8bc5f7b` on `factory/business-documentary-pilot`; `df -h /workspaces`: 3.3 GB free (89%); `.kilo/skills/` already contains all 9 master skills with matching name/description front matter; docs/agent-improvement/ already has LESSONS/BACKLOG/EVALS/CHANGELOG templates; `kilo --help` has NO `skills` subcommand → discovery NOT_CHECKED.

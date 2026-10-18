@@ -1,5 +1,25 @@
 # OpenMontage Factory — Work Log
 
+
+---
+
+### 2026-10-18 — Milestone M1 (v1): selective merge of KILO_CODE_YOUTUBE_FACTORY_MASTER.md into factory (docs + project-level skills only)
+- **Goal:** audit master file's 9 skills + 6 rule blocks against installed skills/docs/AGENTS.md/QA_SPEC.md/RIGHTS_MODEL.md/plan v3.2; write docs/openmontage/MERGE_AUDIT.md; seed docs/agent-improvement/{LESSONS.md,BACKLOG.md,EVALS.md,CHANGELOG.md}; adapt .kilo/skills/kilo-self-improvement/SKILL.md to reference EVALS.md (project-level only); stub youtube-publishing-analytics in docs/openmontage/; propose AGENTS.md additive rules block in docs/openmontage/AGENTS_PROPOSED_DIFF.md (not applied). Time-box 35 min. No MCP installs, no global Kilo config changes, no process/lock changes, no paid routes, no secrets. Roles inline, said so. Owner's uncommitted AGENTS.md modification preserved exactly (backed up to /tmp).
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `8bc5f7b` on `factory/business-documentary-pilot`; `df -h /workspaces`: 3.3 GB free (89%); `.kilo/skills/` already contains all 9 master skills with matching name/description front matter; docs/agent-improvement/ already has LESSONS/BACKLOG/EVALS/CHANGELOG templates; `kilo --help` has NO `skills` subcommand → discovery NOT_CHECKED.
+- **Master file located:** `KILO_CODE_YOUTUBE_FACTORY_MASTER.md` found in git commit `36e6595` (1782 lines), not in working tree; treated as reference only — no bootstrap, no install scripts, no vertical slice, no docs/architecture/current-state.md/target-state.md created.
+- **Table A (skills):** all 9 skills = OVERLAP (already installed, name/desc match). kilo-self-improvement = MERGE-IDEAS-ONLY (adapted to reference EVALS.md, project-level only, no global writes). Remaining 8 = SKIP (duplicates; render stack = ffmpeg + HyperFrames per plan v3.2; publishing-analytics = stub-only, no OAuth).
+- **Table B (rules):** rights/provenance OVERLAP (RIGHTS_MODEL.md wins, more specific); publishing safety OVERLAP (AGENTS.md identical); pipeline stages OVERLAP (AGENTS.md identical); definition of done CONFLICT (master NOT_CHECKED vs QA_SPEC PASS\|REVIEW\|BLOCKED\|FAILED — mapped, not replaced); self-improvement OVERLAP; MCP/tool list CONFLICT (master lists GitHub/Serena/jCodeMunch/YouTube/n8n/Context7 MCPs vs plan v3.2 max-3-runtime + zero-secrets in v1 → SKIP all MCPs); global AGENTS/global skill paths vs project-level only CONFLICT → SKIP (~/.config/kilo untouched).
+- **Conflicts flagged:** (1) Remotion vs HyperFrames — Remotion SKIP, ffmpeg+HyperFrames stack; (2) extra MCPs vs max-3-runtime+zero-secrets — none installed; (3) global paths vs project-level — none written; (4) master NOT_CHECKED vs our qa_report statuses — mapped NOT_CHECKED→BLOCKED/NOT_RUN, our statuses kept.
+- **Files created:** docs/openmontage/MERGE_AUDIT.md; docs/openmontage/youtube-publishing-analytics-STUB.md; docs/openmontage/AGENTS_PROPOSED_DIFF.md.
+- **Files modified:** docs/agent-improvement/LESSONS.md (6 evidence-backed entries seeded); docs/agent-improvement/EVALS.md (5 fixed tasks); .kilo/skills/kilo-self-improvement/SKILL.md (EVALS.md reference added to evaluate step; name/description unchanged); docs/agent-improvement/CHANGELOG.md (M1 entry added).
+- **Files NOT touched:** AGENTS.md (owner's uncommitted modification preserved; proposed diff only in docs/openmontage/AGENTS_PROPOSED_DIFF.md); kilo.json/kilo.jsonc; ~/.config/kilo; any media/secrets.
+- **Tests actually run:** tests/tools/test_qc_tool.py (6 passed, exit 0); tests/tools/test_finish_audio.py (5 passed, exit 0); tests/tools/test_piper_tts.py (9 passed, exit 0); tests/tools/test_tts_kaggle.py (5 passed, exit 0). py_compile OK on changed files.
+- **kilo --help skills subcommand:** NOT_CHECKED — no `skills` subcommand exists; owner can check via `ls .kilo/skills/` or `kilo agent list`.
+- **Budget / provider verification:** strict $0 held. No MCP installs, no global config changes, no paid routes, no secrets, no process/lock changes.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs + skill files staged; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the M1 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner reviews AGENTS_PROPOSED_DIFF.md and MERGE_AUDIT.md Table B conflicts; decides on MCP/tool and global-path conflicts; then proceed to next milestone per plan.
+
 ---
 
 ### 2026-10-17 — Milestone K1 (v2): Kaggle bridge code (test-first) + live "hello" CPU job

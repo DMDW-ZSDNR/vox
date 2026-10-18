@@ -23,3 +23,16 @@
 - ERROR/HTTP/EMPTY separate states; fail-closed; unmeasured = BLOCKED or NOT_RUN
 - Code test-first (red then green); run new + existing tests; report exact commands/exit codes
 - Roles inline; never claim unobserved work
+
+## M1 — selective merge of KILO_CODE_YOUTUBE_FACTORY_MASTER.md (2026-10-18)
+- **Status:** COMPLETE (docs + project-level skills only)
+- **HEAD:** `8bc5f7b` (factory/business-documentary-pilot)
+- **Master file:** located in git commit `36e6595` (1782 lines), not in working tree; treated as reference only — no bootstrap, no install scripts, no vertical slice.
+- **Skills:** all 9 master skills already installed in `.kilo/skills/` with matching name/description; `kilo-self-improvement` adapted to reference `docs/agent-improvement/EVALS.md` (project-level only, no global writes); remaining 8 SKIP (duplicates); `youtube-publishing-analytics` stub-only in `docs/openmontage/` (no OAuth).
+- **Rules audit:** `docs/openmontage/MERGE_AUDIT.md` written (Table A skills + Table B rules). 4 conflicts flagged: Remotion vs HyperFrames (HyperFrames wins); extra MCPs vs max-3-runtime+zero-secrets (none installed); global AGENTS/skill paths vs project-level (none written); master `NOT_CHECKED` vs QA_SPEC `PASS\|REVIEW\|BLOCKED\|FAILED` (mapped, our statuses kept).
+- **Templates:** `docs/agent-improvement/LESSONS.md` seeded with 6 entries; `EVALS.md` seeded with 5 fixed tasks; `BACKLOG.md`/`CHANGELOG.md` preserved (merge, never overwrite); CHANGELOG M1 entry added.
+- **Verification:** `tests/tools/test_qc_tool.py` 6/6 exit 0; `test_finish_audio.py` 5/5 exit 0; `test_piper_tts.py` 9/9 exit 0; `test_tts_kaggle.py` 5/5 exit 0; `kilo --help` has no `skills` subcommand → discovery NOT_CHECKED.
+- **AGENTS.md:** owner's uncommitted modification preserved exactly (backed up to `/tmp/AGENTS.md.bak-20261018-013214`); proposed additive rules block in `docs/openmontage/AGENTS_PROPOSED_DIFF.md` (not applied).
+- **Rollback:** `git revert` of the M1 commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner reviews MERGE_AUDIT.md Table B conflicts and AGENTS_PROPOSED_DIFF.md; decides on MCP/tool and global-path conflicts.
+

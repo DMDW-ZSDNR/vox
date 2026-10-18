@@ -94,3 +94,19 @@
 - **AGENTS.md:** untouched (owner's uncommitted modification preserved).
 - **Rollback:** `git revert` of the F5 commit on branch `factory/business-documentary-pilot`.
 - **Next action:** owner reviews F5 QC result (PASS with freezedetect REVIEW on static cards), OWNER_ACTIONS.md, FOOTAGE_QUALITY.md (email draft + AI-upscale decision); then proceed to next milestone per plan.
+
+## G — 100-minute session close (2026-10-18)
+- **Status:** DONE (docs/code/tests only; media in gitignored projects/, never committed)
+- **G1 PORTABILITY:** scripts/rebuild_slice_assets.sh (re-downloads 8 assets with curl -L + sha256 verify); docs/openmontage/HANDOFF_NEW_ACCOUNT.md (branch, clone, dependencies, secrets, exact steps); docs/openmontage/assets/CID_SLICE_MANIFEST.json (COMMITTED manifest: URLs + sha256 + rights for all 8 assets); dry-run PASS (EC84-3167-A still, sha256 verified). Non-git deps: curl, sha256sum, ffmpeg/ffprobe, python3, kokoro + misaki, espeak-ng, Kokoro weights ~313 MB from Hugging Face, kaggle CLI 2.2.4 (P3 only, BLOCKED). Secret: KAGGLE_API_TOKEN (Codespaces secret, name only).
+- **G2 EVIDENCE:** CID_CLAIM_LEDGER.md updated — CID-13 now TWO_SOURCES (FS + FAA/CT-87/10 both read); CONTRADICTION note (NASA Facts "no reduction in propagation or intensity" vs FAA p.32 "reduced intensity attributed to AMK"); no intensity claim in script. CID_SLICE_SCRIPT_v0.md updated — S8 unblocked with new wording ("At full scale the modified fuel did not prevent a massive fuel-fed fire, and the FAA ended its attempts to require the additive."); S8 removed from BLOCKED. QC claim_ids check: PASS (9/9 sentences have claim_id).
+- **G3 SLICE v2:** Rebuilt slice with Kokoro narration S1-S8 (56.0s), moving footage inserts (EM-0004-01 approach, LV-00090 impact, LV-00092 fireball), 2x framed layout, 2 graphics cards, S8 with FAA source card overlay. finish_audio PASS. qc.py overall PASS with all inputs: freezedetect REVIEW (static_by_design cards), ebur128 PASS (I=-15.2 LUFS), all other checks PASS. Thresholds NOT changed in qc.py. Contact sheet at projects/slice_cid_v0/contact_sheet_f5.jpg (gitignored).
+- **G4 PACKAGING DRAFT:** docs/openmontage/package/CID_PACKAGE_DRAFT.md — 3 title options (truthful), description with chapters, credits/attribution block from rights_records, pre-publish checklist (owner review, voice decision, Guardian/AdSense, insignia decision, synthetic-voice disclosure). All marked NOT_PUBLISHABLE.
+- **G5 CLOSE:** This section. OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CHANGELOG.md updated.
+- **AGENTS.md:** untouched (owner's uncommitted modification preserved).
+- **Rollback:** `git revert` of the G commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner reviews G1-G4 outputs; decides on voice license, insignia clearance, synthetic-voice disclosure; then proceed to next milestone or publish prep.
+
+**Stop Codespace commands (for owner):**
+- `gh codespace stop -c <codespace-name>` — stop the current Codespace
+- `gh codespace list` — list all Codespaces
+- Or from the VS Code Codespaces panel: stop the active codespace

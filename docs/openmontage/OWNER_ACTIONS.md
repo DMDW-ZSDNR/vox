@@ -63,3 +63,18 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 | `contact_sheet_f5.jpg` | ~12 frames of final video |
 | `rights_records.json` | Per-clip rights_basis (9 clips, all source_policy_us_gov, 4 clips USABLE_FOR_SLICE) |
 | `narration_manifest.json` | Narration duration 46.0s + tolerance 1.0s |
+
+## 7. Slice rebuild / portability (G1)
+
+- [ ] Review `scripts/rebuild_slice_assets.sh` and `docs/openmontage/HANDOFF_NEW_ACCOUNT.md`
+- [ ] Manifest: `docs/openmontage/assets/CID_SLICE_MANIFEST.json` (committed, URLs + sha256 + rights for 8 assets)
+- [ ] To rebuild elsewhere: `git clone <repo-url>`, `git checkout factory/business-documentary-pilot`, install deps (curl, sha256sum, ffmpeg, python3, kokoro, misaki, espeak-ng), `bash scripts/rebuild_slice_assets.sh`
+- [ ] Secret: `KAGGLE_API_TOKEN` Codespaces secret (name only, value never committed) — needed only for P3 Kaggle bake-off (BLOCKED)
+
+## 8. Publication blockers (all must clear before publish)
+
+- [ ] Voice license: Kokoro-82M license UNKNOWN — owner decision required (VOICE_DECISION.md)
+- [ ] Clip full-clip review: F5 owner review done (4 clips USABLE_FOR_SLICE); full video frame-level review pending
+- [ ] NASA insignia clearance: decide if incidental insignia requires separate clearance
+- [ ] Synthetic-voice disclosure: evaluate against current YouTube rules
+- [ ] Guardian/AdSense: no monetization review performed

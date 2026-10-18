@@ -19,7 +19,7 @@
 | CID-10 | A cutter struck the right inboard engine, massive fuel leak ignited, right wing broke off, fireball, fire > 1 hour. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-11 | 76,000 lb of modified fuel on board. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-12 | Takeoff weight 200,500 lb. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
-| CID-13 | In the full-scale test the modified fuel was ineffective at reducing fire; FAA additive requirements were cancelled. | FS | SINGLE, LOAD-BEARING | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched; LOAD-BEARING, needs a second source. |
+| CID-13 | At full scale the modified fuel did not prevent a massive fuel-fed fire; FAA additive requirements were cancelled. | FS; FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT (FS); FAA PDF read p.32 | FS PDF reachable and fetched; LOAD-BEARING, second source FAA/CT-87/10 read. CONTRADICTION: NASA Facts says the fuel was "ineffective in reducing the propagation or intensity of fire" (no intensity reduction); FAA/CT-87/10 p.32 says "The reduced intensity of the fire is attributed to the antimisting characteristic of the fuel" and proponents argued the fire would have been worse without AMK. Do NOT use any intensity claim in the script — script wording only: fuel did not prevent a massive fuel-fed fire; FAA ended additive requirements. Secondary confirmations: Wikipedia citing FAA/CT-87/10 pp. 20-22; Encyclopedia MDPI citing FAA/CT-87/10. Status: TWO_SOURCES (FS + FAA/CT-87/10 both read). |
 | CID-14 | Ground pilot had poor depth perception via a 525-line monitor; tracking radar accuracy insufficient. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
 | CID-15 | From the remote-piloting standpoint the program was considered a success though not all impact parameters were met. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
 | CID-16 | Cabin cameras showed dummies shaken, seats stayed attached; data informed new FAA fire-prevention/fire-retardant rules. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
@@ -27,9 +27,11 @@
 ## Verification status summary
 
 - AGENT_VERIFIED_TEXT (FS PDF reachable and fetched): CID-01, 02, 03, 04, 05, 07, 08, 09, 10, 11, 13, 16 (12 claims)
+- FAA/CT-87/10 PDF read (p.32 AMK section): CID-13 (second source, TWO_SOURCES)
 - Per stated provenance, TM-4084 not re-fetched: CID-06, 12, 14, 15 (4 claims)
 
 ## Source abbreviations
 
 - FS = NASA Facts FS-2009-02-003-DFRC (Dryden/Flight Research Center), https://www.nasa.gov/centers/dryden/pdf/315492main_FS-2009-02-003-CID.pdf
 - TM = NASA TM-4084 (Horton & Kempel), "Flight Test Experience and Controlled Impact of a Remotely Piloted Jet Transport Aircraft"
+- FAA/CT-87/10 = DOT/FAA/CT-87/10 "Summary Report—Full-Scale Transport Controlled Impact Demonstration Program", https://rosap.ntl.bts.gov/view/dot/92854/dot_92854_DS1.pdf (PDF read, p.32 AMK fire-intensity finding)

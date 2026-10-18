@@ -56,3 +56,32 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Evidence: qc report at projects/slice_cid_v0/f5/qa_report_f5.json (gitignored, not committed); tests pass (test_qc_tool 9/9, test_finish_audio 5/5, test_piper_tts 9/9, test_tts_kaggle 5/5, all exit 0).
 - Network/download budget: 13/15 requests, ~14MB/300MB, curl -L, no installs, no AI upscaling, no paid routes, no secrets. Temp files deleted after commit.
 - Rollback: `git revert` of the F5 commit on branch `factory/business-documentary-pilot`.
+
+## 2026-10-18 — Milestone G (100-minute session close)
+
+### G1 PORTABILITY (DONE)
+- scripts/rebuild_slice_assets.sh: re-downloads 8 assets with curl -L + sha256 verify from committed manifest
+- docs/openmontage/HANDOFF_NEW_ACCOUNT.md: branch/clone/deps/secrets/exact steps for new account
+- docs/openmontage/assets/CID_SLICE_MANIFEST.json: COMMITTED manifest (URLs + sha256 + rights for all 8 assets)
+- Dry-run PASS (EC84-3167-A still, sha256 verified)
+- Non-git deps: curl, sha256sum, ffmpeg/ffprobe, python3, kokoro + misaki, espeak-ng, Kokoro weights ~313 MB (Hugging Face), kaggle CLI 2.2.4 (P3 only)
+- Secret: KAGGLE_API_TOKEN (Codespaces secret, name only)
+
+### G2 EVIDENCE (DONE)
+- CID_CLAIM_LEDGER.md: CID-13 now TWO_SOURCES (FS + FAA/CT-87/10 both read); CONTRADICTION note (FS "no reduction in propagation/intensity" vs FAA p.32 "reduced intensity attributed to AMK"); no intensity claim in script
+- CID_SLICE_SCRIPT_v0.md: S8 unblocked with new wording ("At full scale the modified fuel did not prevent a massive fuel-fed fire, and the FAA ended its attempts to require the additive.")
+- QC claim_ids check: PASS (9/9 sentences have claim_id)
+
+### G3 SLICE v2 (DONE)
+- Rebuilt slice with Kokoro narration S1-S8 (56.0s), moving footage inserts (EM-0004-01, LV-00090, LV-00092), 2x framed layout, 2 graphics cards, S8 with FAA source card
+- finish_audio PASS; qc.py overall PASS with all inputs (freezedetect REVIEW on static cards, ebur128 PASS at -15.2 LUFS)
+- Thresholds NOT changed in qc.py
+
+### G4 PACKAGING DRAFT (DONE)
+- docs/openmontage/package/CID_PACKAGE_DRAFT.md: 3 title options, description with chapters, credits/attribution block, pre-publish checklist; all NOT_PUBLISHABLE
+
+### G5 CLOSE (DONE)
+- OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CHANGELOG.md updated
+- Stop Codespace commands documented
+- AGENTS.md untouched (owner's uncommitted modification preserved)
+- Rollback: `git revert` of the G commit on branch `factory/business-documentary-pilot`

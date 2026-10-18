@@ -13,7 +13,7 @@
 | S5 | But in practice, the airplane had never flown lower than a hundred and fifty feet toward the crash site. | CID-06 | SINGLE_SOURCE | DRAFT, NOT_PUBLISHABLE — depends on SINGLE_SOURCE claim (TM only) |
 | S6 | On the real flight, it arrived slightly off the centerline, and its left wing hit first. | CID-08, CID-09 | TWO | DRAFT, NOT_PUBLISHABLE |
 | S7 | The fuel ignited into a fireball that burned for more than an hour. | CID-10 | SINGLE_SOURCE | DRAFT, NOT_PUBLISHABLE — depends on SINGLE_SOURCE claim (FS only) |
-| S8 | And the additive that had worked in small tests did not reduce the fire at full scale. | CID-13 | SINGLE_SOURCE, LOAD-BEARING | BLOCKED for publication until CID-13 has a second source |
+| S8 | At full scale the modified fuel did not prevent a massive fuel-fed fire, and the FAA ended its attempts to require the additive. | CID-13 | TWO_SOURCES | DRAFT, NOT_PUBLISHABLE — unblocked (CID-13 TWO_SOURCES: FS + FAA/CT-87/10 both read; no intensity claim used in wording) |
 
 ## Notes
 

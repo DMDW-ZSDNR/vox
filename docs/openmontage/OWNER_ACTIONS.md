@@ -78,3 +78,24 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 - [ ] NASA insignia clearance: decide if incidental insignia requires separate clearance
 - [ ] Synthetic-voice disclosure: evaluate against current YouTube rules
 - [ ] Guardian/AdSense: no monetization review performed
+
+## 9. Milestone H — autonomous session close (H1-H5)
+
+- [ ] Review H1 outputs: CID_FULL_SCRIPT_v0.md (34 sentences, claim_ids), CID_CLAIM_LEDGER.md (CID-17..30), QC claim_ids PASS (35/35)
+- [ ] Review H2: CID_BEAT_COVERAGE.md (6/6 beats covered, B6 aftermath LIMITED), viability-gate wording
+- [ ] Review H3: 6 hardening tests pass, EVALS.md results recorded, py_compile PASS
+- [ ] Review H4: 3 thumbnail candidates (gitignored), THUMBNAIL_NOTES.md — select one or request revisions
+- [ ] Review H5: TOPIC_BACKLOG.md (X-15/XB-70 LOW viability, CID remains only production-ready topic)
+- [ ] Stop Codespace when done: `gh codespace stop -c <codespace-name>`
+
+## Owner's remaining decisions (consolidated)
+
+1. Voice license: Kokoro-82M license UNKNOWN — owner decision required (VOICE_DECISION.md)
+2. Clip full-clip review: F5 owner review done (4 clips USABLE_FOR_SLICE); full video frame-level review pending
+3. NASA insignia clearance: decide if incidental insignia requires separate clearance per NASA Media Usage Guidelines
+4. Synthetic-voice disclosure: evaluate against current YouTube rules for synthetic/altered content
+5. Guardian/AdSense: no monetization eligibility review performed
+6. Thumbnail selection: choose one of 3 candidates (docs/openmontage/package/THUMBNAIL_NOTES.md)
+7. AI upscaling of 320x240 archive video: NEEDS OWNER APPROVAL (4th component, not applied)
+
+**Rollback:** `git revert` of the H commit on branch `factory/business-documentary-pilot`.

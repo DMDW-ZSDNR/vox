@@ -85,3 +85,39 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Stop Codespace commands documented
 - AGENTS.md untouched (owner's uncommitted modification preserved)
 - Rollback: `git revert` of the G commit on branch `factory/business-documentary-pilot`
+
+## 2026-10-18 — Milestone H (100-minute autonomous session close)
+
+### H1 FULL-VIDEO PLAN (DONE)
+- Extended CID_CLAIM_LEDGER.md with CID-17..CID-30 (14 new claims; TWO_SOURCES/SINGLE_SOURCE honestly marked; CID-25 CONTRADICTION noted vs CID-20; no intensity claim in script)
+- Wrote docs/openmontage/slice/CID_FULL_SCRIPT_v0.md — 6 narrative beats, 34 sentences, every sentence with claim_ids, single-source sentences flagged
+- Created docs/openmontage/slice/CID_FULL_CLAIM_IDS.json (35 entries)
+- QC claim_ids check: PASS (35/35 sentences have claim_id)
+- ~3-4 min of sourced material; noted gap to 6-8 min without additional evidence
+
+### H2 FOOTAGE COVERAGE (DONE)
+- Wrote docs/openmontage/footage/CID_BEAT_COVERAGE.md — 6 beats mapped to 12 NIX clips + 5 NASA stills + 2 graphics cards; all 6 beats covered (B6 aftermath LIMITED)
+- Searched archive.org (17 CID docs) and NASA images API (HTML only); applied RIGHTS_MODEL.md (4 third-party assets REJECTED)
+- Proposed viability-gate wording (6/6 beats = GATE_READY)
+- Downloads: 0 new (metadata reads only)
+
+### H3 HARDENING (DONE)
+- Wrote tests/tools/test_rebuild_slice_assets.py — 6 tests (sha256 logic + claim_ids validation); all pass
+- EVALS.md updated (E1-E3 PASS, E4 PASS, E5 NOT_CHECKED)
+- py_compile PASS; ruff not available
+- Full fast suite: 26 tests pass
+
+### H4 THUMBNAIL (DONE)
+- Generated 3 thumbnail candidates at 1280x720 PNG (gitignored, not committed)
+- Wrote docs/openmontage/package/THUMBNAIL_NOTES.md
+
+### H5 TOPIC BACKLOG (DONE)
+- Wrote docs/openmontage/audit/TOPIC_BACKLOG.md — X-15/XB-70 LOW viability; CID remains only production-ready topic
+- No demand claims; read-only keyless probe
+
+### H6 CLOSE (DONE)
+- OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CHANGELOG.md updated
+- Stop Codespace commands documented
+- AGENTS.md untouched (owner's uncommitted modification preserved)
+- Rollback: `git revert` of the H commit on branch `factory/business-documentary-pilot`
+

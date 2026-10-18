@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import time
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,25 @@ from tools.base_tool import (
 )
 
 
+# Holds at most one pipeline: the most recently used model. Batch calls with the
+# same model reuse it; switching models releases the previous one first, so
+# multi-GB SDXL pipelines never accumulate in RAM/VRAM for the life of the process.
 _PIPELINE_CACHE: dict[str, Any] = {}
+
+
+def _release_cached_pipelines(torch_module: Any = None) -> None:
+    """Drop every cached pipeline and free its CPU-offload hooks and GPU memory."""
+    for pipe in list(_PIPELINE_CACHE.values()):
+        remove_hooks = getattr(pipe, "remove_all_hooks", None)
+        if callable(remove_hooks):
+            try:
+                remove_hooks()
+            except Exception:
+                pass
+    _PIPELINE_CACHE.clear()
+    gc.collect()
+    if torch_module is not None and torch_module.cuda.is_available():
+        torch_module.cuda.empty_cache()
 
 
 class LocalDiffusion(BaseTool):
@@ -123,9 +142,11 @@ class LocalDiffusion(BaseTool):
             dtype = torch.float16 if device == "cuda" else torch.float32
 
             # AutoPipeline picks the right class (SD 1.x/2.x or SDXL) from the model.
-            # Cache it so batch calls don't reload weights for every image.
+            # Keep only the active model resident: reuse it across batch calls,
+            # release it before loading a different one.
             pipe = _PIPELINE_CACHE.get(model_id)
             if pipe is None:
+                _release_cached_pipelines(torch)
                 kwargs = {"torch_dtype": dtype}
                 if device == "cuda":
                     kwargs["variant"] = "fp16"

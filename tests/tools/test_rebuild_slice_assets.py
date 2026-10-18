@@ -152,3 +152,98 @@ def test_claim_ids_rejects_empty_claim_id(tmp_path):
     entry = next((e for e in report if e.get("check_id") == "claim_ids"), None)
     assert entry is not None, "claim_ids entry missing"
     assert entry["status"] == "FAILED", entry
+
+
+# ---------------------------------------------------------------------------
+# rebuild_slice_assets.sh fail-closed behavior
+# ---------------------------------------------------------------------------
+
+
+def _run_rebuild(tmp_path, manifest_content=None, assets_dir_name="assets"):
+    """Run rebuild_slice_assets.sh with optional MANIFEST env override."""
+    assets_dir = tmp_path / assets_dir_name
+    env = dict(os.environ)
+    if manifest_content is not None:
+        manifest = tmp_path / "manifest.json"
+        manifest.write_text(manifest_content)
+        env["MANIFEST"] = str(manifest)
+    result = subprocess.run(
+        ["bash", str(REBUILD_SCRIPT), str(assets_dir)],
+        env=env, capture_output=True, text=True,
+    )
+    return result, assets_dir
+
+
+def _asset_entry(file_name, sha256, download_url="https://example.com/file", role="archive_insert"):
+    return {
+        "file_name": file_name,
+        "sha256": sha256,
+        "download_url": download_url,
+        "role": role,
+    }
+
+
+def test_rebuild_invalid_json_fails(tmp_path):
+    """Invalid JSON manifest must cause the script to fail non-zero."""
+    result, _ = _run_rebuild(tmp_path, manifest_content="{ not valid json }")
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+def test_rebuild_hash_comment_style_rejected(tmp_path):
+    """'#'-prefixed legacy manifest must be rejected, not silently ignored."""
+    result, _ = _run_rebuild(tmp_path, manifest_content="# legacy comment\n{ \"assets\": [] }")
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+def test_rebuild_empty_manifest_fails(tmp_path):
+    """Manifest with zero assets must fail (nothing to verify)."""
+    result, _ = _run_rebuild(tmp_path, manifest_content=json.dumps({"assets": []}))
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+def test_rebuild_missing_assets_key_fails(tmp_path):
+    """Manifest missing 'assets' key must fail."""
+    result, _ = _run_rebuild(tmp_path, manifest_content=json.dumps({}))
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+def test_rebuild_missing_file_download_fails(tmp_path):
+    """Referenced download URL that cannot be fetched must fail."""
+    result, _ = _run_rebuild(
+        tmp_path,
+        manifest_content=json.dumps({"assets": [_asset_entry("clip.mp4", "0" * 64)]}),
+    )
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+def test_rebuild_sha256_mismatch_fails(tmp_path):
+    """Pre-placed file with wrong sha256 must cause failure (no network to re-download)."""
+    content = b"wrong content"
+    actual = hashlib.sha256(content).hexdigest()
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    dest = assets_dir / "clip.mp4"
+    dest.write_bytes(content)
+    result, _ = _run_rebuild(
+        tmp_path,
+        manifest_content=json.dumps({"assets": [_asset_entry("clip.mp4", "0" * 64)]}),
+        assets_dir_name="assets",
+    )
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
+def test_rebuild_summary_count_matches_manifest(tmp_path):
+    """When all assets verify, output must report N/N and exit zero."""
+    content = b"expected content"
+    actual = hashlib.sha256(content).hexdigest()
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    dest = assets_dir / "clip.mp4"
+    dest.write_bytes(content)
+    result, _ = _run_rebuild(
+        tmp_path,
+        manifest_content=json.dumps({"assets": [_asset_entry("clip.mp4", actual)]}),
+        assets_dir_name="assets",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1/1" in result.stdout, result.stdout

@@ -563,3 +563,18 @@
 - **Rollback:** `git revert` of the F2 commit on branch `factory/business-documentary-pilot`.
 - **Next smallest step:** owner decides on ebur128 narration-only threshold proposal and borderline silencedetect; then proceed to next milestone per plan.
 
+
+---
+
+### 2026-10-18 — Milestone F3 (v1): still-image-led slice (docs/code only; media in gitignored projects/, never committed)
+- **Goal:** build stills-led slice (NASA Armstrong CID photos, zoompan max 1.15x, 1080p), archive clips as 3-6s inserts in 2x framed layout, 2 original graphics cards (flight-path/timeline + key-numbers with claim_ids), voice unchanged (archive audio); run finish_audio + qc.py; write FOOTAGE_QUALITY.md (findings, draft email to ARC-DL-archives@mail.nasa.gov, AI-upscale marked needs owner approval). Max 25 network requests, curl -L, downloads <= 300MB in gitignored projects/. No installs, no AI upscaling, no YouTube downloading, no paid routes. Roles inline, said so.
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `4564085` on `factory/business-documentary-pilot`; `df -h /workspaces`: ~3.1 GB free (90%).
+- **Step 1 (stills):** re-read NASA Armstrong CID gallery + 7 item pages (not guessed). 5 unique CID photos: ECN-31803, ECN-31808, EC84-3167-A, EC84-31809, ECN-28307. All NASA-produced (source_policy_us_gov), no third-party credit. Downloaded highest-res derivative of each (5/5, ~0.4MB total), recorded sha256 + resolution. Caption-only flags: identifiable_persons none (ECN-28307 = crash-test dummies), logo_visible none.
+- **Step 2 (build):** stills primary with slow zoompan (max 1.15x) letterboxed on dark 1080p background; archive inserts clip01/02/03 (3-6s) in 2x framed layout; 2 original graphics cards; finish_audio PASS. Added-value gate: graphics ≈16%, archive ≈25%, stills ≈59%.
+- **Step 3 (QC):** qc.py FAILED — freezedetect FAILED (4.00s on 2 static title cards — intentional, not footage); silencedetect FAILED (0.8433, no narration); ebur128 FAILED (-22.3 LUFS, quiet due to silence); rest PASS/NOT_RUN. Thresholds NOT changed in qc.py.
+- **Step 4 (probe + FOOTAGE_QUALITY.md):** archive.org re-read — all CID video 320x240, no >640x480 source; NASA images API HTML only; EC84/ECN photos only. FOOTAGE_QUALITY.md written with draft email to ARC-DL-archives@mail.nasa.gov + AI-upscale NEEDS OWNER APPROVAL (4th component). ~17 requests (<25), ~7.6MB (<300MB). Max 3 test downloads not exercised.
+- **Tests actually run:** tests/tools/test_qc_tool.py (6/6, exit 0), test_finish_audio.py (5/5, exit 0), test_piper_tts.py (9/9, exit 0), test_tts_kaggle.py (5/5, exit 0) — pre-existing, re-verified.
+- **Budget / provider verification:** strict $0 held. ~17/25 network requests, ~7.6MB downloads. curl -L. No new installs, no AI upscaling, no paid routes, no secrets. Temp files (/tmp/f3, rebuild3) deleted after commit.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs staged; media never committed; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the F3 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner reviews FOOTAGE_QUALITY.md (draft email + AI-upscale approval decision) and QC failures; then proceed to next milestone per plan.

@@ -35,3 +35,10 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Evidence: qc report at projects/slice_cid_v0/rebuild3/qa_report_f2.json (gitignored, not committed).
 - Network/download budget: ~11/25 requests, ~7.6MB/600MB, curl -L, no new installs, no paid routes, no secrets. Temp files deleted after commit.
 - Rollback: `git revert` of the F2 commit on branch `factory/business-documentary-pilot`.
+
+## 2026-10-18 — F3 still-image-led slice
+- Accepted: built stills-led slice (5 NASA Armstrong CID photos, zoompan max 1.15x, 1080p, letterboxed, no upscale beyond source); archive inserts clip01/02/03 (3-6s) in 2x framed layout; 2 original graphics cards (flight-path/timeline + key-numbers with claim_ids); finish_audio PASS; rights_records.json + credits.txt + qa_report.json updated; FOOTAGE_QUALITY.md written (findings, draft email to ARC-DL-archives@mail.nasa.gov, AI-upscale NEEDS OWNER APPROVAL as 4th component).
+- Not accepted: qc.py overall FAILED (freezedetect on static title cards, silencedetect no-narration, ebur128 quiet). Thresholds NOT changed in qc.py. AI upscaling NOT applied (needs owner approval).
+- Evidence: qc report at projects/slice_cid_v0/f3/qa_report_f3.json (gitignored, not committed).
+- Network/download budget: ~17/25 requests, ~7.6MB/300MB, curl -L, no installs, no AI upscaling, no paid routes, no secrets.
+- Rollback: `git revert` of the F3 commit on branch `factory/business-documentary-pilot`.

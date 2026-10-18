@@ -57,3 +57,14 @@
 
 
 
+
+## F3 — still-image-led slice (2026-10-18)
+- **Status:** PARTIAL (docs/code only; media in gitignored projects/, never committed; temp files deleted)
+- **Step 1 (stills):** NASA Armstrong CID image gallery + 7 linked item pages re-read (not guessed). 5 unique CID photos (2 pages are a generic duplicate): ECN-31803, ECN-31808, EC84-3167-A, EC84-31809, ECN-28307. All NASA-produced (source_policy_us_gov), no third-party credit. Downloaded highest-res derivative of each (5/5), recorded sha256 + resolution. Caption-only flags: identifiable_persons none (ECN-28307 = crash-test dummies), logo_visible none.
+- **Step 2 (slice build):** stills primary with slow zoompan (max 1.15x, 1080p, no upscale beyond source, letterboxed); archive clips as 3-6s inserts in 2x framed layout (clip01/02/03); 2 original graphics cards (flight-path/timeline + key-numbers with claim_ids); voice unchanged (archive audio only, no Kokoro narration present); finish_audio PASS. Added-value gate: original graphics ≈16%, archive inserts ≈25%, stills ≈59%.
+- **Step 3 (QC):** finish_audio PASS. qc.py: freezedetect FAILED (max freeze 4.00s > 2.0s, on the 2 static title cards — intentional, not footage); silencedetect FAILED (0.8433 > 0.1, no narration); ebur128 FAILED (I=-22.3 LUFS, quiet due to silence); ffprobe_streams/full_decode/blackdetect/credits_complete/rights_basis/added_value PASS; duration_vs_script/subtitle_sync/claim_ids NOT_RUN. Thresholds NOT changed in qc.py. Overall FAILED.
+- **Step 4 (source probe + FOOTAGE_QUALITY.md):** archive.org re-read for all CID items — all video 320x240, no >640x480 source; NASA images API returned HTML (no JSON candidates); EC84/ECN are photos only. docs/openmontage/FOOTAGE_QUALITY.md written (findings, draft email to ARC-DL-archives@mail.nasa.gov requesting higher-quality digitized CID film/video, AI-upscaling option marked NEEDS OWNER APPROVAL as 4th component). Max 3 test downloads not exercised. ~17 network requests total for F3 (<25), ~7.6MB downloads (<300MB), curl -L.
+- **Records:** rights_records.json updated (5 stills + 3 archive inserts, sha256/resolution/role/caption flags); credits.txt updated; qa_report.json recorded. Media NOT committed (gitignored).
+- **AGENTS.md:** untouched (owner's uncommitted modification preserved).
+- **Rollback:** `git revert` of the F3 commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner reviews FOOTAGE_QUALITY.md (draft email + AI-upscale approval decision) and QC failures; then proceed to next milestone.

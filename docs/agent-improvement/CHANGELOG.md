@@ -28,3 +28,10 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Evidence: qc report at projects/slice_cid_v0/rebuild2/qa_report_f1.json (gitignored, not committed).
 - Network/download budget: 4/25 requests, ~7.6MB/600MB, curl -L, no new installs, no paid routes, no secrets. Temp files deleted after commit.
 - Rollback: `git revert` of the F1 redo commit on branch `factory/business-documentary-pilot`.
+
+## 2026-10-18 — F2 improve slice footage quality
+- Accepted: layout fix (320x240 → 2x integer 640x480 centered on dark background + thin frame + source card, lanczos crf 18 30fps, audio chain kept); re-read archive.org metadata for 4 items (all 320x240, no higher-res → keep all 4); source probe (archive.org + NASA images API; no higher-res CID video >640x480 available); freeze investigation (frame-compare EM-0004-01.mp4: source still 0-6s, motion from ~t=6s → clip01 rebuilt from motion segment 6.0-10.5s, frozen portion cut, clip kept); finish_audio PASS; qc.py: freezedetect PASS (0.00s); silencedetect FAILED (0.1006 > 0.10 borderline); ebur128 FAILED (-17.1 LUFS marginal); rights_records.json + credits.txt + qa_report.json updated; EBUR128_THRESHOLD_PROPOSAL.md created (docs only, no qc.py change).
+- Not accepted: overall qc FAILED (silencedetect borderline + ebur128 marginal). Thresholds NOT changed in qc.py; ebur128 narration-only proposal in docs only.
+- Evidence: qc report at projects/slice_cid_v0/rebuild3/qa_report_f2.json (gitignored, not committed).
+- Network/download budget: ~11/25 requests, ~7.6MB/600MB, curl -L, no new installs, no paid routes, no secrets. Temp files deleted after commit.
+- Rollback: `git revert` of the F2 commit on branch `factory/business-documentary-pilot`.

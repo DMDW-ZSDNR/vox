@@ -544,3 +544,22 @@
 
 
 ---
+---
+
+### 2026-10-18 — Milestone F2 (v1): improve slice footage quality (docs/code only; media in gitignored projects/, never committed)
+- **Goal:** layout fix (320x240 clips at 2x integer scale 640x480 centered on dark background + thin frame + source card, keep audio chain); investigate freezedetect (frame-compare; trim source still); propose ebur128 threshold change in docs only; higher-quality source probe (archive.org + NASA images API); re-run finish_audio + qc.py. Max 25 network requests, curl -L, downloads <= 600MB in gitignored projects/. Delete temp files after. No new installs, no paid routes. Roles inline, said so. Owner confirmed real footage → clip01 NOT treated as placeholder.
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `a854e10` on `factory/business-documentary-pilot`; `df -h /workspaces`: ~3.1 GB free (90%).
+- **Layout fix:** each 320x240 source scaled 2x integer to 640x480 (lanczos), centered on dark solid background (1920x1080), thin white frame, on-screen source card (asset id + center + rights_basis). No stretch. crf 18, 30fps, h264/aac. Audio chain kept (PCM/WAV per source; archive.org AAC malformed → only ~4.6s decodable).
+- **Step 2:** re-read archive.org metadata for 4 items (4 requests, curl -L). Best = h.264 mp4, all only 320x240, no higher-res → keep all 4, none replaced. Recorded name/size/res/sha256 per clip.
+- **Step 3 (source probe):** archive.org advancedsearch found additional CID items (NIX-ECN-*, NIX-EC84-*, NIX-EM-0004-02); EC84/ECN are photos only, NIX-EM-0004-02 is 320x240. NASA images API returned web-app HTML (no JSON candidates). No higher-resolution (>640x480) CID video source available. Max 3 test downloads not exercised (none needed). ~7.6MB total downloads.
+- **QC investigation (freeze):** frame-compare EM-0004-01.mp4: source still (static NASA logo + title card) 0-6s, real motion from ~t=6s. Per task, trimmed source still: clip01 rebuilt from motion segment t=6.0-10.5s (4.5s); frozen 0-6s cut; clip kept, not rejected. freezedetect now PASS (max freeze 0.00s <= 2.0s).
+- **Thresholds:** NOT changed in qc.py. Proposed ebur128 narration-only band (-16 +/- 2 LUFS) in docs only: docs/openmontage/EBUR128_THRESHOLD_PROPOSAL.md (reason: narration-only, no music, -17.1 LUFS marginal ~1 LU below -16 band; QA_SPEC docstring notes -16..-14 may be acceptable for narration-first).
+- **QC result (final_f2.mp4):** finish_audio PASS. ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect PASS (0.00s), silencedetect FAILED (silence ratio 0.1006 > 0.10, borderline; clip01 silent), ebur128 FAILED (I=-17.1 LUFS, target -14+/-2, marginal); credits_complete PASS, rights_basis PASS (4/4), added_value PASS; duration_vs_script/subtitle_sync/claim_ids NOT_RUN. Overall FAILED.
+- **Before/after bitrate:** clip01 480k→724k, clip02 1.94M→4.45M, clip03 1.62M→3.76M, clip04 1.87M→4.17M (all 1920x1080).
+- **Records:** rights_records.json updated (clip01 used_segment 6.0-10.5s + freeze-trim note); credits.txt updated (layout + QC + probe notes); qa_report.json recorded. Media (final_slice.mp4) in gitignored projects/, NOT committed.
+- **Tests actually run:** tests/tools/test_qc_tool.py (6/6, exit 0), test_finish_audio.py (5/5, exit 0), test_piper_tts.py (9/9, exit 0), test_tts_kaggle.py (5/5, exit 0) — pre-existing, re-verified.
+- **Budget / provider verification:** strict $0 held. ~11/25 network requests, ~7.6MB downloads. curl -L. No new installs, no paid routes, no secrets. Temp files (/tmp/f2, rebuild3) deleted after commit.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs staged; media never committed; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the F2 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner decides on ebur128 narration-only threshold proposal and borderline silencedetect; then proceed to next milestone per plan.
+

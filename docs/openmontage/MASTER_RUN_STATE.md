@@ -37,15 +37,23 @@
 - **Next action:** owner reviews MERGE_AUDIT.md Table B conflicts and AGENTS_PROPOSED_DIFF.md; decides on MCP/tool and global-path conflicts.
 
 ## F1 — fix slice footage quality (2026-10-18)
+- **Status:** SUPERSEDED by F2. Media in gitignored projects/, never committed.
+
+## F2 — improve slice footage quality (2026-10-18)
 - **Status:** PARTIAL (docs/code only; media in gitignored projects/, never committed; temp files deleted)
-- **Diagnosis:** ffprobe 4 clips in projects/slice_cid_v0 — all 1920x1080 upscaled from 320x240 archive.org sources. clip01→NIX-EM-0004-01, clip02→NIX-LV-1998-00090, clip03→NIX-LV-1998-00092, clip04→NIX-LV-1998-00098 (per edit_decisions.json). Owner confirmed real footage; clip01 NOT treated as placeholder (used 0-4.5s).
-- **Step 2:** re-read archive.org metadata for all 4 items (4 network requests, curl -L). Best derivative per item = h.264 mp4 (not 512kb); all only 320x240, no higher-res file exists → keep all 4, none replaced. Recorded name/size/res/sha256 per clip.
-- **Step 3:** rebuilt slice lanczos 1920x1080 + pad/letterbox (no stretch), crf 18, 30fps, keep audio chain. clip01 = real footage 0-4.5s. Audio via PCM/WAV per source (archive.org AAC malformed). clip01 silent (no audio in source).
-- **Step 4:** finish_audio PASS. qc.py: freezedetect FAILED (max freeze 2.43s > 2.0s); ebur128 FAILED (I=-17.0 LUFS, target -14+/-2, marginal); ffprobe_streams PASS, full_decode PASS, blackdetect PASS, silencedetect PASS, credits_complete PASS, rights_basis PASS (4/4), added_value PASS; duration_vs_script/subtitle_sync/claim_ids NOT_RUN. Overall FAILED. Before/after bitrate: clip01 480k→724k, clip02 1.94M→4.45M, clip03 1.62M→3.76M, clip04 1.87M→4.17M (all 1920x1080). No clip much worse → no REVIEW_QUEUE replacement.
-- **Step 5:** rights_records.json updated (sha256, source_file, size, resolution, used_segment, before/after bitrate); credits.txt updated (clip01 = real footage); qa_report.json recorded. Media NOT committed (gitignored).
-- **Network/download budget:** 4 metadata requests (4/25), ~7.6MB downloads (<600MB), curl -L. No new installs, no paid routes. Temp files in /tmp/f1 and rebuild2 to be deleted after commit.
+- **Diagnosis:** ffprobe 4 clips — all 1920x1080 upscaled from 320x240 archive.org sources. clip01→NIX-EM-0004-01, clip02→NIX-LV-1998-00090, clip03→NIX-LV-1998-00092, clip04→NIX-LV-1998-00098 (per edit_decisions.json). Owner confirmed real footage; clip01 NOT treated as placeholder.
+- **Layout fix:** each 320x240 source scaled 2x integer to 640x480 (lanczos), centered on dark solid background (1920x1080), thin white frame, on-screen source card (asset id + center + rights_basis). No stretch. crf 18, 30fps, h264/aac. Audio chain kept (PCM/WAV per source; archive.org AAC malformed).
+- **Step 2:** re-read archive.org metadata for all 4 items (4 requests, curl -L). Best = h.264 mp4, all only 320x240, no higher-res → keep all 4, none replaced. Recorded name/size/res/sha256 per clip.
+- **Step 3 (higher-quality probe):** archive.org advancedsearch found additional CID items (NIX-ECN-*, NIX-EC84-*, NIX-EM-0004-02) but EC84/ECN are photos only and NIX-EM-0004-02 is 320x240. NASA images API returned web-app HTML (no JSON candidates). No higher-resolution (>640x480) CID video source available. Max 3 test downloads not needed (none downloaded for probe). ~7.6MB total downloads.
+- **QC investigation (freeze):** frame-compare of EM-0004-01.mp4 showed source still (static NASA logo + title card) 0-6s, real motion from ~t=6s. Per task "if source still, trim/cut around it": clip01 rebuilt from motion segment t=6.0-10.5s (4.5s), frozen 0-6s cut; clip kept, not rejected. freezedetect now PASS (max freeze 0.00s <= 2.0s).
+- **Thresholds:** NOT changed in qc.py. Proposed ebur128 narration-only band (-16 +/- 2 LUFS) in docs only: docs/openmontage/EBUR128_THRESHOLD_PROPOSAL.md (reason: narration-only, no music, -17.1 LUFS marginal ~1 LU below -16 band; QA_SPEC docstring already notes -16..-14 may be acceptable for narration-first).
+- **QC result (final_f2.mp4):** ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect PASS (0.00s), silencedetect FAILED (silence ratio 0.1006 > 0.10, borderline; clip01 silent), ebur128 FAILED (I=-17.1 LUFS, target -14+/-2, marginal); credits_complete PASS, rights_basis PASS (4/4), added_value PASS; duration_vs_script/subtitle_sync/claim_ids NOT_RUN. Overall FAILED.
+- **Before/after bitrate:** clip01 480k→724k, clip02 1.94M→4.45M, clip03 1.62M→3.76M, clip04 1.87M→4.17M (all 1920x1080).
+- **Records:** rights_records.json updated (clip01 used_segment 6.0-10.5s + freeze-trim note); credits.txt updated (layout + QC + probe notes); qa_report.json recorded. Media NOT committed (gitignored).
+- **Network/download budget:** ~11 requests (<25), ~7.6MB downloads (<600MB), curl -L. No new installs, no paid routes, no secrets. Temp files (/tmp/f2, rebuild3) deleted after commit.
 - **AGENTS.md:** untouched (owner's uncommitted modification preserved).
-- **Rollback:** `git revert` of the F1 commit on branch `factory/business-documentary-pilot`.
-- **Next action:** owner decides whether to accept marginal ebur128 FAILED and investigate freezedetect (2.43s); then proceed to next milestone.
+- **Rollback:** `git revert` of the F2 commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner decides on ebur128 narration-only threshold proposal and borderline silencedetect; then proceed to next milestone.
+
 
 

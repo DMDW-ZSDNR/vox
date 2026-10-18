@@ -49,3 +49,10 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Evidence: qc report at projects/slice_cid_v0/f4/qa_report_f4.json (gitignored, not committed); tests pass (test_qc_tool 9/9, test_finish_audio 5/5, test_piper_tts 9/9, test_tts_kaggle 5/5, all exit 0).
 - Network/download budget: no new downloads for F4 (sources reused). curl -L. No new installs, no AI upscaling, no paid routes, no secrets.
 - Rollback: `git revert` of the F4 commit on branch `factory/business-documentary-pilot`.
+
+## 2026-10-18 — F5 moving footage + stills + Kokoro narration
+- Accepted: rebuilt slice with moving footage for approach/impact/fireball (EM-0004-01, LV-00090, LV-00092 as 2x framed inserts); stills for prep/context; 2 graphics cards retained; Kokoro-82M narration S1-S7 (46.0s); finish_audio PASS; qc.py overall PASS with all inputs (freezedetect REVIEW on static_by_design cards, ebur128 PASS at -15.3 LUFS). Owner review recorded in REVIEW_QUEUE.md (4 clips USABLE_FOR_SLICE). rights_records.json + credits.txt updated. FOOTAGE_QUALITY.md updated to F5 state (email draft corrected, NASA stills max ~1040x816 noted, AI-upscale NEEDS OWNER APPROVAL). OWNER_ACTIONS.md updated.
+- Not accepted: qc.py thresholds NOT changed. S8 (CID-13) omitted. AI upscaling NOT applied. Full video full-clip review still pending.
+- Evidence: qc report at projects/slice_cid_v0/f5/qa_report_f5.json (gitignored, not committed); tests pass (test_qc_tool 9/9, test_finish_audio 5/5, test_piper_tts 9/9, test_tts_kaggle 5/5, all exit 0).
+- Network/download budget: 13/15 requests, ~14MB/300MB, curl -L, no installs, no AI upscaling, no paid routes, no secrets. Temp files deleted after commit.
+- Rollback: `git revert` of the F5 commit on branch `factory/business-documentary-pilot`.

@@ -278,4 +278,36 @@ Owner rule (restated): any third-party credit = REJECT regardless of review. All
 
 **Notes:** ffmpeg 6.1.1 (Ubuntu build) license UNKNOWN from repo files. No music used in pilot (music gate-blocked, library empty). Audio finishing prototype verified via ebur128 (-13.8 LUFS / -5.2 dBTP) but used synthetic test-tone bed, not licensed music.
 
+---
+## F5 owner review — CID slice clips + stills (Milestone F5)
+
+**reviewer:** owner
+**date:** 2026-10-18
+**scope:** viewed in final f4 video only, not every source frame
+**identifiable_persons:** no
+**logo_visible:** no
+**third_party_credit:** no
+
+**Result:** 4 slice clips marked USABLE_FOR_SLICE; full video still needs full-clip review before publication.
+
+| # | nasa_id / asset | role in slice | review outcome | flags (owner) | third-party credit? |
+|---|---|---|---|---|---|
+| 1 | NIX-EM-0004-01 | archive insert (S6-S7 region, approach) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 2 | NIX-LV-1998-00090 | archive insert (impact) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 3 | NIX-LV-1998-00092 | archive insert (fireball) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 4 | NIX-LV-1998-00098 | reserve archive insert | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+
+**5 stills (already reviewed C4/C5; re-confirmed F5):**
+| # | nasa.gov id | role | review outcome | flags (owner) | third-party credit? |
+|---|---|---|---|---|---|
+| 1 | ECN-31803 | still (S1) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 2 | EC84-3167-A | still (S2) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 3 | ECN-31808 | still (S3) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 4 | EC84-31809 | still (S4) | USABLE_FOR_SLICE | identifiable_persons=no; logo_visible=no | no |
+| 5 | ECN-28307 | still (S5) | USABLE_FOR_SLICE | identifiable_persons=no (crash-test dummies, not real persons); logo_visible=no | no |
+
+**Open item:** full video (all source frames) still needs full-clip review; the F5 review covers only the segments actually used in the final slice. Full review remains a publication precondition.
+
+**Owner rule (restated):** any third-party credit = REJECT regardless of review. None of the 9 reviewed assets have third-party credit in metadata → pending flag review only (all cleared: no identifiable persons, no logo visible).
+
 

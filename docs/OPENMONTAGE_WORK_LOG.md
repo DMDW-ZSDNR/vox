@@ -595,3 +595,19 @@
 - **Rollback:** `git revert` of the F4 commit on branch `factory/business-documentary-pilot`.
 - **Next smallest step:** owner reviews F4 QC result (PASS with freezedetect REVIEW on static cards); then proceed to next milestone per plan.
 
+
+---
+
+### 2026-10-18 — Milestone F5 (v1): moving footage + stills + Kokoro narration (docs/code/tests only; media in gitignored projects/, never committed)
+- **Goal:** rebuild slice with MOVING footage for approach/impact/fireball beats (NIX-LV-1998-00090..00098 and NIX-EM-0004-01/02 as 6-10s framed 2x inserts), keep stills for prep/context + 2 graphics cards, target mix video 40-45%/stills 35-40%/graphics >=15%. Voice (Kokoro S1-S7), finish_audio, subtitles unchanged. S8 omitted. Record owner review in REVIEW_QUEUE.md. Run qc.py with all inputs. Fix stale docs (OWNER_ACTIONS.md, FOOTAGE_QUALITY.md email draft). Max 15 network requests, curl -L, downloads <= 300MB. No installs, no new downloads beyond already-identified archive.org files. Roles inline, said so.
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `f819d38` on `factory/business-documentary-pilot`; `df -h /workspaces`: ~3.1 GB free (90%).
+- **Step 1 (owner review):** Owner review recorded in REVIEW_QUEUE.md F5 section: reviewer=owner, date=2026-10-18, scope="viewed in final f4 video only, not every source frame", identifiable_persons=no, logo_visible=no, third_party_credit=no. 4 clips USABLE_FOR_SLICE; full video still needs full-clip review. rights_records.json updated with review_status/reviewer/date/scope/flags.
+- **Step 2 (build):** Downloaded 8 archive.mp4 files (5 new metadata fetches + 8 downloads = 13 requests, <15 limit). Frame-compared all 8 for static title cards (EM-0004-01 static 0-6s, LV-00090 static 1-6s → trimmed). Built slice: S1 EM-0004-01 moving approach, S2-S5 stills with zoompan, S6 LV-00090 moving impact, S7 LV-00092 moving fireball, 2 graphics cards. Total 46.0s, 1080p30.
+- **Step 3 (QC):** qc.py with ALL inputs: overall PASS. freezedetect REVIEW (static_by_design cards), silencedetect PASS, ebur128 PASS (I=-15.3 LUFS), duration_vs_script/subtitle_sync/credits_complete/claim_ids/rights_basis/added_value all PASS. ffprobe_streams/full_decode/blackdetect PASS. Thresholds NOT changed.
+- **Step 4 (stale docs):** OWNER_ACTIONS.md updated (Kokoro narration, 4 clips USABLE_FOR_SLICE, full-clip review open item). FOOTAGE_QUALITY.md updated to F5 state (email draft corrected: "for a YouTube documentary channel (monetization possible), with attribution per NASA media guidelines", signed [owner name], NASA stills max ~1040x816 noted).
+- **Tests actually run:** tests/tools/test_qc_tool.py (9/9, exit 0), test_finish_audio.py (5/5, exit 0), test_piper_tts.py (9/9, exit 0), test_tts_kaggle.py (5/5, exit 0).
+- **Budget / provider verification:** strict $0 held. 13/15 network requests, ~14MB downloads. curl -L. No new installs, no AI upscaling, no paid routes, no secrets. Temp files deleted after commit.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs/code staged; media never committed; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the F5 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner reviews F5 QC result, OWNER_ACTIONS.md, FOOTAGE_QUALITY.md (email + AI-upscale decision); then proceed to next milestone per plan.
+

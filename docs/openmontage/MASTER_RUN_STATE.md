@@ -81,3 +81,16 @@
 - **AGENTS.md:** untouched (owner's uncommitted modification preserved).
 - **Rollback:** `git revert` of the F4 commit on branch `factory/business-documentary-pilot`.
 - **Next action:** owner reviews F4 QC result (PASS with freezedetect REVIEW on static cards); then proceed to next milestone per plan.
+
+## F5 — moving footage + stills + Kokoro narration (2026-10-18)
+- **Status:** DONE (docs/code/tests only; media in gitignored projects/, never committed)
+- **Step 1 (owner review):** Owner review recorded in docs/openmontage/audit/REVIEW_QUEUE.md (F5 section): reviewer=owner, date=2026-10-18, scope="viewed in final f4 video only, not every source frame", identifiable_persons=no, logo_visible=no, third_party_credit=no. 4 slice clips marked USABLE_FOR_SLICE; full video still needs full-clip review. rights_records.json updated (review_status/reviewer/date/scope/flags per clip; 9 clips total, all source_policy_us_gov).
+- **Step 2 (slice build):** Moving footage for approach/impact/fireball beats: EM-0004-01 (S1 approach, 6.0-13.2s source), LV-00090 (S6 impact, 8.0-13.5s source), LV-00092 (S7 fireball, 0-4.2s source). All as 2x framed 640x480 inserts with source cards. Stills for prep/context: EC84-3167-A (S2), ECN-31808 (S3), EC84-31809 (S4), ECN-28307 (S5). 2 graphics cards retained. Voice unchanged (Kokoro S1-S7, 46.0s), finish_audio PASS, subtitles unchanged. S8 omitted. Static title cards at source heads trimmed (EM-0004-01 static 0-6s, LV-00090 static 1-6s).
+- **Step 3 (QC exemption):** static_by_design exemption in qc.py freezedetect already implemented in F4; edit_decisions.json updated with new cuts[] + static_segments[] (intro, 2 title cards). All 9 qc tests pass (red→green test-first). Thresholds NOT changed.
+- **Step 4 (QC):** qc.py run with ALL inputs. Result: ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect REVIEW (static title cards at 17.6-20.7s, 41.2-45.2s), silencedetect PASS, ebur128 PASS (I=-15.3 LUFS, target -14+/-2), duration_vs_script PASS (drift 0.00s), subtitle_sync PASS, credits_complete PASS, claim_ids PASS (9/9), rights_basis PASS (9/9), added_value PASS. Overall: PASS. Measured LUFS: -15.3.
+- **Step 5 (contact sheet):** 12-frame contact sheet at projects/slice_cid_v0/contact_sheet_f5.jpg (gitignored, not committed).
+- **Records:** rights_records.json updated (new sha256 for EM-0004-02/LV-00091/LV-00093/LV-00096/LV-00098 downloads; review_status USABLE_FOR_SLICE on 4 clips); credits.txt updated (F5 narration + layout + QC). Media NOT committed (gitignored).
+- **Network/download budget:** 13 requests (5 metadata + 8 downloads, <15 limit), ~14MB downloads (<300MB), curl -L. No new installs, no AI upscaling, no paid routes, no secrets. Temp files deleted after commit.
+- **AGENTS.md:** untouched (owner's uncommitted modification preserved).
+- **Rollback:** `git revert` of the F5 commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner reviews F5 QC result (PASS with freezedetect REVIEW on static cards), OWNER_ACTIONS.md, FOOTAGE_QUALITY.md (email draft + AI-upscale decision); then proceed to next milestone per plan.

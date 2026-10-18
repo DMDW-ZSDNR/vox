@@ -1,11 +1,11 @@
 # Owner Actions — OpenMontage MASTER RUN
 
-**Status:** P7 complete. Numbered, minimal steps for the owner.
+**Status:** F5 complete. Numbered, minimal steps for the owner.
 **None of these are blocking for the demo slice (which is NOT_PUBLISHABLE), but all must be resolved before any publish.**
 
 ## 1. Voice license decision (REQUIRED before publish)
 
-The slice uses Kokoro-82M (CPU fallback, because the Kaggle GPU bake-off is BLOCKED).
+The slice uses Kokoro-82M (CPU local synthesis, Kaggle GPU bake-off BLOCKED).
 
 - [ ] Review `docs/openmontage/VOICE_DECISION.md` and `docs/openmontage/VOICE_BAKEOFF_LICENSES.md`
 - [ ] Decide: accept Kokoro-82M (Apache-2.0 weights, but CC BY training items + synthetic-data origin UNKNOWN) or select a different voice
@@ -14,14 +14,11 @@ The slice uses Kokoro-82M (CPU fallback, because the Kaggle GPU bake-off is BLOC
 
 ## 2. Clip rights review (REQUIRED before publish)
 
-All 4 CID clips in the slice are `source_policy_us_gov` but have unreviewed flags:
+All 4 CID clips in the slice are `source_policy_us_gov` and have been owner-reviewed as `USABLE_FOR_SLICE` (viewed in final F5 video only, not every source frame):
 
-- [ ] Review `docs/openmontage/audit/REVIEW_QUEUE.md` (CID section)
-- [ ] For each clip, answer the one-line checklist:
-  - Identifiable person? (yes/no/unclear)
-  - Logo/insignia visible (NASA, FAA, Boeing, other)? (yes/no/unclear)
-  - Third-party credit? (yes → REJECT, no → proceed)
-- [ ] If any clip has identifiable persons or NASA insignia visible, obtain clearance per NASA Media Usage Guidelines before publish
+- [ ] Review `docs/openmontage/audit/REVIEW_QUEUE.md` (F5 owner review section + CID section)
+- [ ] For each clip, the owner has confirmed: no identifiable persons, no logo/insignia visible, no third-party credit
+- [ ] Full video (all source frames) still needs full-clip review before publish — this is the open item
 - [ ] All 4 clips currently have NO third-party credit in metadata (passes this check)
 
 ## 3. Single-source claims (REQUIRED before publish)
@@ -46,6 +43,7 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 - [ ] No monetization eligibility review has been performed
 - [ ] No AdSense/YouTube partnership review
 - [ ] Content ID / music policy: no music used (MUSIC_POLICY.md: no music unless license evidence exists)
+- [ ] Narration uses Kokoro-82M synthetic voice — confirm commercial-use rights before publish
 
 ## 6. Kaggle GPU quota (UNVERIFIED — blocks P3)
 
@@ -57,11 +55,11 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 
 | File | Purpose |
 |---|---|
-| `final_slice.mp4` | 48.93s, 1920x1080, 30fps, h264/aac (NOT_PUBLISHABLE) |
-| `qa_report.json` | 12/12 QC checks PASS |
-| `edit_decisions.json` | EDL with per-cut rationale |
+| `final_slice.mp4` | 46.0s, 1920x1080, 30fps, h264/aac (NOT_PUBLISHABLE) |
+| `qa_report.json` | 12/12 QC checks PASS (freezedetect REVIEW on static title cards) |
+| `edit_decisions.json` | EDL with per-cut rationale + static_segments[] |
 | `credits.txt` | All clip credits + rights_basis |
-| `subtitles.srt` | 8 caption cues from Kokoro word timestamps |
-| `contact_sheet.jpg` | ~12 frames of final video |
-| `rights_records.json` | Per-clip rights_basis (4 clips, all source_policy_us_gov) |
-| `manifest.json` | Narration duration + tolerance |
+| `subtitles.srt` | 7 caption cues from Kokoro narration (S1-S7, S8 omitted) |
+| `contact_sheet_f5.jpg` | ~12 frames of final video |
+| `rights_records.json` | Per-clip rights_basis (9 clips, all source_policy_us_gov, 4 clips USABLE_FOR_SLICE) |
+| `narration_manifest.json` | Narration duration 46.0s + tolerance 1.0s |

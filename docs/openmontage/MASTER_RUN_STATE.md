@@ -37,16 +37,15 @@
 - **Next action:** owner reviews MERGE_AUDIT.md Table B conflicts and AGENTS_PROPOSED_DIFF.md; decides on MCP/tool and global-path conflicts.
 
 ## F1 — fix slice footage quality (2026-10-18)
-- **Status:** COMPLETE (docs/code only; media in gitignored projects/, never committed)
-- **Diagnosis:** clip01 (NIX-EM-0004-01) = NASA-logo placeholder (first 3 frames identical, hamming=0, 272KB); clips 02-04 = real footage. Source EM-0004-01.mp4 also opens with 4s logo; real footage begins ~t=8s.
-- **Step 2:** fetched archive.org metadata for 4 items (4 network requests); selected best h.264 mp4 derivative per item (not 512kb/thumbnail). All 320x240. Downloaded 4 files (~7.6MB, 4 requests). Total requests: 8/20; total downloads: ~7.6MB/400MB.
-- **Step 3:** rebuilt slice with lanczos scale 1920x1080 + pad (no stretch), crf 18, 30fps. clip01 replaced with real-footage segment 8.0-12.5s. Audio via WAV/PCM (archive.org AAC malformed). finish_audio PASS. Muxed final: 45.8s, 1920x1080, h264/aac, 30fps.
-- **Step 4:** 12-frame contact sheet; all frames high std dev (76-103) = varied real footage; blue=sky (f6-f8), red=fireball (f2-f5); NO NASA logo/title card → logo_visible=false, no REJECT.
-- **Step 5:** rights_records.json updated (sha256, source_file, size, resolution, used_segment); credits.txt updated; qa_report.json recorded.
-- **QC result:** ffprobe_streams PASS, full_decode PASS, blackdetect PASS, freezedetect PASS, silencedetect PASS, ebur128 FAILED (I=-17.0 LUFS, target -14+/-2, marginal 1 LU below range), duration_vs_script NOT_RUN, subtitle_sync NOT_RUN, credits_complete PASS, claim_ids NOT_RUN, rights_basis PASS (4/4), added_value PASS. Overall: FAILED (ebur128 marginal).
-- **Network/download budget:** 8/20 requests, ~7.6MB/400MB. curl -L used. No new installs, no paid routes.
+- **Status:** PARTIAL (docs/code only; media in gitignored projects/, never committed; temp files deleted)
+- **Diagnosis:** ffprobe 4 clips in projects/slice_cid_v0 — all 1920x1080 upscaled from 320x240 archive.org sources. clip01→NIX-EM-0004-01, clip02→NIX-LV-1998-00090, clip03→NIX-LV-1998-00092, clip04→NIX-LV-1998-00098 (per edit_decisions.json). Owner confirmed real footage; clip01 NOT treated as placeholder (used 0-4.5s).
+- **Step 2:** re-read archive.org metadata for all 4 items (4 network requests, curl -L). Best derivative per item = h.264 mp4 (not 512kb); all only 320x240, no higher-res file exists → keep all 4, none replaced. Recorded name/size/res/sha256 per clip.
+- **Step 3:** rebuilt slice lanczos 1920x1080 + pad/letterbox (no stretch), crf 18, 30fps, keep audio chain. clip01 = real footage 0-4.5s. Audio via PCM/WAV per source (archive.org AAC malformed). clip01 silent (no audio in source).
+- **Step 4:** finish_audio PASS. qc.py: freezedetect FAILED (max freeze 2.43s > 2.0s); ebur128 FAILED (I=-17.0 LUFS, target -14+/-2, marginal); ffprobe_streams PASS, full_decode PASS, blackdetect PASS, silencedetect PASS, credits_complete PASS, rights_basis PASS (4/4), added_value PASS; duration_vs_script/subtitle_sync/claim_ids NOT_RUN. Overall FAILED. Before/after bitrate: clip01 480k→724k, clip02 1.94M→4.45M, clip03 1.62M→3.76M, clip04 1.87M→4.17M (all 1920x1080). No clip much worse → no REVIEW_QUEUE replacement.
+- **Step 5:** rights_records.json updated (sha256, source_file, size, resolution, used_segment, before/after bitrate); credits.txt updated (clip01 = real footage); qa_report.json recorded. Media NOT committed (gitignored).
+- **Network/download budget:** 4 metadata requests (4/25), ~7.6MB downloads (<600MB), curl -L. No new installs, no paid routes. Temp files in /tmp/f1 and rebuild2 to be deleted after commit.
 - **AGENTS.md:** untouched (owner's uncommitted modification preserved).
 - **Rollback:** `git revert` of the F1 commit on branch `factory/business-documentary-pilot`.
-- **Next action:** owner decides whether to accept marginal ebur128 FAILED (-17.0 LUFS) or re-run finish_audio; then proceed to next milestone.
+- **Next action:** owner decides whether to accept marginal ebur128 FAILED and investigate freezedetect (2.43s); then proceed to next milestone.
 
 

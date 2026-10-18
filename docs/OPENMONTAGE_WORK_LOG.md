@@ -527,3 +527,20 @@
 - **Next smallest step:** Create business-documentary pipeline manifest (12 stages) and 13 director skills
 
 ---
+
+### 2026-10-18 — Milestone F1 redo (v2): improve slice footage quality (docs/code only; media in gitignored projects/, never committed)
+- **Goal:** diagnose 4 clips (ffprobe resolution/bitrate/fps + source archive.org file), re-read archive.org metadata for best derivative per clip, rebuild slice (lanczos 1080p+pad, crf 18, 30fps, keep audio chain), re-run finish_audio + qc.py, before/after bitrate table, update rights_records/credits/qa_report. Max 25 network requests, curl -L, downloads <= 600MB in gitignored projects/. Delete temp files after. No new installs, no paid routes. Roles inline, said so. Owner confirmed real footage → clip01 NOT treated as placeholder.
+- **Preflight observed:** git status clean-ish (AGENTS.md modified by user — preserved); HEAD `313e9ee` on `factory/business-documentary-pilot`; `df -h /workspaces`: ~3.3 GB free (89%).
+- **Step 1 (diagnose):** all 4 clips 1920x1080 upscaled from 320x240. clip01→NIX-EM-0004-01, clip02→NIX-LV-1998-00090, clip03→NIX-LV-1998-00092, clip04→NIX-LV-1998-00098 (per edit_decisions.json). clip01 = real footage per owner, used 0-4.5s.
+- **Step 2 (best derivatives):** re-read archive.org metadata for 4 items (4 requests, curl -L). Best = h.264 mp4 per item (not 512kb); all only 320x240, no higher-res file → keep all 4, none replaced. Recorded name/size/res/sha256 per clip. Downloaded ~7.6MB (4 files).
+- **Step 3 (rebuild):** lanczos scale 1920x1080 + pad/letterbox (no stretch), crf 18, 30fps. Audio via PCM/WAV per source (archive.org AAC malformed → only 4.6s decodable, so PCM used). clip01 silent (no audio in source).
+- **Step 4 (qc + before/after):** finish_audio PASS. qc.py: freezedetect FAILED (max freeze 2.43s > 2.0s); ebur128 FAILED (I=-17.0 LUFS, target -14+/-2); ffprobe_streams/full_decode/blackdetect/silencedetect/credits_complete/rights_basis/added_value PASS; duration_vs_script/subtitle_sync/claim_ids NOT_RUN. Overall FAILED. Before/after bitrate: clip01 480k→724k, clip02 1.94M→4.45M, clip03 1.62M→3.76M, clip04 1.87M→4.17M (all 1920x1080). No clip much worse → no REVIEW_QUEUE replacement.
+- **Step 5 (records):** rights_records.json updated (sha256, source_file, size, resolution, used_segment, before/after bitrate); credits.txt updated (clip01 = real footage); qa_report.json recorded. Media in gitignored projects/, NOT committed.
+- **Tests actually run:** tests/tools/test_qc_tool.py (6/6, exit 0), test_finish_audio.py (5/5, exit 0), test_piper_tts.py (9/9, exit 0), test_tts_kaggle.py (5/5, exit 0) — pre-existing, re-verified.
+- **Budget / provider verification:** strict $0 held. 4/25 network requests, ~7.6MB downloads. curl -L. No new installs, no paid routes, no secrets. Temp files in /tmp/f1 and rebuild2 deleted after commit.
+- **Git status / user changes preserved:** AGENTS.md left modified-uncommitted (owner's); only agent-authored docs staged; media never committed; no destructive commands, no force-push.
+- **Rollback:** `git revert` of the F1 commit on branch `factory/business-documentary-pilot`.
+- **Next smallest step:** owner decides whether to accept marginal ebur128 FAILED (-17.0 LUFS) and investigate freezedetect (2.43s); then proceed to next milestone per plan.
+
+
+---

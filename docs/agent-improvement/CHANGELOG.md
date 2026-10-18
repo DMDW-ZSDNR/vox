@@ -21,3 +21,10 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - Evidence: qc report at projects/slice_cid_v0/qa_report.json (gitignored, not committed); 12/12 checks accounted (PASS/NOT_RUN/1 FAILED).
 - Network/download budget: 8/20 requests, ~7.6MB/400MB, curl -L, no new installs, no paid routes, no secrets.
 - Rollback: `git revert` of the F1 commit on branch `factory/business-documentary-pilot`.
+
+## 2026-10-18 — F1 redo (v2) improve slice footage quality
+- Accepted: re-read archive.org metadata for 4 items (4/25 requests); all only 320x240, no higher-res derivative → keep all 4, none replaced. Rebuilt slice lanczos 1920x1080+pad crf 18 30fps, clip01 = real footage 0-4.5s per owner. finish_audio PASS. qc.py: freezedetect FAILED (max freeze 2.43s > 2.0s), ebur128 FAILED (I=-17.0 LUFS, marginal); remaining checks PASS/NOT_RUN. Before/after bitrate table recorded. rights_records.json + credits.txt + qa_report.json updated.
+- Not accepted: overall qc FAILED (freezedetect + ebur128). Owner must decide whether to accept or investigate/re-run.
+- Evidence: qc report at projects/slice_cid_v0/rebuild2/qa_report_f1.json (gitignored, not committed).
+- Network/download budget: 4/25 requests, ~7.6MB/600MB, curl -L, no new installs, no paid routes, no secrets. Temp files deleted after commit.
+- Rollback: `git revert` of the F1 redo commit on branch `factory/business-documentary-pilot`.

@@ -2,6 +2,39 @@
 
 Record accepted changes, benchmark evidence, reviewer and rollback method.
 
+## 2026-10-18 — Milestone H (Kilo), factory scope only
+
+### H1 FULL SCRIPT (DONE)
+- Extended docs/openmontage/evidence/CID_CLAIM_LEDGER.md with 20 new claims (CID-31 to CID-50), all paraphrased from NASA Facts FS-2009-02-003-DFRC fetched + fully extracted this session (curl -L + pypdf); TM-4084 not re-fetched (NTRS blocked from sandbox) so all new claims honestly marked SINGLE / name SINGLE; CID-25 CONTRADICTION vs CID-20 restated; no intensity claim used. Ledger now 50 claims.
+- Rewrote docs/openmontage/slice/CID_FULL_SCRIPT_v0.md: 6 beats (preparation, remote piloting, approach, impact, fire, aftermath), 40 sentences, every sentence carries claim_id(s), single-source sentences flagged, ~5.5-6.5 min narration estimate, gap to 6-8 min noted.
+- Regenerated docs/openmontage/slice/CID_FULL_CLAIM_IDS.json (52 entries).
+- QC claim_ids check: PASS (52/52 sentences have claim_id), ffprobe 6.1.1.
+
+### H2 FOOTAGE COVERAGE (DONE)
+- Rewrote docs/openmontage/footage/CID_BEAT_COVERAGE.md: corrected asset inventory — keyless archive.org advancedsearch re-confirmed mediatype this session: 8 NIX video clips (EM-0004-01/02, LV-1998-00090/91/92/93/96/98, all 320x240 h.264, NASA/Dryden or NASA/Langley, source_policy_us_gov) + 5 NIX photos (EC84-31805/31806/31809, ECN-31808, ECN-28307 — mediatype=image, NOT video, correcting prior doc) + 5 NASA Armstrong stills (nasa.gov gallery, up to 1040x832); all source_policy_us_gov, no third-party credit.
+- 4 third-party assets REJECTED per RIGHTS_MODEL.md.
+- Keyless gap search: images.nasa.gov search returns web-app HTML only (not parseable); archive.org aftermath/investigation/wreckage video search = 0 results → B6 aftermath gap confirmed (stills + graphics card only).
+- Beat coverage: B1-B5 GOOD/EXCELLENT, B6 LIMITED; all 6 beats covered → proposed viability gate (>=6 beats with >=1 usable asset) = GATE_READY with B6 LIMITED.
+- Downloads: 0 successful test files (1 derivative download attempted for LV-00093 returned HTTP 404, recorded as ERROR not success); within the 3-file cap; earlier verified downloads (EM-0004-01, LV-00090, LV-00092, LV-00098) remain decodable.
+
+### H3 HARDENING (DONE)
+- Regression tests for unknown/missing source/claim ID rejection already present: tests/factory/test_artifact_id_resolution.py (19 passed, exit 0 — fabricated source_id/evidence_id/scene_id/asset_id caught) and tests/tools/test_rebuild_slice_assets.py (13 passed, exit 0 — missing/empty claim_id rejected, sha256 fail-closed).
+- EVALS.md recorded: E1 PASS, E2 PASS, E3 PASS, E4 PASS, E5 NOT_CHECKED (no footage-classifier test).
+- py_compile exit 0 on changed/test files; ruff not available.
+- Full fast suite exit 0: test_qc_tool 13, test_finish_audio 5, test_piper_tts 6 (3 skipped), test_rebuild_slice_assets 13, test_artifact_id_resolution 19, test_artifact_schemas 41.
+
+### H4 THUMBNAILS (DONE)
+- Generated 3 candidates at 1280x720 PNG in gitignored projects/slice_cid_v0/thumbnails/ (thumb_01_impact ECN-31803, thumb_02_approach EC84-3167-A, thumb_03_fireball ECN-31808): PIL composite of NASA still + darkened overlay + large bold title/subtitle + attribution bar; no NASA emblem, no people, no third-party credit, large readable text; NOT committed.
+- docs/openmontage/package/THUMBNAIL_NOTES.md already describes them (unchanged).
+
+### H5 TOPIC BACKLOG (DONE)
+- docs/openmontage/audit/TOPIC_BACKLOG.md: read-only keyless probe for X-15 and XB-70; video count per beat, rights_basis, reachable primary docs (NTRS blocked); both LOW viability (pilot-flown, no crash/fire demonstration); CID remains only production-ready topic; no demand claims.
+
+### H6 CLOSE (DONE — this session)
+- OWNER_ACTIONS.md, MASTER_RUN_STATE.md, this CHANGELOG updated; stop Codespace commands documented below; AGENTS.md untouched (owner's uncommitted modification preserved); .env.example untouched.
+- Rollback: `git revert` of this session's commit on branch `factory/business-documentary-pilot`.
+- Network/download budget this session: 8 requests total (pip pypdf, fs_cid.pdf, pytest, 2 archive.org advancedsearch, images.nasa.gov, 1 LV-00093 derivative 404) — well under the 40 cap; all keyless/$0; curl -L for downloads; no paid routes, no secrets printed; no AI upscaling; no publishing.
+
 ## 2026-10-18 — M1 selective merge of KILO_CODE_YOUTUBE_FACTORY_MASTER.md
 - Accepted: docs/openmontage/MERGE_AUDIT.md (Table A skills + Table B rules vs RIGHTS_MODEL.md/QA_SPEC.md/AGENTS.md/plan v3.2); docs/agent-improvement/LESSONS.md (6 evidence-backed entries); docs/agent-improvement/EVALS.md (5 fixed tasks); .kilo/skills/kilo-self-improvement/SKILL.md (EVALS.md reference, project-level only); docs/openmontage/youtube-publishing-analytics-STUB.md (stub only, no OAuth); docs/openmontage/AGENTS_PROPOSED_DIFF.md (proposed, not applied).
 - Not accepted: no MCP installs; no global ~/.config/kilo or kilo.json/kilo.jsonc changes; no Remotion activation (render stack = ffmpeg + HyperFrames); AGENTS.md left unmodified (owner's uncommitted change preserved; diff proposed only).

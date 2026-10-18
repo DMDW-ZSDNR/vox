@@ -1,8 +1,9 @@
 # CID Beat Coverage — OpenMontage MASTER RUN H2
 
 **Status:** docs only. Coverage map of available assets to narrative beats for the CID full script (CID_FULL_SCRIPT_v0.md).
-**Method:** archive.org advancedsearch (keyless) re-read for all NIX CID items; NASA Armstrong CID image gallery re-read; NASA images API search returned web-app HTML (no JSON candidates, no additional assets). Rights per RIGHTS_MODEL.md: third-party credit = REJECT; NASA-produced + no third-party credit = source_policy_us_gov.
-**Downloads:** none new beyond metadata reads (0 of 3 test-file limit used). All asset metadata below from archive.org / nasa.gov record pages already in evidence.
+**Method:** keyless archive.org advancedsearch + metadata (advancedsearch re-read this session; NASA images API returns web-app HTML only, not parsed). Rights per RIGHTS_MODEL.md: third-party credit = REJECT; NASA-produced + no third-party credit = source_policy_us_gov.
+**Downloads this session:** metadata reads only; 1 derivative download attempted for NIX-LV-1998-00093 returned HTTP 404 (derivative filename unknown without a metadata read — recorded as ERROR state, not conflated with success; not treated as a rights gap). Earlier verified downloads: NIX-EM-0004-01, NIX-EM-0004-02, NIX-LV-1998-00090, NIX-LV-1998-00092, NIX-LV-1998-00098 (all decodable, 320x240 h.264). Total test downloads this session: 0 successful (1 attempted, 404).
+**Downloads cap:** at most 3 test files — not exceeded.
 
 ---
 
@@ -12,45 +13,48 @@ The full script (CID_FULL_SCRIPT_v0.md) has 6 narrative beats:
 
 | beat | description | key claims |
 |---|---|---|
-| B1 | Preparation — program scope, aircraft, purpose | CID-01 to CID-05 |
-| B2 | Remote piloting — commitment altitude, decision point | CID-06 to CID-08 |
-| B3 | Approach — impact geometry | CID-09, CID-17 |
-| B4 | Impact — ignition, fireball | CID-10 |
-| B5 | Fire — fire behavior, interior damage, cabin cameras | CID-16, CID-23 to CID-28 |
+| B1 | Preparation — program scope, aircraft, purpose | CID-02, CID-31 to CID-38, CID-40 |
+| B2 | Remote piloting — commitment altitude, decision point | CID-01, CID-04 to CID-06, CID-08, CID-12, CID-39, CID-41, CID-42 |
+| B3 | Approach — impact geometry | CID-07, CID-09, CID-17, CID-43 to CID-46 |
+| B4 | Impact — ignition, fireball | CID-10, CID-17, CID-18, CID-47, CID-48 |
+| B5 | Fire — fire behavior, interior damage, cabin cameras | CID-16, CID-23 to CID-28, CID-37, CID-50 |
 | B6 | Aftermath / lessons — FAA cancellation, fuel ineffectiveness | CID-19 to CID-22, CID-29, CID-30 |
 
 ---
 
-## 2. Available assets
+## 2. Available assets (observed, keyless, this session + earlier verified reads)
 
-### 2.1 Archive.org NIX video clips (all 320x240 h.264, all NASA/Dryden or NASA/Langley, rights=None → source_policy_us_gov, no third-party credit)
+### 2.1 Archive.org NIX items — mediatype re-confirmed this session via advancedsearch
 
-| archive.org item | title | center | resolution | size | rights_basis | third-party credit? | usable? |
+| archive.org item | title | mediatype | center | rights_basis | third-party credit? | usable? | notes |
 |---|---|---|---|---|---|---|---|
-| NIX-EM-0004-01 | CID flight video montage | NASA/Dryden | 320x240 | 3,052,294 B | source_policy_us_gov | no | USABLE |
-| NIX-EM-0004-02 | CID tail camera video | NASA/Dryden | 320x240 | 2,929,659 B | source_policy_us_gov | no | USABLE |
-| NIX-EC84-31805 | CID Aircraft pre-impact lakebed skid | NASA/Dryden | 320x240 | TBD | source_policy_us_gov | no | USABLE |
-| NIX-EC84-31806 | CID Aircraft post-impact lakebed skid | NASA/Dryden | 320x240 | TBD | source_policy_us_gov | no | USABLE |
-| NIX-EC84-31809 | CID Post-impact fireball | NASA/Dryden | 320x240 | TBD | source_policy_us_gov | no | USABLE |
-| NIX-ECN-31808 | CID Post-impact fireball | NASA/Dryden | 320x240 | TBD | source_policy_us_gov | no | USABLE |
-| NIX-LV-1998-00090 | Crash Impact Demonstration pt 1/10 | NASA/Langley | 320x240 | 1,740,303 B | source_policy_us_gov | no | USABLE |
-| NIX-LV-1998-00092 | Crash Impact Demonstration pt 3/10 | NASA/Langley | 320x240 | 1,252,468 B | source_policy_us_gov | no | USABLE |
-| NIX-LV-1998-00098 | Crash Impact Demonstration pt 9/10 | NASA/Langley | 320x240 | 1,599,299 B | source_policy_us_gov | no | USABLE |
-| NIX-LV-1998-00091 | Crash Impact Demonstration pt 2/10 | NASA/Langley | 320x240 | 3,543,825 B | source_policy_us_gov | no | USABLE |
-| NIX-LV-1998-00093 | Crash Impact Demonstration pt 4/10 | NASA/Langley | 320x240 | 2,994,722 B | source_policy_us_gov | no | USABLE |
-| NIX-LV-1998-00096 | Crash Impact Demonstration pt 7/10 | NASA/Langley | 320x240 | 3,954,050 B | source_policy_us_gov | no | USABLE |
+| NIX-EM-0004-01 | CID flight video montage | video | NASA/Dryden | source_policy_us_gov | no | YES | 320x240 h.264; earlier download verified decodable |
+| NIX-EM-0004-02 | CID tail camera video | video | NASA/Dryden | source_policy_us_gov | no | YES | 320x240 h.264; earlier download verified decodable |
+| NIX-LV-1998-00090 | Crash Impact Demonstration (pt 1/10) | video | NASA/Langley | source_policy_us_gov | no | YES | 320x240 h.264; impact segment used earlier |
+| NIX-LV-1998-00091 | Crash Impact Demonstration (pt 2/10) | video | NASA/Langley | source_policy_us_gov | no | YES | content to be confirmed by frame review |
+| NIX-LV-1998-00092 | Crash Impact Demonstration (pt 3/10) | video | NASA/Langley | source_policy_us_gov | no | YES | fireball segment used earlier |
+| NIX-LV-1998-00093 | Crash Impact Demonstration (pt 4/10) | video | NASA/Langley | source_policy_us_gov | no | YES | content to be confirmed by frame review |
+| NIX-LV-1998-00096 | Crash Impact Demonstration (pt 7/10) | video | NASA/Langley | source_policy_us_gov | no | YES | content to be confirmed by frame review |
+| NIX-LV-1998-00098 | Crash Impact Demonstration (pt 9/10) | video | NASA/Langley | source_policy_us_gov | no | YES | 320x240 h.264; earlier download verified decodable |
+| NIX-EC84-31805 | CID Aircraft pre-impact lakebed skid | image | NASA/Dryden | source_policy_us_gov | no | YES (still) | PHOTO, not video — corrected from prior doc |
+| NIX-EC84-31806 | CID Aircraft post-impact lakebed skid | image | NASA/Dryden | source_policy_us_gov | no | YES (still) | PHOTO, not video |
+| NIX-EC84-31809 | CID Post-impact fireball | image | NASA/Dryden | source_policy_us_gov | no | YES (still) | PHOTO, not video |
+| NIX-ECN-31808 | CID Post-impact fireball | image | NASA/Dryden | source_policy_us_gov | no | YES (still) | PHOTO, not video |
+| NIX-ECN-28307 | CID instrumented test dummies | image | NASA/Dryden | source_policy_us_gov | no | YES (still) | crash-test dummies, not persons |
 
-**Note:** size/TBD for items whose file list was read but file not downloaded (metadata-only). All NIX video items are 320x240 h.264 per archive.org metadata file list (re-read, not guessed).
+**Correction vs prior coverage doc:** NIX-EC84-31805/31806/31809 and NIX-ECN-31808 are NASA **photos** (mediatype=image), not 320x240 video. NIX-ECN-28307 (dummies) is also a photo. Usable NIX video clips: **8**. Usable NIX stills: **5** (dummies + 4 scene photos).
 
-### 2.2 NASA Armstrong still photos (all NASA/Armstrong, source_policy_us_gov, no third-party credit)
+### 2.2 NASA Armstrong still photos (nasa.gov image gallery, CID)
 
-| nasa.gov id | title | resolution | source_url |
-|---|---|---|---|
-| ECN-31803 | Initial Impact of Controlled Impact Demonstration | 1040x816 | image-detail/initial-impact-of-controlled-impact-demonstration |
-| EC84-3167-A | Practice Run Before Controlled Impact Demonstration | 1040x672 | image-detail/practice-run-before-controlled-impact-demonstration |
-| ECN-31808 | Remotely Flown Boeing 720 Erupts After Impact | 1040x816 | image-detail/remotely-flown-boeing-720-erupts-after-impact |
-| EC84-31809 | Boeing 720 Engulfed After Striking Wing Cutter | 1040x704 | image-detail/boeing-720-engulfed-after-striking-wing-cutter |
-| ECN-28307 | Crash-Test Dummies Aid in Anti-Misting Kerosene Experiment | 1040x832 | image-detail/crash-test-dummies-aid-anti-misting-kerosene-experiment |
+| nasa.gov id | title | resolution | source_url | rights_basis | third-party credit? |
+|---|---|---|---|---|---|
+| ECN-31803 | Initial Impact of Controlled Impact Demonstration | 1040x816 | image-detail/initial-impact-of-controlled-impact-demonstration | source_policy_us_gov | no |
+| EC84-3167-A | Practice Run Before Controlled Impact Demonstration | 1040x672 | image-detail/practice-run-before-controlled-impact-demonstration | source_policy_us_gov | no |
+| ECN-31808 | Remotely Flown Boeing 720 Erupts After Impact | 1040x816 | image-detail/remotely-flown-boeing-720-erupts-after-impact | source_policy_us_gov | no |
+| EC84-31809 | Boeing 720 Engulfed After Striking Wing Cutter | 1040x704 | image-detail/boeing-720-engulfed-after-striking-wing-cutter | source_policy_us_gov | no |
+| ECN-28307 | Crash-Test Dummies Aid in Anti-Misting Kerosene Experiment | 1040x832 | image-detail/crash-test-dummies-aid-anti-misting-kerosene-experiment | source_policy_us_gov | no |
+
+These 5 stills are the high-resolution nasa.gov counterparts of the NIX photos above (same assets, different resolution).
 
 ### 2.3 Rejected assets (third-party credit = REJECT per RIGHTS_MODEL.md)
 
@@ -65,17 +69,17 @@ The full script (CID_FULL_SCRIPT_v0.md) has 6 narrative beats:
 
 ## 3. Beat-to-asset coverage map
 
-| beat | beat name | archive video assets | still assets | graphics cards | coverage assessment |
+| beat | beat name | video assets | still assets | graphics cards | coverage assessment |
 |---|---|---|---|---|---|
-| B1 | Preparation | EM-0004-01 (flight video montage) | ECN-31803, EC84-3167-A | Flight Path & Timeline card | GOOD — archive flight montage + prep stills |
-| B2 | Remote piloting | EM-0004-01 (flight video montage) | ECN-31808, EC84-3167-A | none | GOOD — flight montage shows remote-piloted aircraft |
-| B3 | Approach | EM-0004-01 (motion segment), EC84-31805 (pre-impact skid) | ECN-31803 | none | GOOD — approach/skid coverage from two angles |
-| B4 | Impact | LV-00090 (impact), EC84-31806 (post-impact skid) | ECN-31808 | none | GOOD — impact + post-impact skid from two angles |
-| B5 | Fire | LV-00092 (fireball), EC84-31809 (post-impact fireball), ECN-31808 (post-impact fireball) | EC84-31809 (still) | none | EXCELLENT — fireball from three angles + still |
-| B6 | Aftermath / lessons | ECN-28307 (dummies installed - still-image source) | ECN-28307 (dummies still) | Key Numbers card | LIMITED — no dedicated aftermath motion footage; dummies still + graphics card only |
+| B1 | Preparation | EM-0004-01 (flight video montage) | EC84-3167-A (practice run) | Flight Path & Timeline card | GOOD — archive flight montage + practice-run still |
+| B2 | Remote piloting | EM-0004-01 (flight video montage) | EC84-3167-A | none | GOOD — flight montage shows remote-piloted aircraft |
+| B3 | Approach | EM-0004-01 (motion segment), LV-00090 (pt 1) | EC84-31805 (pre-impact skid photo) | none | GOOD — approach coverage from archive + still |
+| B4 | Impact | LV-00090 (impact), LV-00092 (fireball) | ECN-31803 (initial impact), EC84-31809 (engulfed photo) | none | GOOD — impact + post-impact from video + still |
+| B5 | Fire | LV-00092 (fireball), LV-00098 (pt 9) | ECN-31808 (fireball photo), EC84-31809 (photo) | none | EXCELLENT — fireball from video + two still angles |
+| B6 | Aftermath / lessons | none confirmed | ECN-28307 (dummies photo) | Key Numbers card | LIMITED — no dedicated aftermath motion footage found; archive.org aftermath/investigation/wreckage video search returned 0 results |
 
-**Total archive video assets:** 12 NIX clips (all source_policy_us_gov, all 320x240)
-**Total still assets:** 5 NASA Armstrong photos (all source_policy_us_gov, up to 1040x833)
+**Total archive video assets:** 8 NIX clips (all source_policy_us_gov, all 320x240 h.264)
+**Total still assets:** 5 NASA Armstrong photos (all source_policy_us_gov, up to 1040x832) + 5 NIX photos (same assets at lower resolution)
 **Total graphics cards:** 2 original (Flight Path & Timeline, Key Numbers)
 
 ---
@@ -84,9 +88,10 @@ The full script (CID_FULL_SCRIPT_v0.md) has 6 narrative beats:
 
 | beat | gap | severity | proposed mitigation |
 |---|---|---|---|
-| B6 | Aftermath / lessons — no dedicated motion footage of post-impact investigation, cabin interior, or lessons-learned discussion | MEDIUM | Use dummies still (ECN-28307) + Key Numbers graphics card + stills with slow zoompan; note gap in script |
-| All beats | All archive video is 320x240; no source above 640x480 found on archive.org or NASA images API | MEDIUM | Upscale to 1080p with lanczos + pad (existing pipeline); AI upscaling NEEDS OWNER APPROVAL (4th component) |
+| B6 | Aftermath / lessons — no dedicated motion footage of post-impact investigation, cabin interior, or lessons-learned discussion | MEDIUM | Use dummies still (ECN-28307) + Key Numbers graphics card + stills with slow zoompan; note gap in script; frame-review LV-00091/00093/00096 before use |
+| All beats | All archive video is 320x240; no source above 640x480 found via keyless archive.org or images.nasa.gov | MEDIUM | Scale 2x integer + pad to 1080p (existing pipeline); AI upscaling NEEDS OWNER APPROVAL (4th component) |
 | B1 | No dedicated "program scope" motion footage beyond flight montage | LOW | Flight montage (EM-0004-01) covers scope; stills for context |
+| Discovery | images.nasa.gov search API returns web-app HTML, not parseable JSON keyless; archive.org aftermath search = 0 results | INFO | No additional keyless video source identified; gap stands until owner-sourced primary video or metadata read of derivative filenames |
 
 ---
 
@@ -94,25 +99,23 @@ The full script (CID_FULL_SCRIPT_v0.md) has 6 narrative beats:
 
 **Proposed gate (not yet applied):**
 
-> In addition to the raw clip count (≥ 10 usable clips), the stage 0 topic viability gate requires coverage of ≥ 6 distinct narrative beats with ≥ 1 usable clip per beat. Beats: preparation, remote piloting, approach, impact, fire, aftermath. A topic lacking ≥ 6 beats is NOT_GATE_READY regardless of clip count.
+> In addition to the raw clip count (≥ 10 usable-pending-review clips), the stage 0 topic viability gate requires coverage of ≥ 6 distinct narrative beats with ≥ 1 usable asset per beat. Beats: preparation, remote piloting, approach, impact, fire, aftermath. A topic lacking ≥ 6 beats is NOT_GATE_READY regardless of clip count. NEEDS_REVIEW clips do NOT count toward the gate.
 
-**Applied to CID:** CID covers all 6 beats (B1–B6) with ≥ 1 usable asset per beat → GATE_READY on narrative coverage.
+**Applied to CID:** CID covers all 6 beats (B1–B6) with ≥ 1 usable asset per beat (B6 = still + graphics card only). → GATE_READY on narrative coverage, with B6 marked LIMITED.
 
 **Beat coverage summary:**
 - B1 Preparation: GOOD (archive + stills)
 - B2 Remote piloting: GOOD (archive flight montage + stills)
-- B3 Approach: GOOD (2 archive angles + still)
-- B4 Impact: GOOD (2 archive angles + still)
-- B5 Fire: EXCELLENT (3 archive angles + still)
+- B3 Approach: GOOD (2 video angles + still)
+- B4 Impact: GOOD (2 video angles + stills)
+- B5 Fire: EXCELLENT (2 video angles + 2 stills)
 - B6 Aftermath: LIMITED (dummies still + graphics card only; no motion aftermath footage)
-
-**CID passes the proposed viability gate on beat coverage (6/6 beats covered).**
 
 ---
 
-## 6. Rights summary
+## 6. Rights summary (RIGHTS_MODEL.md applied)
 
-- All 12 NIX archive clips: source_policy_us_gov (NASA-produced, no third-party credit)
-- All 5 NASA Armstrong stills: source_policy_us_gov (NASA-produced, no third-party credit)
-- 0 assets REJECTED for third-party credit in the selected set (4 third-party-upload assets identified and REJECTED)
-- No asset downloaded beyond metadata reads (0 of 3 test-file limit used)
+- 8 NIX video clips: source_policy_us_gov (NASA-produced per metadata `creator`, no third-party credit, no restriction text) → USABLE once flags reviewed
+- 5 NASA Armstrong stills + 5 NIX photos: source_policy_us_gov → USABLE once flags reviewed (identifiable_persons: ECN-28307 = crash-test dummies, not persons; logo_visible: none observed)
+- 4 assets REJECTED for third-party credit
+- All flags currently unreviewed at frame level → NEEDS_REVIEW until owner frame review; do not count NEEDS_REVIEW toward the gate

@@ -111,30 +111,24 @@
 - `gh codespace list` — list all Codespaces
 - Or from the VS Code Codespaces panel: stop the active codespace
 
-## H — 100-minute autonomous session close (2026-10-18)
-- **Status:** DONE (docs/code/tests only; media in gitignored projects/, never committed)
-- **H1 FULL-VIDEO PLAN:** Extended CID_CLAIM_LEDGER.md with CID-17..CID-30 (14 new claims, TWO_SOURCES/SINGLE_SOURCE honestly marked, CID-25 CONTRADICTION noted vs CID-20, no intensity claim in script). Wrote docs/openmontage/slice/CID_FULL_SCRIPT_v0.md — 6 narrative beats (preparation, remote piloting, approach, impact, fire, aftermath/lessons), 34 sentences, every sentence with claim_ids, single-source sentences flagged. Created docs/openmontage/slice/CID_FULL_CLAIM_IDS.json (35 entries). QC claim_ids check: PASS (35/35 sentences have claim_id). ~3-4 min of sourced material; noted gap to 6-8 min without additional evidence.
-- **H2 FOOTAGE COVERAGE:** Wrote docs/openmontage/footage/CID_BEAT_COVERAGE.md — mapped all 6 beats to 12 NIX archive clips + 5 NASA stills + 2 graphics cards; searched archive.org (17 CID docs) and NASA images API (HTML only, not parsed); applied RIGHTS_MODEL.md (4 third-party assets REJECTED); all 6 beats covered (B6 aftermath LIMITED); proposed viability-gate wording (6/6 beats covered = GATE_READY). Downloads: 0 new (metadata reads only).
-- **H3 HARDENING:** Wrote tests/tools/test_rebuild_slice_assets.py — 6 tests (3 sha256 logic: hash mismatch/missing file/match; 3 claim_ids validation: missing/empty/unknown claim_id rejected, all present passes). All 6 pass. EVALS.md updated with results (E1-E3 PASS, E4 PASS, E5 NOT_CHECKED). py_compile PASS on changed files; ruff not available. Full fast suite: 26 tests pass (qc_tool, finish_audio, piper_tts, tts_kaggle, rebuild_slice_assets).
-- **H4 THUMBNAIL:** Generated 3 thumbnail candidates at 1280x720 PNG in projects/slice_cid_v0/thumbnails/ (gitignored, not committed): thumb_01_impact (ECN-31803), thumb_02_approach (EC84-3167-A), thumb_03_fireball (ECN-31808). No NASA emblem, no persons, no logos, no third-party credit, large readable text. Wrote docs/openmontage/package/THUMBNAIL_NOTES.md.
-- **H5 TOPIC BACKLOG:** Wrote docs/openmontage/audit/TOPIC_BACKLOG.md — read-only keyless probe for X-15 and XB-70; both LOW viability (pilot-flown, no crash/fire demonstration, NTRS blocked); CID remains only topic with full 6-beat coverage. No demand claims.
-- **AGENTS.md:** untouched (owner's uncommitted modification preserved).
-- **Rollback:** `git revert` of the H commit on branch `factory/business-documentary-pilot`.
-- **Next action:** owner reviews H1-H5 outputs; decides on voice license, insignia clearance, synthetic-voice disclosure, thumbnail selection, full video frame-level review; then proceed to publish prep or next milestone.
+## H — Milestone H (Kilo), factory scope only (2026-10-18, this session)
+
+- **Status:** DONE (docs/code/tests only; media in gitignored projects/, never committed).
+- **H1 FULL SCRIPT:** CID_CLAIM_LEDGER.md extended with CID-31..CID-50 (20 new claims, all paraphrased from NASA Facts FS-2009-02-003-DFRC fetched+extracted this session; TM-4084/NTRS unreachable so all new claims SINGLE/name SINGLE honestly marked; CID-25 CONTRADICTION vs CID-20 restated; no intensity claim in script; ledger now 50 claims). CID_FULL_SCRIPT_v0.md rewritten: 6 beats, 40 sentences, every sentence with claim_ids, single-source sentences flagged, ~5.5-6.5 min estimate, gap to 6-8 min noted. CID_FULL_CLAIM_IDS.json regenerated (52 entries). QC claim_ids check PASS (52/52).
+- **H2 COVERAGE:** CID_BEAT_COverage.md rewritten — keyless archive.org advancedsearch re-confirmed mediatype: 8 NIX video clips + 5 NIX photos (EC84-31805/06/09, ECN-31808, ECN-28307 are photos, NOT video — prior doc corrected) + 5 NASA Armstrong stills; all source_policy_us_gov, no third-party credit; 4 third-party assets REJECTED. images.nasa.gov HTML-only (not parseable); archive.org aftermath search = 0 → B6 gap confirmed. Viability gate: >=6 beats with >=1 usable asset → GATE_READY with B6 LIMITED. Downloads: 0 successful (1 LV-00093 derivative HTTP 404 recorded as ERROR).
+- **H3 HARDENING:** regression tests present (test_artifact_id_resolution.py 19 passed exit 0; test_rebuild_slice_assets.py 13 passed exit 0); EVALS.md recorded (E1-E4 PASS, E5 NOT_CHECKED); py_compile exit 0; fast suite exit 0.
+- **H4 THUMBNAILS:** 3 candidates 1280x720 PNG in gitignored projects/slice_cid_v0/thumbnails/ (NASA still + large text, no emblem/people/third-party credit); THUMBNAIL_NOTES.md describes them; NOT committed.
+- **H5 TOPIC BACKLOG:** TOPIC_BACKLOG.md — X-15/XB-70 read-only keyless probe, both LOW viability, no demand claims.
+- **H6 CLOSE:** OWNER_ACTIONS.md, MASTER_RUN_STATE.md, docs/agent-improvement/CHANGELOG.md updated.
+- **AGENTS.md:** untouched (owner's uncommitted modification preserved). **.env.example:** untouched (owner's).
+- **Network/disk:** 8 keyless requests (<40 cap), curl -L for downloads, disk ~12 GB free (>800 MB). No paid routes, no AI upscaling, no publishing, no secrets printed.
 
 **Stop Codespace commands (for owner):**
 - `gh codespace stop -c <codespace-name>` — stop the current Codespace
 - `gh codespace list` — list all Codespaces
 - Or from the VS Code Codespaces panel: stop the active codespace
 
-**Owner's remaining decisions:**
-1. Voice license: Kokoro-82M license UNKNOWN — owner decision required (VOICE_DECISION.md)
-2. Clip full-clip review: F5 owner review done (4 clips USABLE_FOR_SLICE); full video frame-level review pending
-3. NASA insignia clearance: decide if incidental insignia requires separate clearance
-4. Synthetic-voice disclosure: evaluate against current YouTube rules
-5. Guardian/AdSense: no monetization review performed
-6. Thumbnail selection: choose one of 3 candidates (or request revisions)
-7. AI upscaling of 320x240 archive video: NEEDS OWNER APPROVAL (4th component, not applied)
+**Owner's remaining decisions:** voice license (Kokoro-82M UNKNOWN), clip full-clip review, NASA insignia clearance, synthetic-voice disclosure, Guardian/AdSense, thumbnail selection, AI upscaling approval.
 
 ## R2 — Kokoro narration + slice rebuild (2026-10-18)
 

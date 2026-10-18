@@ -1,142 +1,54 @@
 [
-  {
-    "text": "On December first, 1984, NASA and the FAA intentionally crashed a remotely piloted Boeing 720 at Edwards Air Force Base.",
-    "claim_id": "CID-01"
-  },
-  {
-    "text": "The aircraft was an obsolete four-engine Boeing 720 obtained from the FAA.",
-    "claim_id": "CID-02"
-  },
-  {
-    "text": "The purpose was to test a fuel additive called FM-9 anti-misting kerosene to reduce post-crash fire, and to gather structural data and seat and restraint test data.",
-    "claim_id": "CID-03"
-  },
-  {
-    "text": "No flight crew was aboard on the final flight; the airplane was flown from a ground cockpit.",
-    "claim_id": "CID-04"
-  },
-  {
-    "text": "Before the final flight, the team flew fourteen test flights with crews aboard.",
-    "claim_id": "CID-05"
-  },
-  {
-    "text": "They practiced sixty-nine approaches to the impact site.",
-    "claim_id": "CID-05"
-  },
-  {
-    "text": "They accumulated sixteen hours and twenty-two minutes of remote control.",
-    "claim_id": "CID-05"
-  },
-  {
-    "text": "There were ten remote takeoffs and thirteen remote landings.",
-    "claim_id": "CID-05"
-  },
-  {
-    "text": "In practice, the airplane was never flown lower than a hundred and fifty feet above ground toward the impact site.",
-    "claim_id": "CID-06"
-  },
-  {
-    "text": "Below a hundred and fifty feet, the airplane was committed to impact.",
-    "claim_id": "CID-07"
-  },
-  {
-    "text": "At the decision point, the airplane arrived slightly right of centerline.",
-    "claim_id": "CID-08"
-  },
-  {
-    "text": "The pilot judged altitude sufficient and continued.",
-    "claim_id": "CID-08"
-  },
-  {
-    "text": "The left wing hit first, short of the wing cutters.",
-    "claim_id": "CID-09"
-  },
-  {
-    "text": "The left wing dropped and contacted the ground first, short of the wing cutters.",
-    "claim_id": "CID-17"
-  },
-  {
-    "text": "The nose swung left and skidded at about a forty-five degree angle.",
-    "claim_id": "CID-17"
-  },
-  {
-    "text": "The damaged right wing broke off and folded over.",
-    "claim_id": "CID-17"
-  },
-  {
-    "text": "A cutter struck the right inboard engine.",
-    "claim_id": "CID-10"
-  },
-  {
-    "text": "A massive fuel leak ignited.",
-    "claim_id": "CID-10"
-  },
-  {
-    "text": "The right wing broke off and folded over.",
-    "claim_id": "CID-10"
-  },
-  {
-    "text": "The right wing broke off and folded over.",
-    "claim_id": "CID-17"
-  },
-  {
-    "text": "The fuselage was engulfed in a massive fuel-fed fireball.",
-    "claim_id": "CID-18"
-  },
-  {
-    "text": "The fire took more than an hour to fully extinguish.",
-    "claim_id": "CID-18"
-  },
-  {
-    "text": "Exterior and internal film documentation indicates the resulting fire diminished within nine seconds.",
-    "claim_id": "CID-23"
-  },
-  {
-    "text": "The fuselage sustained relatively little damage during the duration of the fire.",
-    "claim_id": "CID-24"
-  },
-  {
-    "text": "Fire that later damaged the aircraft interior resulted from burning fuel entering the fuselage during the slideout.",
-    "claim_id": "CID-26"
-  },
-  {
-    "text": "Fuel appeared to have entered through a forward cargo door and/or openings made by passage of wing cutters through the fuselage structure.",
-    "claim_id": "CID-27"
-  },
-  {
-    "text": "Burning fuel inside the fuselage ruptured by wing cutters was responsible for the long-term fire which entered the cabin by burning through the floor.",
-    "claim_id": "CID-28"
-  },
-  {
-    "text": "Cabin cameras showed crash test dummies shaken and small panels falling, but the seats remained attached to the floor.",
-    "claim_id": "CID-16"
-  },
-  {
-    "text": "The Controlled Impact Demonstration marked the end of FAA attempts to order airlines to use the anti-misting additive.",
-    "claim_id": "CID-19"
-  },
-  {
-    "text": "FAA requirements for the additive were cancelled.",
-    "claim_id": "CID-19"
-  },
-  {
-    "text": "Full-scale demonstration in a real-world flight environment showed the modified anti-misting fuel was ineffective in reducing the propagation or intensity of fire.",
-    "claim_id": "CID-20"
-  },
-  {
-    "text": "Small-scale ground tests had indicated the anti-misting additive would be effective in reducing post-crash fires.",
-    "claim_id": "CID-22"
-  },
-  {
-    "text": "Proponents argued the modified fuel prevented a hotter, more catastrophic fire during the test.",
-    "claim_id": "CID-21"
-  },
-  {
-    "text": "The antimisting additive tested was not sufficient to prevent a post-crash fire in all circumstances.",
-    "claim_id": "CID-30"
-  },
-  {
-    "text": "About one-quarter of the passengers would have survived, and several changes to equipment in the passenger compartment were needed.",
-    "claim_id": "CID-29"
-  }
+  {"text": "In 1984, NASA Dryden Flight Research Center and the FAA teamed up in the Controlled Impact Demonstration, a flight experiment to test a fuel additive for retarding or suppressing fire in a real-world aircraft crash-landing scenario.", "claim_id": "CID-31"},
+  {"text": "The test aircraft was an obsolete four-engine Boeing 720 obtained from the FAA.", "claim_id": "CID-02"},
+  {"text": "The additive, FM-9 anti-misting kerosene, is a high-molecular-weight, long-chain polymer blended with standard Jet-A fuel.", "claim_id": "CID-32"},
+  {"text": "FM-9 had shown it could inhibit ignition and flame propagation of released fuel in simulated impact tests.", "claim_id": "CID-33"},
+  {"text": "The modified fuel could not be introduced directly into the gas turbine engines — risks such as filter clogging — so it was restored to nearly Jet-A standard using a degrader on each of the four Pratt & Whitney JT3C-7 engines.", "claim_id": "CID-34"},
+  {"text": "The modified fuel could not be introduced directly into the gas turbine engines — risks such as filter clogging — so it was restored to nearly Jet-A standard using a degrader on each of the four Pratt & Whitney JT3C-7 engines.", "claim_id": "CID-35"},
+  {"text": "NASA Langley Research Center ran a structural loads measurement experiment with instrumented dummies in passenger cabin seats.", "claim_id": "CID-36"},
+  {"text": "The plane also carried impact-survivability instrumentation: new seat designs, flight data recorders, galley and stowage-bin attachments, cabin fireproof materials, and burn-resistant windows.", "claim_id": "CID-37"},
+  {"text": "More than four years of effort went into setting up final impact conditions the FAA considered survivable before the final flight.", "claim_id": "CID-38"},
+  {"text": "Fourteen preliminary flights introduced the modified fuel incrementally into some fuel tanks and engines while engine performance was monitored.", "claim_id": "CID-40"},
+  {"text": "NASA Dryden developed remote-piloting techniques and flew the Boeing 720 from a ground cockpit with no flight crew aboard.", "claim_id": "CID-04"},
+  {"text": "General Electric installed and tested the engine degraders; the FAA refined the fuel with the FM-9 anti-misting additive.", "claim_id": "CID-39"},
+  {"text": "During fourteen flights with safety pilots aboard, the aircraft was controlled remotely from a ground console for sixteen hours and twenty-two minutes, including ten takeoffs, sixty-nine controlled landing approaches, and thirteen landings on the abort runway.", "claim_id": "CID-05"},
+  {"text": "On the morning of December first, 1984, the remotely controlled Boeing 720 took off from Edwards on the fifteenth and final flight of the program.", "claim_id": "CID-01"},
+  {"text": "On the morning of December first, 1984, the remotely controlled Boeing 720 took off from Edwards on the fifteenth and final flight of the program.", "claim_id": "CID-41"},
+  {"text": "The tanks held seventy-six thousand pounds of modified Jet-A fuel and all engines ran normally from start-up to impact during the nine-minute flight.", "claim_id": "CID-41"},
+  {"text": "Flown by NASA research pilot Fitzhugh Fulton from the NASA Dryden Remotely Controlled Vehicle Facility, the airliner made a left-hand departure and climbed to two thousand three hundred feet.", "claim_id": "CID-42"},
+  {"text": "Takeoff weight was two hundred thousand five hundred pounds.", "claim_id": "CID-12"},
+  {"text": "In practice the airplane was never flown lower than a hundred and fifty feet above ground toward the impact site.", "claim_id": "CID-06"},
+  {"text": "The descent used a landing-gear-retracted approach on a roughly three-point-eight degree glide slope.", "claim_id": "CID-44"},
+  {"text": "The flight plan called for a wheels-up touchdown on a prepared runway on the east side of the dry lakebed, wings level and exactly on centerline, with the fuselage intact as eight steel posts cemented into the lakebed sliced the wings open.", "claim_id": "CID-43"},
+  {"text": "Descending through the decision height of a hundred and fifty feet above ground, the aircraft was slightly right of the desired path but appeared to have enough altitude to return to centerline.", "claim_id": "CID-08"},
+  {"text": "Descending through the decision height of a hundred and fifty feet above ground, the aircraft was slightly right of the desired path but appeared to have enough altitude to return to centerline.", "claim_id": "CID-45"},
+  {"text": "Data acquisition systems were activated and the aircraft was committed to impact.", "claim_id": "CID-07"},
+  {"text": "Data acquisition systems were activated and the aircraft was committed to impact.", "claim_id": "CID-45"},
+  {"text": "Near the lakebed the left wing dropped and contacted the ground first, short of the wing cutters.", "claim_id": "CID-09"},
+  {"text": "Near the lakebed the left wing dropped and contacted the ground first, short of the wing cutters.", "claim_id": "CID-46"},
+  {"text": "The nose swung left and the aircraft skidded at about a forty-five degree angle on the lakebed surface.", "claim_id": "CID-17"},
+  {"text": "The nose swung left and the aircraft skidded at about a forty-five degree angle on the lakebed surface.", "claim_id": "CID-46"},
+  {"text": "One wing cutter struck the inboard engine on the right wing, destroying the engine and causing a massive fuel leak that immediately burst into flame.", "claim_id": "CID-10"},
+  {"text": "One wing cutter struck the inboard engine on the right wing, destroying the engine and causing a massive fuel leak that immediately burst into flame.", "claim_id": "CID-47"},
+  {"text": "The airliner yawed left until nearly sideways, causing the damaged right wing to break off and fold over.", "claim_id": "CID-17"},
+  {"text": "The airliner yawed left until nearly sideways, causing the damaged right wing to break off and fold over.", "claim_id": "CID-48"},
+  {"text": "The fuselage was engulfed in a massive fuel-fed fireball.", "claim_id": "CID-18"},
+  {"text": "The fuselage was engulfed in a massive fuel-fed fireball.", "claim_id": "CID-48"},
+  {"text": "The fire took more than an hour to fully extinguish.", "claim_id": "CID-18"},
+  {"text": "Exterior and internal film documentation indicates the resulting fire diminished within nine seconds.", "claim_id": "CID-23"},
+  {"text": "The fuselage sustained relatively little damage during the duration of the fire.", "claim_id": "CID-24"},
+  {"text": "Fire that later damaged the aircraft interior resulted from burning fuel entering the fuselage during the slideout.", "claim_id": "CID-26"},
+  {"text": "Fuel appeared to have entered through a forward cargo door and/or openings made by passage of wing cutters through the fuselage structure.", "claim_id": "CID-27"},
+  {"text": "Burning fuel inside the fuselage ruptured by wing cutters was responsible for the long-term fire which entered the cabin by burning through the floor.", "claim_id": "CID-28"},
+  {"text": "Cabin cameras showed crash test dummies shaken and small panels falling while seats remained attached to the floor.", "claim_id": "CID-16"},
+  {"text": "Cabin cameras showed crash test dummies shaken and small panels falling while seats remained attached to the floor.", "claim_id": "CID-50"},
+  {"text": "Test data on seat designs, recorders, fireproof materials and windows helped the FAA establish new rules on fire prevention and fire-retardant materials.", "claim_id": "CID-37"},
+  {"text": "Test data on seat designs, recorders, fireproof materials and windows helped the FAA establish new rules on fire prevention and fire-retardant materials.", "claim_id": "CID-50"},
+  {"text": "The Controlled Impact Demonstration marked the end of FAA attempts to order airlines to use the anti-misting additive; FAA requirements for the additive were cancelled.", "claim_id": "CID-19"},
+  {"text": "Proponents argued the modified fuel prevented a hotter, more catastrophic fire during the test.", "claim_id": "CID-21"},
+  {"text": "Small-scale ground tests had indicated the anti-misting additive would be effective in reducing post-crash fires.", "claim_id": "CID-22"},
+  {"text": "The full-scale real-world flight demonstration showed the modified anti-misting fuel was ineffective in reducing the propagation or intensity of fire.", "claim_id": "CID-20"},
+  {"text": "The full-scale real-world flight demonstration showed the modified anti-misting fuel was ineffective in reducing the propagation or intensity of fire.", "claim_id": "CID-49"},
+  {"text": "The antimisting additive tested was not sufficient to prevent a post-crash fire in all circumstances.", "claim_id": "CID-30"},
+  {"text": "About one-quarter of the passengers would have survived and several changes to passenger-compartment equipment were needed.", "claim_id": "CID-29"}
 ]

@@ -79,13 +79,14 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 - [ ] Synthetic-voice disclosure: evaluate against current YouTube rules
 - [ ] Guardian/AdSense: no monetization review performed
 
-## 9. Milestone H — autonomous session close (H1-H5)
+## 9. Milestone H — autonomous session close (H1-H6) — COMPLETE this session
 
-- [ ] Review H1 outputs: CID_FULL_SCRIPT_v0.md (34 sentences, claim_ids), CID_CLAIM_LEDGER.md (CID-17..30), QC claim_ids PASS (35/35)
-- [ ] Review H2: CID_BEAT_COVERAGE.md (6/6 beats covered, B6 aftermath LIMITED), viability-gate wording
-- [ ] Review H3: 6 hardening tests pass, EVALS.md results recorded, py_compile PASS
-- [ ] Review H4: 3 thumbnail candidates (gitignored), THUMBNAIL_NOTES.md — select one or request revisions
-- [ ] Review H5: TOPIC_BACKLOG.md (X-15/XB-70 LOW viability, CID remains only production-ready topic)
+- [x] H1: CID_CLAIM_LEDGER.md extended to 50 claims (CID-31..50 from NASA Facts FS extracted this session); CID_FULL_SCRIPT_v0.md 6 beats/40 sentences with claim_ids; QC claim_ids PASS (52/52).
+- [x] H2: CID_BEAT_COVERAGE.md corrected (8 NIX video clips + 5 NASA stills; photos no longer listed as video); B6 aftermath LIMITED; viability gate proposed; all 6 beats covered.
+- [x] H3: hardening tests present and passing; EVALS.md recorded (E1-E4 PASS, E5 NOT_CHECKED); py_compile exit 0; fast suite exit 0.
+- [x] H4: 3 thumbnail candidates 1280x720 PNG in gitignored projects/slice_cid_v0/thumbnails/; THUMBNAIL_NOTES.md describes them.
+- [x] H5: TOPIC_BACKLOG.md — X-15/XB-70 read-only probe, both LOW viability.
+- [x] H6: OWNER_ACTIONS.md, MASTER_RUN_STATE.md, docs/agent-improvement/CHANGELOG.md updated.
 - [ ] Stop Codespace when done: `gh codespace stop -c <codespace-name>`
 
 ## Owner's remaining decisions (consolidated)
@@ -98,4 +99,4 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 6. Thumbnail selection: choose one of 3 candidates (docs/openmontage/package/THUMBNAIL_NOTES.md)
 7. AI upscaling of 320x240 archive video: NEEDS OWNER APPROVAL (4th component, not applied)
 
-**Rollback:** `git revert` of the H commit on branch `factory/business-documentary-pilot`.
+**Rollback:** `git revert` of this session's commit on branch `factory/business-documentary-pilot`.

@@ -37,13 +37,34 @@
 | CID-28 | Burning fuel inside the fuselage ruptured by wing cutters was responsible for the long-term fire which entered the cabin by burning through the floor. | FAA/CT-87/10 | SINGLE | per stated provenance; FAA PDF read p.32 | FAA/CT-87/10 p.32 read directly. |
 | CID-29 | About one-quarter of the passengers would have survived; several changes to equipment in the passenger compartment were needed. | Wikipedia citing FAA/CT-87/10 p.5 | SINGLE | per stated provenance via Wikipedia citing FAA/CT-87/10; p.5 not directly re-fetched | Secondary confirmation only; p.5 of FAA/CT-87/10 not directly read in this session. |
 | CID-30 | The antimisting additive tested was not sufficient to prevent a post-crash fire in all circumstances. | FS; Wikipedia citing FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT (FS); secondary confirmation Wikipedia citing FAA/CT-87/10 | FS PDF reachable and fetched; aligned with FS finding of ineffectiveness. |
+| CID-31 | NASA Dryden Flight Research Center and the FAA teamed up in 1984 in the Controlled Impact Demonstration, a flight experiment to test a fuel additive for retarding or suppressing fire in a real-world aircraft crash-landing scenario. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; TM-4084 not re-fetched (NTRS blocked from sandbox). |
+| CID-32 | The FM-9 additive is a high-molecular-weight, long-chain polymer blended with standard Jet-A fuel. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-33 | FM-9 demonstrated the capability to inhibit ignition and flame propagation of released fuel in simulated impact tests. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-34 | Anti-misting kerosene with FM-9 could not be introduced directly into a gas turbine engine due to potential problems such as filter clogging. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-35 | Modified fuel had to be restored to nearly Jet-A standard before engine burning; restoration used a degrader installed on each of the four Pratt & Whitney JT3C-7 engines. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-36 | NASA Langley Research Center ran a structural loads measurement experiment with instrumented dummies occupying passenger cabin seats. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-37 | Impact-survivability instrumentation included new seat designs, flight data recorders, galley and stowage-bin attachments, cabin fireproof materials, and burn-resistant windows. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-38 | More than four years of effort were required before the final flight to set up final impact conditions the FAA considered survivable. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-39 | General Electric installed and tested the degraders for each engine; the FAA refined the fuel with the FM-9 anti-misting additive. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-40 | Fourteen preliminary flights introduced the modified fuel incrementally into some fuel tanks and engines while engine performance was monitored. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-41 | On the morning of Dec. 1, 1984, the tanks held 76,000 pounds of modified Jet-A fuel and all engines ran normally from start-up to impact during the nine-minute flight. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-11 (fuel quantity) plus engine detail. |
+| CID-42 | NASA research pilot Fitzhugh Fulton flew the final flight from the NASA Dryden Remotely Controlled Vehicle Facility; the airliner made a left-hand departure and climbed to 2,300 feet. | FS | name SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; names Fitzhugh Fulton. |
+| CID-43 | Flight plan: wheels-up touchdown on a prepared runway on the east side of the dry lakebed, wings level, exactly on centerline, fuselage intact as eight steel posts cemented into the lakebed sliced the wings open. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-44 | Descent with landing gear retracted; final approach on a roughly 3.8-degree glide slope. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18. |
+| CID-45 | Descending through the 150 ft decision height, the aircraft was slightly right of the desired path but appeared to have enough altitude to return to centerline; data acquisition was activated and the aircraft was committed to impact. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-06/CID-08. |
+| CID-46 | Near the lakebed the left wing dropped and contacted the ground first, short of the wing cutters; the nose swung left and the aircraft skidded at about a 45-degree angle. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-09/CID-17. |
+| CID-47 | One wing cutter struck the inboard engine on the right wing, destroying the engine and causing a massive fuel leak that immediately burst into flame. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-10. |
+| CID-48 | The airliner yawed left until nearly sideways; the damaged right wing broke off and folded over and the fuselage was engulfed in a massive fuel-fed fireball that took more than an hour to fully extinguish. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-10/CID-17/CID-18. |
+| CID-49 | Despite small-scale ground tests indicating the additive would reduce post-crash fires, the full-scale real-world flight demonstration showed the modified fuel was ineffective in reducing the propagation or intensity of fire. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-20/CID-22; CONTRADICTION with FAA/CT-87/10 p.32 (CID-25) — no intensity claim used in script. |
+| CID-50 | Cabin cameras showed crash dummies shaken and small panels falling during the crash-landing while seats remained attached to the floor; test data helped the FAA establish new rules on fire prevention and fire-retardant materials. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF fetched 2026-10-18; overlaps CID-16. |
 
 ## Verification status summary
 
-- AGENT_VERIFIED_TEXT (FS PDF reachable and fetched): CID-01, 02, 03, 04, 05, 07, 08, 09, 10, 11, 13, 16, 17, 18, 19, 20, 21, 22, 30 (19 claims)
+- AGENT_VERIFIED_TEXT (FS PDF reachable and fetched): CID-01, 02, 03, 04, 05, 07, 08, 09, 10, 11, 13, 16, 17, 18, 19, 20, 21, 22, 30 plus CID-31 to CID-50 (39 claims)
 - FAA/CT-87/10 PDF read (p.32 AMK section): CID-13, 23, 24, 25, 26, 27, 28 (7 claims)
 - Secondary confirmation via Wikipedia citing FAA/CT-87/10: CID-17, 19, 21, 29, 30 (5 claims)
-- Per stated provenance, TM-4084 not re-fetched: CID-06, 12, 14, 15 (4 claims)
+- Per stated provenance, TM-4084 not re-fetched: CID-06, 12, 14, 15 (4 claims); all of CID-31 to CID-50 are FS-only since NTRS/TM-4084 is unreachable from this sandbox
+- Total claims in ledger: 50 (CID-01 to CID-50)
 
 ## Source abbreviations
 

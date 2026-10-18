@@ -135,3 +135,15 @@
 5. Guardian/AdSense: no monetization review performed
 6. Thumbnail selection: choose one of 3 candidates (or request revisions)
 7. AI upscaling of 320x240 archive video: NEEDS OWNER APPROVAL (4th component, not applied)
+
+## R2 — Kokoro narration + slice rebuild (2026-10-18)
+
+- **Status:** DONE (docs/code/tests only; media in gitignored projects/, never committed)
+- **Step 1 (narration):** Kokoro-82M (af_heart) synthesized S1-S8 from CID_SLICE_SCRIPT_v0.md via local CPU pipeline in output/kokoro_venv (gitignored). Weights ~313 MB from Hugging Face hexgrad/Kokoro-82M. 8 clips + concatenated narration 52.80s. RTF 1.2860. finish_audio PASS: loudnorm applied I=-25.85→-15.2 LUFS, TP=-4.3 dBTP, target I=-14+/-2 LUFS. subtitles.srt regenerated with sentence timestamps. narration_manifest.json recorded (expected_duration 52.8s).
+- **Step 2 (slice rebuild):** 56s slice rebuilt from verified 8 assets in projects/slice_cid_v0/ (sha256-verified via rebuild_slice_assets.sh). 5 NASA stills with continuous zoompan (max 1.15x, 1920x1080, no upscale beyond source); 3 archive inserts as 640x480 2x-framed on dark background with thin white frame + source card (EM-0004-01 approach, LV-1998-00090 impact, LV-1998-00092 fireball); 1 original graphics card for S8 (dark gray background, key numbers + FAA source card overlay + claim_ids). Static title card at 48.0-53.0s declared static_by_design. edit_decisions.json recreated with per-cut rationale (was not committed previously).
+- **Step 3 (QC):** qc.py run with ALL inputs (narration_manifest, subtitle_path, credits_path, claim_ids_path, rights_records_path, edit_decisions_path, static_segments). Result: ffprobe_streams PASS, full_decode PASS, blackdetect PASS (0.0000), freezedetect REVIEW (static_by_design card 48.0-52.80s, max 4.80s > 2.0s within static segment), silencedetect PASS (0.0000), ebur128 PASS (I=-15.2 LUFS, TP=-4.3 dBTP), duration_vs_script PASS (drift 0.00s), subtitle_sync PASS (drift 0.00s), credits_complete PASS, claim_ids PASS (8/8), rights_basis PASS (9/9), added_value PASS. Overall verdict: PASS (REVIEW on freezedetect does not fail). Thresholds NOT changed in qc.py.
+- **Step 4 (artifacts):** Small project files committed to docs/openmontage/slice/artifacts/: edit_decisions.json, narration_manifest.json, subtitles.srt, credits.txt, rights_records.json, qa_report.json, claim_ids.json. Media (mp4/wav/png) NOT committed — gitignored projects/.
+- **Network/download budget:** Kokoro weights ~313 MB from Hugging Face (one-time); no new asset downloads (8 assets already verified via rebuild_slice_assets.sh); curl -L for any new downloads. No AI upscaling. No paid routes. No secrets printed.
+- **AGENTS.md:** untouched (owner's uncommitted modification preserved).
+- **Rollback:** `git revert` of the R2 commit on branch `factory/business-documentary-pilot`.
+- **Next action:** owner reviews R2 QC result (PASS with freezedetect REVIEW on static card), artifact commits, then decide on voice license / insignia clearance / synthetic-voice disclosure / thumbnail selection / publish prep.

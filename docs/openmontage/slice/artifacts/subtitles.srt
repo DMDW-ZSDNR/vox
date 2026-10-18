@@ -1,0 +1,32 @@
+1
+00:00:00,000 --> 00:00:06,799
+On December first, 1984, NASA crashed a Boeing 720 airliner on purpose.
+
+2
+00:00:07,299 --> 00:00:12,224
+Nobody was on board. A pilot flew it by remote control from the ground.
+
+3
+00:00:12,724 --> 00:00:17,175
+The goal was to test a fuel additive meant to stop crash fires.
+
+4
+00:00:17,675 --> 00:00:25,524
+Before the real thing, the team flew fourteen test flights with crews aboard and practiced sixty-nine approaches to the crash site.
+
+5
+00:00:26,024 --> 00:00:32,574
+But in practice, the airplane had never flown lower than a hundred and fifty feet toward the crash site.
+
+6
+00:00:33,074 --> 00:00:38,624
+On the real flight, it arrived slightly off the centerline, and its left wing hit first.
+
+7
+00:00:39,124 --> 00:00:43,299
+The fuel ignited into a fireball that burned for more than an hour.
+
+8
+00:00:43,799 --> 00:00:52,799
+At full scale the modified fuel did not prevent a massive fuel-fed fire, and the FAA ended its attempts to require the additive.
+

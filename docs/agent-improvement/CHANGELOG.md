@@ -121,3 +121,14 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 - AGENTS.md untouched (owner's uncommitted modification preserved)
 - Rollback: `git revert` of the H commit on branch `factory/business-documentary-pilot`
 
+## 2026-10-18 — R2 Kokoro narration + slice rebuild
+
+- Accepted: Kokoro-82M (af_heart) synthesized S1-S8 from CID_SLICE_SCRIPT_v0.md (52.80s, RTF 1.2860) in output/kokoro_venv (gitignored venv). finish_audio PASS: I=-15.2 LUFS (target -14+/-2), TP=-4.3 dBTP. subtitles.srt regenerated. narration_manifest.json recorded.
+- Accepted: rebuilt 52.80s slice from verified 8 assets in projects/slice_cid_v0/ (sha256-verified via rebuild_slice_assets.sh). 5 NASA stills zoompan (max 1.15x, continuous motion), 3 archive inserts as 640x480 2x-framed inserts with source cards, 1 original S8 graphics card (FAA source overlay + claim_ids). S8 static card at 48.0-52.80s declared static_by_design. edit_decisions.json recreated with per-cut rationale.
+- Accepted: qc.py with ALL inputs → overall PASS. 11/12 PASS, freezedetect REVIEW (static_by_design card). ebur128 PASS I=-15.2 LUFS. Thresholds NOT changed. duration_vs_script PASS (drift 0.00s), subtitle_sync PASS (drift 0.00s), claim_ids PASS (8/8), rights_basis PASS (9/9).
+- Accepted: Small project files committed to docs/openmontage/slice/artifacts/: edit_decisions.json, narration_manifest.json, subtitles.srt, credits.txt, rights_records.json, qa_report.json, claim_ids.json. Media (mp4/wav/png) NOT committed (gitignored projects/).
+- Not accepted: freezedetect REVIEW (not FAILED) on static S8 card — acceptable per static_by_design exemption, owner may review.
+- Evidence: qc report at projects/slice_cid_v0/qa_report.json (gitignored); tests pass (test_rebuild_slice_assets.py 13/13 exit 0).
+- Network/download budget: Kokoro weights ~313 MB one-time from Hugging Face; no new asset downloads. No AI upscaling. No paid routes. No secrets printed.
+- Rollback: `git revert` of the R2 commit on branch `factory/business-documentary-pilot`.
+

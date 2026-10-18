@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "slice_version": "R2",
+  "total_duration_s": 53.0,
+  "resolution": "1920x1080",
+  "fps": 30,
+  "codec": "h264",
+  "audio_codec": "aac",
+  "narration_wav": "projects/slice_cid_v0/narration/finished.wav",
+  "narration_duration_s": 52.80,
+  "voice": "af_heart",
+  "engine": "kokoro_82m",
+  "cuts": [
+    {
+      "cut_id": 1,
+      "start": 0.0,
+      "end": 7.0,
+      "asset_id": "ECN-31803",
+      "role": "still_primary",
+      "clip": "S1",
+      "layout": "zoompan_letterbox",
+      "scale": "max 1.15x",
+      "rationale": "S1 opening: B-720 at initial impact. Still primary with slow zoompan (max 1.15x) to add motion to static NASA photo. Source card shows asset id, center, rights_basis.",
+      "source_url": "https://www.nasa.gov/wp-content/uploads/2023/03/304167main_ECN-31803_full.jpg",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 2,
+      "start": 7.0,
+      "end": 13.0,
+      "asset_id": "NIX-EM-0004-01",
+      "role": "archive_insert",
+      "clip": "S1/S2",
+      "layout": "2x_framed",
+      "source_segment": "6.0-13.2s",
+      "rationale": "S1/S2 approach: remote-piloted B-720 approaching impact site. Archive insert as 640x480 2x-framed on dark background with thin white frame and source card. Source head static 0-6s trimmed per rights_records.",
+      "source_url": "https://archive.org/download/NIX-EM-0004-01/EM-0004-01.mp4",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 3,
+      "start": 13.0,
+      "end": 19.0,
+      "asset_id": "EC84-3167-A",
+      "role": "still_primary",
+      "clip": "S2",
+      "layout": "zoompan_letterbox",
+      "scale": "max 1.15x",
+      "rationale": "S2 practice run: B-720 making close approach over prepared impact site. Still primary with slow zoompan.",
+      "source_url": "https://www.nasa.gov/wp-content/uploads/2023/03/ec84-3167-a.jpg",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 4,
+      "start": 19.0,
+      "end": 25.0,
+      "asset_id": "ECN-31808",
+      "role": "still_primary",
+      "clip": "S3",
+      "layout": "zoompan_letterbox",
+      "scale": "max 1.15x",
+      "rationale": "S3 after impact: B-720 enveloped in fireball after striking wing cutter. Still primary with slow zoompan.",
+      "source_url": "https://www.nasa.gov/wp-content/uploads/2023/03/304180main_ECN-31808_full.jpg",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 5,
+      "start": 25.0,
+      "end": 31.0,
+      "asset_id": "EC84-31809",
+      "role": "still_primary",
+      "clip": "S4",
+      "layout": "zoompan_letterbox",
+      "scale": "max 1.15x",
+      "rationale": "S4 wing cutter strike: B-720 slid sideways after controlled impact, almost enveloped in fireball. Still primary with slow zoompan.",
+      "source_url": "https://www.nasa.gov/wp-content/uploads/2023/03/304143main_EC84-31809_full.jpg",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 6,
+      "start": 31.0,
+      "end": 37.0,
+      "asset_id": "ECN-28307",
+      "role": "still_primary",
+      "clip": "S5",
+      "layout": "zoompan_letterbox",
+      "scale": "max 1.15x",
+      "rationale": "S5 cabin: crash test dummies in passenger cabin. Still primary with slow zoompan. Identifiable_persons: none (dummies).",
+      "source_url": "https://www.nasa.gov/wp-content/uploads/2023/03/304155main_ECN-28307_full.jpg",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 7,
+      "start": 37.0,
+      "end": 43.0,
+      "asset_id": "NIX-LV-1998-00090",
+      "role": "archive_insert",
+      "clip": "S6",
+      "layout": "2x_framed",
+      "source_segment": "8.0-13.5s",
+      "rationale": "S6 impact: left wing strikes ground first. Archive insert as 640x480 2x-framed insert with source card. Source head static 1-6s trimmed.",
+      "source_url": "https://archive.org/download/NIX-LV-1998-00090/LV-1998-00090.mp4",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 8,
+      "start": 43.0,
+      "end": 48.0,
+      "asset_id": "NIX-LV-1998-00092",
+      "role": "archive_insert",
+      "clip": "S7",
+      "layout": "2x_framed",
+      "source_segment": "0.0-4.2s",
+      "rationale": "S7 fireball: fuel ignition and massive fireball. Archive insert as 640x480 2x-framed insert with source card.",
+      "source_url": "https://archive.org/download/NIX-LV-1998-00092/LV-1998-00092.mp4",
+      "rights_basis": "source_policy_us_gov"
+    },
+    {
+      "cut_id": 9,
+      "start": 48.0,
+      "end": 53.0,
+      "asset_id": "GRAPHICS_S8_FAA",
+      "role": "graphics_card",
+      "clip": "S8",
+      "layout": "static_card",
+      "rationale": "S8 aftermath: modified fuel did not prevent fire, FAA ended additive requirements. Original graphics card with key numbers and claim_ids, plus FAA source card overlay. Static by design.",
+      "rights_basis": "source_policy_us_gov"
+    }
+  ],
+  "static_segments": [
+    {
+      "start": 48.0,
+      "end": 53.0,
+      "reason": "S8 graphics card is intentionally static - text/informational card, not footage",
+      "static_by_design": true
+    }
+  ],
+  "notes": "All 8 assets source_policy_us_gov (NASA.gov + archive.org NIX). No third-party credit. No identifiable persons (crash test dummies only). No logos visible. Media is gitignored; regenerated from committed manifest via scripts/rebuild_slice_assets.sh."
+}

@@ -89,3 +89,16 @@ def test_multi_output_paths_are_suffixed_and_unique():
     paths = OpenAIImage._output_paths("/tmp/art/pic.png", 3, "png")
     assert [p.name for p in paths] == ["pic_1.png", "pic_2.png", "pic_3.png"]
     assert len(set(paths)) == 3
+
+
+def test_default_flare_draft_is_priced_and_unverified_models_need_quote(openai_tool):
+    from tools.provider_pricing import PriceQuoteRequired
+
+    # Default = gpt-image-2.5-flare at 'low': the cheap draft keeps a known price.
+    assert openai_tool.estimate_cost({"prompt": "p"}) == pytest.approx(0.006)
+    for inputs in (
+        {"prompt": "p", "model": "gpt-image-2.5-sunburst"},
+        {"prompt": "p", "quality": "max"},
+    ):
+        with pytest.raises(PriceQuoteRequired):
+            openai_tool.estimate_cost(inputs)

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import base64
+from contextlib import ExitStack
 import os
 import time
 from pathlib import Path
 from typing import Any
+
+from tools.provider_pricing import PriceQuoteRequired
 
 from tools.base_tool import (
     BaseTool,
@@ -22,6 +25,12 @@ from tools.base_tool import (
 )
 
 
+DEFAULT_MODEL = "gpt-image-2.5-flare"
+# gpt-image-2.5-flare bills the same per-token price as gpt-image-2; other
+# models (sunburst) and the xhigh/max qualities need a quote before running.
+PRICED_MODELS = {"gpt-image-2", "gpt-image-2.5-flare"}
+
+
 class OpenAIImage(BaseTool):
     name = "openai_image"
     version = "0.1.0"
@@ -35,16 +44,18 @@ class OpenAIImage(BaseTool):
 
     dependencies = []  # checked dynamically
     install_instructions = (
-        "Set OPENAI_API_KEY to your OpenAI API key.\n"
-        "  pip install openai"
+        "Set OPENAI_API_KEY to your OpenAI API key.\n  pip install openai"
     )
-    agent_skills = ["flux-best-practices"]  # general image gen knowledge
+    agent_skills = ["provider-model-refresh"]  # general image gen knowledge
 
     capabilities = ["generate_image", "generate_illustration", "text_to_image"]
     supports = {
         "complex_instructions": True,
         "text_in_image": True,
         "multiple_outputs": True,
+        "image_edit": True,
+        "mask": True,
+        "transparent_background": True,
     }
     best_for = [
         "complex multi-element compositions",
@@ -60,8 +71,12 @@ class OpenAIImage(BaseTool):
             "prompt": {"type": "string"},
             "model": {
                 "type": "string",
-                "enum": ["gpt-image-2.5-flare", "gpt-image-2"],
-                "default": "gpt-image-2.5-flare",
+                "enum": [
+                    "gpt-image-2.5-flare",
+                    "gpt-image-2",
+                    "gpt-image-2.5-sunburst",
+                ],
+                "default": DEFAULT_MODEL,
             },
             "size": {
                 "type": "string",
@@ -70,7 +85,7 @@ class OpenAIImage(BaseTool):
             },
             "quality": {
                 "type": "string",
-                "enum": ["low", "medium", "high", "auto"],
+                "enum": ["low", "medium", "high", "xhigh", "max", "auto"],
                 "default": "low",
                 "description": (
                     "Draft at 'low' (~$0.006/img) while iterating on the prompt; once the "
@@ -85,19 +100,40 @@ class OpenAIImage(BaseTool):
             },
             "n": {"type": "integer", "default": 1, "minimum": 1, "maximum": 4},
             "output_path": {"type": "string"},
+            "generation_mode": {"type": "string", "enum": ["generate", "edit"]},
+            "image_path": {"type": "string"},
+            "image_paths": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 16,
+            },
+            "mask_path": {"type": "string"},
+            "background": {"type": "string", "enum": ["auto", "opaque", "transparent"]},
+            "output_compression": {"type": "integer", "minimum": 0, "maximum": 100},
         },
     }
 
     resource_profile = ResourceProfile(
         cpu_cores=1, ram_mb=512, vram_mb=0, disk_mb=100, network_required=True
     )
-    retry_policy = RetryPolicy(max_retries=2, retryable_errors=["rate_limit", "timeout"])
-    idempotency_key_fields = ["prompt", "size", "quality", "model"]
+    retry_policy = RetryPolicy(max_retries=0)
+    idempotency_key_fields = ["prompt", "size", "quality", "model"] + [
+        "generation_mode",
+        "image_path",
+        "image_paths",
+        "mask_path",
+        "background",
+        "output_format",
+        "output_compression",
+        "n",
+    ]
     side_effects = ["writes image file to output_path", "calls OpenAI API"]
     user_visible_verification = ["Inspect generated image for relevance and quality"]
 
     @staticmethod
-    def _output_paths(output_path: str | None, count: int, extension: str) -> list[Path]:
+    def _output_paths(
+        output_path: str | None, count: int, extension: str
+    ) -> list[Path]:
         """Derive one output path per generated image.
 
         With a single image, honor the requested path as-is. With several,
@@ -124,10 +160,15 @@ class OpenAIImage(BaseTool):
         # gpt-image-2.5-flare and gpt-image-2 share the same token pricing, so the
         # per-image estimates below hold for both at 1024x1024 (non-square sizes run
         # slightly cheaper): https://developers.openai.com/api/docs/guides/image-generation
+        model = inputs.get("model", DEFAULT_MODEL)
         quality = inputs.get("quality", "low")
         n = inputs.get("n", 1)
         cost_map = {"low": 0.006, "medium": 0.053, "high": 0.211, "auto": 0.053}
-        return cost_map.get(quality, 0.006) * n
+        if model not in PRICED_MODELS or quality not in cost_map:
+            raise PriceQuoteRequired(
+                f"{model} at quality {quality!r} has no verified price; obtain a quote"
+            )
+        return cost_map[quality] * n
 
     def execute(self, inputs: dict[str, Any]) -> ToolResult:
         if not os.environ.get("OPENAI_API_KEY"):
@@ -139,8 +180,8 @@ class OpenAIImage(BaseTool):
         from openai import OpenAI
 
         start = time.time()
-        client = OpenAI()
-        model = inputs.get("model", "gpt-image-2.5-flare")
+        client = OpenAI(max_retries=0)
+        model = inputs.get("model", DEFAULT_MODEL)
         prompt = inputs["prompt"]
         size = inputs.get("size", "1024x1024")
         n = inputs.get("n", 1)
@@ -148,7 +189,34 @@ class OpenAIImage(BaseTool):
         try:
             quality = inputs.get("quality", "low")
             output_format = inputs.get("output_format", "png")
-            response = client.images.generate(
+            from jsonschema import validate
+
+            validate(inputs, self.input_schema)
+            if (
+                inputs.get("image_url")
+                or inputs.get("image_urls")
+                or inputs.get("mask_url")
+            ):
+                raise ValueError(
+                    "Direct OpenAI edits require local image_path/image_paths and mask_path"
+                )
+            if model == "gpt-image-2" and quality in {"xhigh", "max"}:
+                raise ValueError("xhigh/max quality requires GPT Image 2.5")
+            paths = list(inputs.get("image_paths") or [])
+            if inputs.get("image_path"):
+                paths.insert(0, inputs["image_path"])
+            mode = inputs.get("generation_mode", "edit" if paths else "generate")
+            if (mode == "edit") != bool(paths):
+                raise ValueError(
+                    "Edit requires source images; generate cannot accept source images"
+                )
+            if len(paths) > 16 or (inputs.get("mask_path") and not paths):
+                raise ValueError(
+                    "At most 16 source images; a mask requires a source image"
+                )
+            if inputs.get("background") == "transparent" and output_format == "jpeg":
+                raise ValueError("Transparent output requires PNG or WebP")
+            params = dict(
                 model=model,
                 prompt=prompt,
                 size=size,
@@ -156,13 +224,32 @@ class OpenAIImage(BaseTool):
                 output_format=output_format,
                 n=n,
             )
+            for key in ("background", "output_compression"):
+                if key in inputs:
+                    params[key] = inputs[key]
+            with ExitStack() as stack:
+                if paths:
+                    params["image"] = [
+                        stack.enter_context(open(path, "rb")) for path in paths
+                    ]
+                    if inputs.get("mask_path"):
+                        params["mask"] = stack.enter_context(
+                            open(inputs["mask_path"], "rb")
+                        )
+                    response = client.images.edit(**params)
+                else:
+                    response = client.images.generate(**params)
 
             items = response.data or []
             if not items:
-                return ToolResult(success=False, error="OpenAI returned no image outputs")
+                return ToolResult(
+                    success=False, error="OpenAI returned no image outputs"
+                )
 
             ext = output_format
-            output_paths = self._output_paths(inputs.get("output_path"), len(items), ext)
+            output_paths = self._output_paths(
+                inputs.get("output_path"), len(items), ext
+            )
             outputs: list[str] = []
             for item, out_path in zip(items, output_paths):
                 out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -170,7 +257,14 @@ class OpenAIImage(BaseTool):
                 outputs.append(str(out_path))
 
         except Exception as e:
-            return ToolResult(success=False, error=f"OpenAI image generation failed: {e}")
+            return ToolResult(
+                success=False, error=f"OpenAI image generation failed: {e}"
+            )
+
+        try:
+            cost_usd = self.estimate_cost(inputs)
+        except PriceQuoteRequired:
+            cost_usd = None
 
         return ToolResult(
             success=True,
@@ -181,9 +275,17 @@ class OpenAIImage(BaseTool):
                 "output": outputs[0],
                 "outputs": outputs,
                 "images_generated": len(outputs),
+                "operation": mode,
+                "usage": response.usage.model_dump()
+                if getattr(response, "usage", None)
+                and hasattr(response.usage, "model_dump")
+                else None,
+                "cost_status": "estimated"
+                if cost_usd is not None
+                else "usage_reported_unpriced",
             },
             artifacts=outputs,
-            cost_usd=self.estimate_cost(inputs),
+            cost_usd=cost_usd,
             duration_seconds=round(time.time() - start, 2),
             model=model,
         )

@@ -128,7 +128,7 @@
 - `gh codespace list` — list all Codespaces
 - Or from the VS Code Codespaces panel: stop the active codespace
 
-**Owner's remaining decisions:** voice license (Kokoro-82M UNKNOWN), clip full-clip review, NASA insignia clearance, synthetic-voice disclosure, Guardian/AdSense, thumbnail selection, AI upscaling approval.
+**Owner's remaining decisions:** voice license (Kokoro-82M weights/code Apache-2.0 clear; UNKNOWN only the provenance of part of the training data — synthetic data — residual risk, owner decision), clip full-clip review, NASA insignia clearance, synthetic-voice disclosure, Guardian/AdSense, thumbnail selection, AI upscaling approval.
 
 ## R2 — Kokoro narration + slice rebuild (2026-10-18)
 
@@ -141,3 +141,18 @@
 - **AGENTS.md:** untouched (owner's uncommitted modification preserved).
 - **Rollback:** `git revert` of the R2 commit on branch `factory/business-documentary-pilot`.
 - **Next action:** owner reviews R2 QC result (PASS with freezedetect REVIEW on static card), artifact commits, then decide on voice license / insignia clearance / synthetic-voice disclosure / thumbnail selection / publish prep.
+
+## I — Milestone I (Kilo), factory scope only (2026-10-19)
+
+- **Status:** DONE (docs/code/tests only; media never committed). I5 narration synthesis BLOCKED (see below).
+- **Network/disk:** 3 keyless requests (<40 cap): pypdf (1), FAA/CT-87/10 PDF via curl -L (1), soundfile pip install (1). Disk ~12 GB free (>800 MB). curl -L for downloads. No paid routes, no AI upscaling, no publishing, no secrets printed.
+- **I1 SECOND SOURCES:** Fetched + fully extracted FAA/CT-87/10 (DOT/FAA/CT-87/10, rosap.ntl.bts.gov/view/dot/92854, 92 pages). Confirmed: CID-06 (150 ft commitment, p.45/75), CID-10 (cutter/right inboard engine/ignition, p.16-19), CID-15 (overall success, p.7/38), and FAA p.32 fire findings (CID-23..28: fire diminished within 9 s, little fuselage damage, reduced intensity attributed to AMK, fuel entered via cargo door/wing cutters, long-term fire through floor). Upgraded CID-06, CID-10, CID-15 to TWO_SOURCES (FS+FAA or TM+FAA). Recorded known contradiction CID-20 (FS: ineffective) vs CID-25 (FAA p.32: reduced intensity attributed to AMK). Ledger now 50 claims. Paraphrase only, no memory facts, page recorded per claim.
+- **I2 CLAIM_ID RESOLUTION (test-first):** Added qc.py `claim_ids_resolve` check (every claim_id resolves to CID_CLAIM_LEDGER.md; fails on unknown ids and SINGLE_SOURCE claims without a flag) + `claim_ledger_path` input. Demonstrated red (FAILED with missing flags) then green (PASS 52/52). Regenerated CID_FULL_CLAIM_IDS.json with source_flags per sentence. Added lib/footage_classifier.py + tests/lib/test_footage_classifier.py (E5 now PASS, 5 passed). Full fast suite exit 0: test_qc_tool 13, test_finish_audio 5, test_piper_tts 6 (3 skipped), test_rebuild_slice_assets 14 (incl. 3 new resolve tests), test_artifact_id_resolution 19, test_artifact_schemas 41, test_footage_classifier 5. py_compile exit 0 (ruff not available). EVALS.md updated (E5 PASS; E4 notes claim_ids_resolve).
+- **I3 BEAT B6:** 0 aftermath footage. Evaluated (a) keyless images.nasa.gov search — NOT viable (HTML only, not parseable); (b) original graphics only (Key Numbers + Lessons Learned cards with claim_ids) — IMPLEMENTED; (c) merge into B5 — declined. Documented in CID_BEAT_COVERAGE.md §5; B6 = graphics-only, remains LIMITED (no aftermath motion footage). Viability gate (>=6 beats with >=1 usable asset) still satisfied.
+- **I4 DOC FIXES:** Corrected Kokoro-82M license status — weights/code Apache-2.0 clear (evidence in VOICE_DECISION.md, config/voice.json); UNKNOWN only the provenance of part of the training data (synthetic data) as residual risk for owner/guardian. Fixed in OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CID_PACKAGE_DRAFT.md, REVIEW_QUEUE.md. FOOTAGE_QUALITY.md NASA email now says "for a YouTube documentary channel (monetization possible)".
+- **I5 FULL-VIDEO DRAFT:** NOT performed — Kokoro-82M not installed in this environment (no cleared alternative TTS available without secrets; Piper lessac BLOCKED). No narration synthesized; finish_audio/qc.py all-media-inputs not run. Wrote docs/openmontage/slice/artifacts/FULL_DRAFT_STATUS.md with EDL plan (per-cut rationale, static cards static_by_design), subtitles/credits plan, and NOT_PUBLISHABLE reasons (8 reasons incl. voice gate residual risk, B6 gap, single-source claims, no frame review, insignia, synthetic-voice disclosure). Never media.
+- **I6 CLOSE:** this block. OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CHANGELOG.md, EVALS.md updated.
+- **Owner's remaining decisions:** voice license (Kokoro-82M weights/code Apache-2.0 clear; UNKNOWN only synthetic-data training provenance — residual risk, owner decision), clip full-clip review, NASA insignia clearance, synthetic-voice disclosure, Guardian/AdSense, thumbnail selection, AI upscaling approval, install Kokoro + synthesize narration to unblock I5.
+- **Rollback:** `git revert` of the I commit on branch `factory/business-documentary-pilot`.
+- **Stop Codespace commands (owner):** `gh codespace stop -c <codespace-name>`; `gh codespace list`; or VS Code Codespaces panel → stop active codespace.
+

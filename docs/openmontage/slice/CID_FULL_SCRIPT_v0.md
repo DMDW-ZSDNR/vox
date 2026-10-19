@@ -32,7 +32,7 @@
 | B2-5 | The tanks held seventy-six thousand pounds of modified Jet-A fuel and all engines ran normally from start-up to impact during the nine-minute flight. | CID-41 | SINGLE | FS only; overlaps CID-11 |
 | B2-6 | Flown by NASA research pilot Fitzhugh Fulton from the NASA Dryden Remotely Controlled Vehicle Facility, the airliner made a left-hand departure and climbed to two thousand three hundred feet. | CID-04, CID-42 | name SINGLE | names Fitzhugh Fulton; FS only |
 | B2-7 | Takeoff weight was two hundred thousand five hundred pounds. | CID-12 | SINGLE_SOURCE | TM-4084 only; TM-4084 not re-fetched in this session |
-| B2-8 | In practice the airplane was never flown lower than a hundred and fifty feet above ground toward the impact site. | CID-06 | SINGLE_SOURCE | TM-4084 only; TM-4084 not re-fetched in this session |
+| B2-8 | In practice the airplane was never flown lower than a hundred and fifty feet above ground toward the impact site. | CID-06 | TWO | TM-4084 per stated provenance not re-fetched; FAA/CT-87/10 p.45/75 confirms 150 ft commitment |
 
 ## Beat 3 — Approach (impact geometry)
 
@@ -49,7 +49,7 @@
 
 | # | Sentence | claim_ids | source_flags | Notes |
 |---|---|---|---|---|
-| B4-1 | One wing cutter struck the inboard engine on the right wing, destroying the engine and causing a massive fuel leak that immediately burst into flame. | CID-10, CID-47 | SINGLE_SOURCE | FS only |
+| B4-1 | One wing cutter struck the inboard engine on the right wing, destroying the engine and causing a massive fuel leak that immediately burst into flame. | CID-10, CID-47 | TWO | CID-10 now TWO (FS + FAA/CT-87/10 p.16-19); CID-47 remains SINGLE (FS only); overlaps CID-10 |
 | B4-2 | The airliner yawed left until nearly sideways, causing the damaged right wing to break off and fold over. | CID-17, CID-48 | TWO | CID-17 TWO; CID-48 SINGLE (FS only) |
 | B4-3 | The fuselage was engulfed in a massive fuel-fed fireball. | CID-18, CID-48 | TWO | CID-18 TWO; CID-48 SINGLE (FS only) |
 | B4-4 | The fire took more than an hour to fully extinguish. | CID-18 | TWO | fire duration from FS |
@@ -87,11 +87,11 @@
 | CID-02 | TWO | B1-2 |
 | CID-04 | TWO / name SINGLE | B2-1, B2-6 |
 | CID-05 | TWO | B2-3 |
-| CID-06 | SINGLE_SOURCE | B2-8 |
+| CID-06 | TWO | B2-8 |
 | CID-07 | TWO | B3-4 |
 | CID-08 | TWO | B3-3 |
 | CID-09 | TWO | B3-5 |
-| CID-10 | SINGLE_SOURCE | B4-1 |
+| CID-10 | TWO | B4-1 |
 | CID-12 | SINGLE_SOURCE | B2-7 |
 | CID-16 | SINGLE_SOURCE | B5-6 |
 | CID-17 | TWO | B3-6, B4-2 |
@@ -131,6 +131,6 @@
 
 **Claims NOT used in script:** CID-03 (purpose incl. seat/restraint data — covered in substance by B1-1/B1-6/B1-7), CID-11 (76,000 lb modified fuel — folded into CID-41 wording), CID-13 (load-bearing; TWO_SOURCES FS + FAA/CT-87/10 but its intensity wording is excluded — see contradiction note), CID-14 (ground pilot depth perception), CID-15 (program considered success). CID-11/CID-13/CID-14/CID-15 excluded to keep the script focused and to avoid load-bearing single/contradicted wording.
 
-**Single-source sentences flagged:** B1-1, B1-3 to B1-9, B2-2, B2-5, B2-6, B2-7, B2-8, B3-1 to B3-6, B4-1 to B4-3, B5-1 to B5-7, B6-2 to B6-4, B6-6 (30 of 40 sentences).
+**Single-source sentences flagged:** B1-1, B1-3 to B1-9, B2-2, B2-5, B2-6, B2-7, B3-1 to B3-6, B4-1 to B4-3, B5-1 to B5-7, B6-2 to B6-4, B6-6 (28 of 40 sentences; B2-8 and B4-1 upgraded to TWO via FAA/CT-87/10).
 
 **Contradiction noted:** CID-20 (FS: ineffective in reducing propagation or intensity) contradicts CID-25 (FAA p.32: reduced intensity attributed to AMK). No intensity claim is used in the script.

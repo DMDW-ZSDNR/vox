@@ -172,6 +172,37 @@ def _load_json(path: str | None):
         return None
 
 
+def _parse_claim_ledger(path: str | None) -> dict[str, str]:
+    """Parse the CID claim ledger markdown table -> {claim_id: source_type}.
+
+    Only rows whose first cell matches a CID-<digits> pattern are treated as
+    claim rows; the header and the Markdown separator row are skipped.
+    source_type is taken from the 4th table cell (source_type column).
+    """
+    if not path:
+        return {}
+    p = Path(path)
+    if not p.is_file():
+        return {}
+    try:
+        text = p.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    ledger: dict[str, str] = {}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        if len(cells) < 5:
+            continue
+        claim_id = cells[0]
+        source_type = cells[3] if len(cells) > 3 else ""
+        if re.fullmatch(r"CID-\d+", claim_id) and source_type:
+            ledger[claim_id] = source_type
+    return ledger
+
+
 def _check_entry(
     check_id: str,
     status: str,
@@ -221,6 +252,7 @@ class QCTool(BaseTool):
         "claim_ids",
         "rights_basis",
         "added_value",
+        "claim_ids_resolve",
     ]
     resource_profile = ResourceProfile(cpu_cores=1, ram_mb=256, vram_mb=0, disk_mb=50)
     idempotency_key_fields = ["input_path"]
@@ -243,6 +275,7 @@ class QCTool(BaseTool):
             "subtitle_path": {"type": "string"},
             "credits_path": {"type": "string"},
             "claim_ids_path": {"type": "string"},
+            "claim_ledger_path": {"type": "string"},
             "rights_records_path": {"type": "string"},
             "edit_decisions_path": {"type": "string"},
             "static_segments": {
@@ -734,6 +767,78 @@ class QCTool(BaseTool):
                         )
             except Exception as exc:  # noqa: BLE001
                 report.append(entry("claim_ids", "BLOCKED", f"claim_ids unreadable: {exc}"))
+
+        # ---- claim_ids_resolve: every claim_id resolves to the ledger and
+        # SINGLE_SOURCE claims carry a flag ----
+        claim_ids_path = inputs.get("claim_ids_path")
+        claim_ledger_path = inputs.get("claim_ledger_path")
+        if not claim_ids_path or not Path(claim_ids_path).is_file():
+            report.append(
+                entry(
+                    "claim_ids_resolve", "NOT_RUN", "claim_ids ledger not provided"
+                )
+            )
+        elif not claim_ledger_path or not Path(claim_ledger_path).is_file():
+            report.append(
+                entry(
+                    "claim_ids_resolve", "NOT_RUN", "claim_ledger not provided"
+                )
+            )
+        else:
+            try:
+                data = _load_json(claim_ids_path)
+                ledger = _parse_claim_ledger(claim_ledger_path)
+                if not isinstance(data, list):
+                    report.append(
+                        entry(
+                            "claim_ids_resolve",
+                            "FAILED",
+                            "claim_ids ledger is not a list",
+                        )
+                    )
+                else:
+                    problems: list[str] = []
+                    for i, c in enumerate(data):
+                        cid = c.get("claim_id") or ""
+                        if not cid:
+                            problems.append(f"sentence {i}: missing claim_id")
+                            continue
+                        if cid not in ledger:
+                            problems.append(f"sentence {i}: unknown claim_id {cid}")
+                            continue
+                        source_type = ledger[cid]
+                        is_single = "SINGLE" in source_type.upper()
+                        flags = c.get("source_flags") or ""
+                        if is_single and not str(flags).strip():
+                            problems.append(
+                                f"sentence {i}: SINGLE_SOURCE claim {cid} without flag"
+                            )
+                    if problems:
+                        report.append(
+                            entry(
+                                "claim_ids_resolve",
+                                "FAILED",
+                                "; ".join(problems)[:300],
+                                len(data),
+                                "all claim_ids resolve + SINGLE_SOURCE flagged",
+                            )
+                        )
+                    else:
+                        report.append(
+                            entry(
+                                "claim_ids_resolve",
+                                "PASS",
+                                f"{len(data)}/{len(data)} claim_ids resolve and SINGLE_SOURCE claims flagged",
+                                len(data),
+                                "all claim_ids resolve + SINGLE_SOURCE flagged",
+                            )
+                        )
+            except Exception as exc:  # noqa: BLE001
+                report.append(
+                    entry(
+                        "claim_ids_resolve", "BLOCKED", f"claim_ids_resolve unrunnable: {exc}"
+                    )
+                )
 
         # ---- 11. rights_basis ----
         rights_path = inputs.get("rights_records_path")

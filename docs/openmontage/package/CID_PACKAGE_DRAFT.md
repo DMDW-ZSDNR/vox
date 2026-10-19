@@ -60,7 +60,7 @@ Generated from `projects/slice_cid_v0/rights_records.json`. All assets NASA-prod
 - NIX-LV-1998-00090 — LV-1998-00090.mp4 — NASA/Langley — 320x240 — https://archive.org/details/NIX-LV-1998-00090
 - NIX-LV-1998-00092 — LV-1998-00092.mp4 — NASA/Langley — 320x240 — https://archive.org/details/NIX-LV-1998-00092
 
-**Narration:** Kokoro-82M (af_heart), synthetic voice, S1-S8. Voice license status: UNKNOWN — owner decision required before publish.
+**Narration:** Kokoro-82M (af_heart), synthetic voice, S1-S8. Voice license status: weights/code Apache-2.0 clear (VOICE_DECISION.md); UNKNOWN only the provenance of part of the training data (synthetic data) — residual risk, owner decision required before publish.
 
 **Primary sources:**
 - NASA Facts FS-2009-02-003-CID (https://www.nasa.gov/centers/dryden/pdf/315492main_FS-2009-02-003-CID.pdf)
@@ -76,7 +76,7 @@ Generated from `projects/slice_cid_v0/rights_records.json`. All assets NASA-prod
 | # | Check | Status | Owner Action |
 |---|---|---|---|
 | 1 | Clip owner review (identifiable persons, logo/insignia, third-party credit) | REVIEW | Review `docs/openmontage/audit/REVIEW_QUEUE.md` F5 section; 4 clips marked USABLE_FOR_SLICE; full video full-clip review still pending |
-| 2 | Voice license decision (Kokoro-82M synthetic voice) | BLOCKED | Review `docs/openmontage/VOICE_DECISION.md`; Kokoro weights license UNKNOWN; do not publish until resolved |
+| 2 | Voice license decision (Kokoro-82M synthetic voice) | BLOCKED | Review `docs/openmontage/VOICE_DECISION.md`; weights/code Apache-2.0 clear; UNKNOWN only synthetic-data training provenance — residual risk, do not publish until owner decision |
 | 3 | YouTube Guardian / AdSense review | NOT_DONE | No monetization eligibility review performed |
 | 4 | NASA insignia clearance | NOT_DONE | Decide if incidental insignia in CID footage requires separate clearance per NASA Media Usage Guidelines |
 | 5 | Synthetic-voice disclosure | NOT_DONE | Evaluate against current YouTube rules for synthetic/altered content disclosure |

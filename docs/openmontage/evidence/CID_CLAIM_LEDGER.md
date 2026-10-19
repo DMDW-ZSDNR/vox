@@ -12,16 +12,16 @@
 | CID-03 | Purpose: test FM-9 anti-misting fuel additive to reduce post-crash fire; also structural data and seat/restraint tests. | FS; TM | TWO | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-04 | No flight crew aboard on the final flight; flown from a ground cockpit; FS names NASA research pilot Fitzhugh Fulton. | FS; TM | name SINGLE | AGENT_VERIFIED_TEXT (FS part); TM part not re-fetched | FS PDF reachable and fetched; names Fitzhugh Fulton. |
 | CID-05 | Before the final flight: 14 test flights with crew aboard, 10 remote takeoffs, 13 remote landings, 69 approaches to the impact site, 16 h 22 min of remote control. | FS; TM | TWO | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
-| CID-06 | In practice the airplane was never flown lower than 150 ft above ground toward the impact site. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
+| CID-06 | In practice the airplane was never flown lower than 150 ft above ground toward the impact site. | TM; FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT | FAA/CT-87/10 p.45 (go-around only by RPV pilot between 400 ft and 150 ft; front 150 ft to impact must continue) and p.75 (ground rules required continuation after 150 ft). TM-4084 per stated provenance, not re-fetched. |
 | CID-07 | Below 150 ft the airplane was committed to impact. | FS; TM | TWO | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-08 | At the decision point it was slightly right of centerline; the pilot judged altitude sufficient and continued. | FS; TM | TWO | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-09 | Left wing hit first, short of the wing cutters. | FS; TM | TWO | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched; TM numeric table values OCR_UNVERIFIED (do not use numbers). |
-| CID-10 | A cutter struck the right inboard engine, massive fuel leak ignited, right wing broke off, fireball, fire > 1 hour. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
+| CID-10 | A cutter struck the right inboard engine, massive fuel leak ignited, right wing broke off, fireball, fire > 1 hour. | FS; FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT | FS PDF fetched; FAA/CT-87/10 p.16-17 (cutter entered right inboard/Number 3 engine, ignition 0.1s later, severed fuel/oil lines) and p.19 (steel wing openers destroyed right inboard engine, large fire from severed pressurized fuel). Note: ">1 hour to extinguish" is FS-only; FAA describes CFR response and specific fire control times, not total burn duration. |
 | CID-11 | 76,000 lb of modified fuel on board. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-12 | Takeoff weight 200,500 lb. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
 | CID-13 | At full scale the modified fuel did not prevent a massive fuel-fed fire; FAA additive requirements were cancelled. | FS; FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT (FS); FAA PDF read p.32 | FS PDF reachable and fetched; LOAD-BEARING, second source FAA/CT-87/10 read. CONTRADICTION: NASA Facts says the fuel was "ineffective in reducing the propagation or intensity of fire" (no intensity reduction); FAA/CT-87/10 p.32 says "The reduced intensity of the fire is attributed to the antimisting characteristic of the fuel" and proponents argued the fire would have been worse without AMK. Do NOT use any intensity claim in the script — script wording only: fuel did not prevent a massive fuel-fed fire; FAA ended additive requirements. Secondary confirmations: Wikipedia citing FAA/CT-87/10 pp. 20-22; Encyclopedia MDPI citing FAA/CT-87/10. Status: TWO_SOURCES (FS + FAA/CT-87/10 both read). |
 | CID-14 | Ground pilot had poor depth perception via a 525-line monitor; tracking radar accuracy insufficient. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
-| CID-15 | From the remote-piloting standpoint the program was considered a success though not all impact parameters were met. | TM | SINGLE | per stated provenance; TM-4084 not re-fetched | TM-only source. |
+| CID-15 | From the remote-piloting standpoint the program was considered a success though not all impact parameters were met. | TM; FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT | FAA/CT-87/10 p.7 (first four-engine jet flown successfully by remote control; first flown solely and successfully on AMK) and p.38 ("Overall, the experiment was a success"); impact requirements/accuracies relaxed consistent with "not all impact parameters met." TM-4084 per stated provenance, not re-fetched. |
 | CID-16 | Cabin cameras showed dummies shaken, seats stayed attached; data informed new FAA fire-prevention/fire-retardant rules. | FS | SINGLE | AGENT_VERIFIED_TEXT | FS PDF reachable and fetched. |
 | CID-17 | Left wing dropped and contacted ground first, short of the wing cutters; nose swung left, skidded at about a 45-degree angle; damaged right wing broke off and folded over. | FS; Wikipedia citing FAA/CT-87/10 pp.20-22 | TWO | AGENT_VERIFIED_TEXT (FS); secondary confirmation Wikipedia citing FAA/CT-87/10 | FS PDF reachable and fetched; wing impact and 45-degree skid from FS. |
 | CID-18 | Fuselage engulfed in a massive fuel-fed fireball; fire took more than an hour to fully extinguish. | FS; FAA/CT-87/10 | TWO | AGENT_VERIFIED_TEXT (FS); FAA PDF read p.32 | FS PDF reachable and fetched; fire duration from FS. |
@@ -61,9 +61,10 @@
 ## Verification status summary
 
 - AGENT_VERIFIED_TEXT (FS PDF reachable and fetched): CID-01, 02, 03, 04, 05, 07, 08, 09, 10, 11, 13, 16, 17, 18, 19, 20, 21, 22, 30 plus CID-31 to CID-50 (39 claims)
-- FAA/CT-87/10 PDF read (p.32 AMK section): CID-13, 23, 24, 25, 26, 27, 28 (7 claims)
+- FAA/CT-87/10 PDF read (fetched 2026-10-19): CID-06 (p.45/75, 150 ft commitment), CID-10 (p.16-19, cutter/right inboard engine/ignition), CID-13 (p.32, load-bearing/cancellation), CID-15 (p.7/38, overall success), CID-23, 24, 25, 26, 27, 28 (p.32 AMK fire findings)
+- Claims upgraded to TWO_SOURCES this session (FS+FAA or TM+FAA): CID-06, CID-10, CID-15
 - Secondary confirmation via Wikipedia citing FAA/CT-87/10: CID-17, 19, 21, 29, 30 (5 claims)
-- Per stated provenance, TM-4084 not re-fetched: CID-06, 12, 14, 15 (4 claims); all of CID-31 to CID-50 are FS-only since NTRS/TM-4084 is unreachable from this sandbox
+- Per stated provenance, TM-4084 not re-fetched: CID-12, CID-14 (2 claims); all of CID-31 to CID-50 are FS-only since NTRS/TM-4084 is unreachable from this sandbox
 - Total claims in ledger: 50 (CID-01 to CID-50)
 
 ## Source abbreviations

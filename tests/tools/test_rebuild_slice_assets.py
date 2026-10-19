@@ -247,3 +247,86 @@ def test_rebuild_summary_count_matches_manifest(tmp_path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "1/1" in result.stdout, result.stdout
+
+
+# ---------------------------------------------------------------------------
+# claim_ids_resolve: every claim_id resolves to the ledger and SINGLE_SOURCE
+# claims carry a flag
+# ---------------------------------------------------------------------------
+
+
+def _write_ledger(path: Path, rows: list[tuple[str, str]]) -> None:
+    """rows: list of (claim_id, source_type)."""
+    lines = [
+        "| claim_id | claim | sources | source_type | verification_status | evidence_notes |",
+        "|---|---|---|---|---|---|",
+    ]
+    for cid, st in rows:
+        lines.append(f"| {cid} | some claim | FS | {st} | AGENT_VERIFIED_TEXT | note |")
+    path.write_text("\n".join(lines))
+
+
+def _run_resolve_qc(tmp_path, entries, ledger_rows):
+    claim_ids_path = tmp_path / "claim_ids.json"
+    claim_ids_path.write_text(json.dumps(entries))
+    ledger_path = tmp_path / "ledger.md"
+    _write_ledger(ledger_path, ledger_rows)
+    out = tmp_path / "qa_report.json"
+    qc = QCTool()
+    # Tiny 1s input keeps the check fast (avoids re-decoding the 52s slice).
+    tiny = tmp_path / "tiny.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", "testsrc=duration=1:size=320x240:rate=30",
+            "-f", "lavfi", "-i", "sine=duration=1:frequency=440",
+            "-c:v", "libx264", "-c:a", "aac", "-shortest", str(tiny),
+        ],
+        check=True,
+    )
+    res = qc.execute(
+        {
+            "input_path": str(tiny),
+            "output_path": str(out),
+            "claim_ids_path": str(claim_ids_path),
+            "claim_ledger_path": str(ledger_path),
+        }
+    )
+    assert res.success, f"qc.execute failed: {res.error}"
+    report = json.loads(out.read_text())
+    entry = next((e for e in report if e.get("check_id") == "claim_ids_resolve"), None)
+    assert entry is not None, "claim_ids_resolve entry missing"
+    return entry
+
+
+def test_claim_ids_resolve_rejects_unknown_id(tmp_path):
+    """An unknown claim_id must fail the resolve check."""
+    entry = _run_resolve_qc(
+        tmp_path,
+        [{"text": "s", "claim_id": "CID-99", "source_flags": ""}],
+        [("CID-01", "TWO")],
+    )
+    assert entry["status"] == "FAILED", entry
+
+
+def test_claim_ids_resolve_rejects_single_source_without_flag(tmp_path):
+    """A SINGLE_SOURCE claim without a flag must fail the resolve check."""
+    entry = _run_resolve_qc(
+        tmp_path,
+        [{"text": "s", "claim_id": "CID-02", "source_flags": ""}],
+        [("CID-01", "TWO"), ("CID-02", "SINGLE")],
+    )
+    assert entry["status"] == "FAILED", entry
+
+
+def test_claim_ids_resolve_passes_when_all_resolve_and_flagged(tmp_path):
+    """When every claim_id resolves and SINGLE_SOURCE claims are flagged, pass."""
+    entry = _run_resolve_qc(
+        tmp_path,
+        [
+            {"text": "s one", "claim_id": "CID-01", "source_flags": ""},
+            {"text": "s two", "claim_id": "CID-02", "source_flags": "FS only"},
+        ],
+        [("CID-01", "TWO"), ("CID-02", "SINGLE")],
+    )
+    assert entry["status"] == "PASS", entry

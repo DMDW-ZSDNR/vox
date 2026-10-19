@@ -8,7 +8,7 @@
 The slice uses Kokoro-82M (CPU local synthesis, Kaggle GPU bake-off BLOCKED).
 
 - [ ] Review `docs/openmontage/VOICE_DECISION.md` and `docs/openmontage/VOICE_BAKEOFF_LICENSES.md`
-- [ ] Decide: accept Kokoro-82M (Apache-2.0 weights, but CC BY training items + synthetic-data origin UNKNOWN) or select a different voice
+- [ ] Decide: accept Kokoro-82M (weights + code Apache-2.0, clear per VOICE_DECISION.md; UNKNOWN only the provenance of part of the training data — synthetic data — a residual risk for the owner/guardian) or select a different voice
 - [ ] If accepting Kokoro: record the decision, note the CC BY attribution obligations (Koniwa `tnc`, SIWIS), and note the synthetic-data provenance gap
 - [ ] Piper `en_US-lessac-medium` remains BLOCKED (license UNKNOWN) — do not use for publish
 
@@ -73,7 +73,7 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 
 ## 8. Publication blockers (all must clear before publish)
 
-- [ ] Voice license: Kokoro-82M license UNKNOWN — owner decision required (VOICE_DECISION.md)
+- [ ] Voice license: Kokoro-82M weights/code Apache-2.0 (clear, VOICE_DECISION.md); UNKNOWN only the provenance of part of the training data (synthetic data) — residual risk, owner decision required.
 - [ ] Clip full-clip review: F5 owner review done (4 clips USABLE_FOR_SLICE); full video frame-level review pending
 - [ ] NASA insignia clearance: decide if incidental insignia requires separate clearance
 - [ ] Synthetic-voice disclosure: evaluate against current YouTube rules
@@ -89,14 +89,24 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 - [x] H6: OWNER_ACTIONS.md, MASTER_RUN_STATE.md, docs/agent-improvement/CHANGELOG.md updated.
 - [ ] Stop Codespace when done: `gh codespace stop -c <codespace-name>`
 
+## 10. Milestone I (Kilo), factory scope only — COMPLETE this session
+
+- [x] I1: FAA/CT-87/10 fetched + extracted (92 pages); CID-06/10/15 upgraded to TWO_SOURCES; CID-20 vs CID-25 contradiction recorded; ledger 50 claims.
+- [x] I2: qc.py claim_ids_resolve check added (red then green, PASS 52/52); lib/footage_classifier.py + test added (E5 PASS); fast suite exit 0; EVALS.md updated.
+- [x] I3: B6 aftermath = graphics-only (Key Numbers + Lessons Learned cards); images.nasa.gov not viable keyless; gap documented in CID_BEAT_COVERAGE.md §5.
+- [x] I4: Kokoro-82M license status corrected (Apache-2.0 weights/code clear; UNKNOWN only synthetic-data training provenance residual risk) in OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CID_PACKAGE_DRAFT.md, REVIEW_QUEUE.md; FOOTAGE_QUALITY.md email says "for a YouTube documentary channel (monetization possible)".
+- [ ] I5: FULL-VIDEO DRAFT BLOCKED — Kokoro-82M not installed in this environment; no cleared alternative TTS without secrets. Wrote docs/openmontage/slice/artifacts/FULL_DRAFT_STATUS.md (EDL plan, NOT_PUBLISHABLE reasons). Owner to install Kokoro + synthesize narration to unblock.
+- [x] I6: MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md, EVALS.md updated.
+
 ## Owner's remaining decisions (consolidated)
 
-1. Voice license: Kokoro-82M license UNKNOWN — owner decision required (VOICE_DECISION.md)
+1. Voice license: Kokoro-82M weights/code Apache-2.0 (clear, VOICE_DECISION.md); UNKNOWN only synthetic-data training provenance — residual risk, owner decision required.
 2. Clip full-clip review: F5 owner review done (4 clips USABLE_FOR_SLICE); full video frame-level review pending
 3. NASA insignia clearance: decide if incidental insignia requires separate clearance per NASA Media Usage Guidelines
 4. Synthetic-voice disclosure: evaluate against current YouTube rules for synthetic/altered content
 5. Guardian/AdSense: no monetization eligibility review performed
 6. Thumbnail selection: choose one of 3 candidates (docs/openmontage/package/THUMBNAIL_NOTES.md)
 7. AI upscaling of 320x240 archive video: NEEDS OWNER APPROVAL (4th component, not applied)
+8. Install Kokoro-82M + synthesize narration to unblock Milestone I5 (kokoro not installed in this environment)
 
-**Rollback:** `git revert` of this session's commit on branch `factory/business-documentary-pilot`.
+**Rollback:** `git revert` of the I commit on branch `factory/business-documentary-pilot`.

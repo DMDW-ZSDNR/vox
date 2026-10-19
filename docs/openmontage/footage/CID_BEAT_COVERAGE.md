@@ -76,7 +76,7 @@ These 5 stills are the high-resolution nasa.gov counterparts of the NIX photos a
 | B3 | Approach | EM-0004-01 (motion segment), LV-00090 (pt 1) | EC84-31805 (pre-impact skid photo) | none | GOOD — approach coverage from archive + still |
 | B4 | Impact | LV-00090 (impact), LV-00092 (fireball) | ECN-31803 (initial impact), EC84-31809 (engulfed photo) | none | GOOD — impact + post-impact from video + still |
 | B5 | Fire | LV-00092 (fireball), LV-00098 (pt 9) | ECN-31808 (fireball photo), EC84-31809 (photo) | none | EXCELLENT — fireball from video + two still angles |
-| B6 | Aftermath / lessons | none confirmed | ECN-28307 (dummies photo) | Key Numbers card | LIMITED — no dedicated aftermath motion footage found; archive.org aftermath/investigation/wreckage video search returned 0 results |
+| B6 | Aftermath / lessons | none confirmed | ECN-28307 (dummies photo) | Key Numbers card + Lessons Learned card | LIMITED (graphics-only) — no aftermath motion footage; covered by original graphics cards with claim_ids |
 
 **Total archive video assets:** 8 NIX clips (all source_policy_us_gov, all 320x240 h.264)
 **Total still assets:** 5 NASA Armstrong photos (all source_policy_us_gov, up to 1040x832) + 5 NIX photos (same assets at lower resolution)
@@ -94,6 +94,18 @@ These 5 stills are the high-resolution nasa.gov counterparts of the NIX photos a
 | Discovery | images.nasa.gov search API returns web-app HTML, not parseable JSON keyless; archive.org aftermath search = 0 results | INFO | No additional keyless video source identified; gap stands until owner-sourced primary video or metadata read of derivative filenames |
 
 ---
+
+## 5. B6 visual decision (options evaluated)
+
+Per milestone I3, three options for covering beat B6 (aftermath / lessons, 0 footage) were evaluated:
+
+- **(a) Keyless images.nasa.gov search for aftermath/post-impact stills:** NOT VIABLE. The images.nasa.gov search endpoint returns the web application (HTML), not a parseable JSON candidate list keyless, so no additional aftermath stills can be retrieved without a key or browser automation.
+- **(b) Cover B6 with original graphics only (Key Numbers + Lessons Learned cards, both carrying claim_ids):** IMPLEMENTED. Rights-safe (original graphics, no third-party credit), adds editorial value (quantifies the outcome), and keeps the aftermath/lessons narrative as a distinct beat. No new component — these are the same class of static cards already used for B1/B6.
+- **(c) Merge B6 into B5:** DECLINED. Would collapse the FAA cancellation / fuel-ineffectiveness / lessons narrative into the fire beat, diluting the lesson and removing a distinct beat the viability gate counts.
+
+**Added-value gate:** B6 graphics ≈ 2 cards, claim_ids shown on card, ~6-8s of narration. The gate (>=6 beats with >=1 usable asset) remains satisfied: B6 now has ECN-28307 still + 2 graphics cards.
+
+**Remaining gap:** B6 has NO motion footage. Post-impact investigation, cabin interior, and the FAA decision moment are not visually supported by archive material. Gap stands until owner-sourced primary video or a frame-level review of LV-00091/00093/00096 turns up usable aftermath inserts.
 
 ## 5. Viability-gate wording (proposed)
 

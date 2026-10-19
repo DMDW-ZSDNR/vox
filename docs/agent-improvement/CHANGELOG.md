@@ -2,6 +2,26 @@
 
 Record accepted changes, benchmark evidence, reviewer and rollback method.
 
+## 2026-10-19 — Milestone I (Kilo), factory scope only
+
+### I1 SECOND SOURCES (DONE)
+- Fetched + fully extracted FAA/CT-87/10 (DOT/FAA/CT-87/10, rosap.ntl.bts.gov/view/dot/92854/dot_92854_DS1.pdf, 92 pages, curl -L + pypdf). Confirmed CID-06 (150 ft commitment, p.45/75), CID-10 (cutter/right inboard engine/ignition, p.16-19), CID-15 (overall success, p.7/38), FAA p.32 fire findings (CID-23..28). Upgraded CID-06, CID-10, CID-15 to TWO_SOURCES. Recorded contradiction CID-20 (FS: ineffective) vs CID-25 (FAA p.32: reduced intensity attributed to AMK). Ledger now 50 claims. Paraphrase only, page recorded per claim.
+
+### I2 CLAIM_ID RESOLUTION (DONE, test-first)
+- Added qc.py `claim_ids_resolve` check (every claim_id resolves to CID_CLAIM_LEDGER.md; fails on unknown ids and SINGLE_SOURCE claims without a flag) + `claim_ledger_path` input. Demonstrated red then green (PASS 52/52). Regenerated CID_FULL_CLAIM_IDS.json with source_flags. Added lib/footage_classifier.py + tests/lib/test_footage_classifier.py (E5 PASS). Full fast suite exit 0; py_compile exit 0; ruff not available. EVALS.md updated (E5 PASS; E4 claim_ids_resolve).
+
+### I3 BEAT B6 (DONE)
+- 0 aftermath footage. Evaluated (a) keyless images.nasa.gov search — not viable (HTML only); (b) original graphics only (Key Numbers + Lessons Learned cards with claim_ids) — implemented; (c) merge into B5 — declined. Documented in CID_BEAT_COVERAGE.md §5; B6 graphics-only, LIMITED. Viability gate satisfied.
+
+### I4 DOC FIXES (DONE)
+- Kokoro-82M license corrected: weights/code Apache-2.0 clear; UNKNOWN only synthetic-data training provenance residual risk. Fixed in OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CID_PACKAGE_DRAFT.md, REVIEW_QUEUE.md. FOOTAGE_QUALITY.md NASA email says "for a YouTube documentary channel (monetization possible)".
+
+### I5 FULL-VIDEO DRAFT (BLOCKED)
+- Kokoro-82M not installed in this environment; no cleared alternative TTS without secrets; Piper lessac BLOCKED. No narration synthesized; finish_audio/qc.py all-media-inputs not run. Wrote docs/openmontage/slice/artifacts/FULL_DRAFT_STATUS.md (EDL plan, NOT_PUBLISHABLE reasons). Never media.
+
+### I6 CLOSE (DONE — this session)
+- MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md, EVALS.md updated.
+
 ## 2026-10-18 — Milestone H (Kilo), factory scope only
 
 ### H1 FULL SCRIPT (DONE)

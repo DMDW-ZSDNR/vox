@@ -144,9 +144,15 @@ def test_good_clip_all_pass(tmp_path):
     credits = tmp_path / "credits.txt"
     credits.write_text("Title: Test\nDirector: T\nProduction: P\n")
     claims = tmp_path / "claims.json"
-    claims.write_text(json.dumps([{"text": "The crash happened.", "claim_id": "c1"}]))
+    claims.write_text(json.dumps([{"text": "The crash happened.", "claim_id": "CID-01", "source_flags": ""}]))
     rights = tmp_path / "rights.json"
     rights.write_text(json.dumps([{"asset_id": "good.mp4", "rights_basis": "source_policy_us_gov"}]))
+    ledger = tmp_path / "ledger.md"
+    ledger.write_text(
+        "| claim_id | claim | sources | source_type | verification_status | evidence_notes |\n"
+        "|---|---|---|---|---|---|\n"
+        "| CID-01 | some claim | FS | TWO | AGENT_VERIFIED_TEXT | note |\n"
+    )
     edits = tmp_path / "edits.json"
     edits.write_text(json.dumps({
         "cuts": [
@@ -162,6 +168,7 @@ def test_good_clip_all_pass(tmp_path):
         "subtitle_path": str(subs),
         "credits_path": str(credits),
         "claim_ids_path": str(claims),
+        "claim_ledger_path": str(ledger),
         "rights_records_path": str(rights),
         "edit_decisions_path": str(edits),
     }, tmp_path)
@@ -177,6 +184,7 @@ def test_good_clip_all_pass(tmp_path):
     assert by_id["subtitle_sync"]["status"] == "PASS", by_id["subtitle_sync"]
     assert by_id["credits_complete"]["status"] == "PASS", by_id["credits_complete"]
     assert by_id["claim_ids"]["status"] == "PASS", by_id["claim_ids"]
+    assert by_id["claim_ids_resolve"]["status"] == "PASS", by_id["claim_ids_resolve"]
     assert by_id["rights_basis"]["status"] == "PASS", by_id["rights_basis"]
     assert res.data["verdict"] == "PASS", res.data
 

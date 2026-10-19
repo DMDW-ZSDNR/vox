@@ -76,7 +76,7 @@ Subject: Request for higher-quality digitized copies of Controlled Impact Demons
 
 Dear NASA Armstrong Digital Assets Library,
 
-I am producing a YouTube documentary channel technical slice about the NASA Controlled Impact Demonstration (CID) of the remotely piloted Boeing 720 (1 December 1984) at Edwards Air Force Base. Monetization is possible for this channel.
+I am producing a YouTube documentary channel technical slice about the NASA Controlled Impact Demonstration (CID) of the remotely piloted Boeing 720 (1 December 1984) at Edwards Air Force Base — this is for a YouTube documentary channel (monetization possible).
 
 The best-quality CID video I have been able to locate online (archive.org NIX collection, e.g. items NIX-EM-0004-01, NIX-LV-1998-00090, NIX-LV-1998-00092) is 320x240 resolution. The NASA Armstrong CID image gallery holds higher-resolution still photographs (up to ~1040x833), but I have not located a digitized CID film/video source above 320x240.
 

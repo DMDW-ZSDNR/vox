@@ -40,7 +40,7 @@ Switch away only for a specific reason: strict budget (use the `fast` variant or
 | **Replicate** | `REPLICATE_API_TOKEN` | `seedance_replicate` | ✅ wrapped | `bytedance/seedance-2.0` + `bytedance/seedance-2.0-fast`. Standard Replicate prediction API. |
 | **Runway** | `RUNWAY_API_KEY` | `runway_video` (model: `seedance_2.0`) | ✅ wrapped | Third-party Seedance 2.0 model inside Runway. **Unlimited/Enterprise plans, non-US only**. Selected via `model` param. |
 | **Higgsfield** | `HIGGSFIELD_API_KEY` + `_SECRET` | `higgsfield_video` (model: `seedance_2.0`) | ✅ wrapped | Seedance 2.0 is the default model on this tool. Emphasis on character identity + long-form chaining. |
-| **HeyGen** | `HEYGEN_API_KEY` | `heygen_video` (1.x only) + TODO | ⚠️ 1.x only | The `seedance_pro` / `seedance_lite` workflow provider strings on HeyGen map to Seedance 1.x. 2.0 access flows through Video Agent / Avatar Shots endpoints — a separate `seedance_heygen` tool is on the roadmap. |
+| **HeyGen** | `HEYGEN_API_KEY` | — | ❌ retired | The HeyGen workflow gateway (`heygen_video`) was removed on 2026-10-31 with no v3 replacement. |
 | **BytePlus ModelArk / Volcengine** | BytePlus token | not wrapped | 🔜 roadmap | Direct from ByteDance. Pro ~$0.15 / 5 s, Lite ~$0.010/s. Token-based. |
 | **Freepik** | Freepik token | not wrapped | 🔜 roadmap | `POST /v1/ai/image-to-video/seedance-pro-1080p` for 1080p I2V |
 | **Pollo / PiAPI / Atlas Cloud / AIMLAPI** | various | not wrapped | 🔜 roadmap | Aggregators resell fal.ai or ByteDance endpoints |

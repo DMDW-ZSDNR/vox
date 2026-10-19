@@ -1,4 +1,4 @@
-"""OpenAI GPT Image generation (gpt-image-2)."""
+"""OpenAI GPT Image generation (gpt-image-2.5-flare by default)."""
 
 from __future__ import annotations
 
@@ -23,6 +23,12 @@ from tools.base_tool import (
     ToolStatus,
     ToolTier,
 )
+
+
+DEFAULT_MODEL = "gpt-image-2.5-flare"
+# gpt-image-2.5-flare bills the same per-token price as gpt-image-2; other
+# models (sunburst) and the xhigh/max qualities need a quote before running.
+PRICED_MODELS = {"gpt-image-2", "gpt-image-2.5-flare"}
 
 
 class OpenAIImage(BaseTool):
@@ -66,11 +72,11 @@ class OpenAIImage(BaseTool):
             "model": {
                 "type": "string",
                 "enum": [
-                    "gpt-image-2",
                     "gpt-image-2.5-flare",
+                    "gpt-image-2",
                     "gpt-image-2.5-sunburst",
                 ],
-                "default": "gpt-image-2",
+                "default": DEFAULT_MODEL,
             },
             "size": {
                 "type": "string",
@@ -80,7 +86,12 @@ class OpenAIImage(BaseTool):
             "quality": {
                 "type": "string",
                 "enum": ["low", "medium", "high", "xhigh", "max", "auto"],
-                "default": "high",
+                "default": "low",
+                "description": (
+                    "Draft at 'low' (~$0.006/img) while iterating on the prompt; once the "
+                    "draft is approved, regenerate the same prompt at 'medium' (~$0.05) or "
+                    "'high' (~$0.21) for the final asset."
+                ),
             },
             "output_format": {
                 "type": "string",
@@ -146,16 +157,18 @@ class OpenAIImage(BaseTool):
         return ToolStatus.UNAVAILABLE
 
     def estimate_cost(self, inputs: dict[str, Any]) -> float:
-        # gpt-image-2 per-image pricing at 1024x1024 (non-square sizes run
+        # gpt-image-2.5-flare and gpt-image-2 share the same token pricing, so the
+        # per-image estimates below hold for both at 1024x1024 (non-square sizes run
         # slightly cheaper): https://developers.openai.com/api/docs/guides/image-generation
-        if inputs.get("model", "gpt-image-2") != "gpt-image-2":
-            raise PriceQuoteRequired(
-                "GPT Image 2.5 uses token pricing; obtain a quote for the chosen size and quality"
-            )
-        quality = inputs.get("quality", "high")
+        model = inputs.get("model", DEFAULT_MODEL)
+        quality = inputs.get("quality", "low")
         n = inputs.get("n", 1)
         cost_map = {"low": 0.006, "medium": 0.053, "high": 0.211, "auto": 0.053}
-        return cost_map.get(quality, 0.053) * n
+        if model not in PRICED_MODELS or quality not in cost_map:
+            raise PriceQuoteRequired(
+                f"{model} at quality {quality!r} has no verified price; obtain a quote"
+            )
+        return cost_map[quality] * n
 
     def execute(self, inputs: dict[str, Any]) -> ToolResult:
         if not os.environ.get("OPENAI_API_KEY"):
@@ -168,13 +181,13 @@ class OpenAIImage(BaseTool):
 
         start = time.time()
         client = OpenAI(max_retries=0)
-        model = inputs.get("model", "gpt-image-2")
+        model = inputs.get("model", DEFAULT_MODEL)
         prompt = inputs["prompt"]
         size = inputs.get("size", "1024x1024")
         n = inputs.get("n", 1)
 
         try:
-            quality = inputs.get("quality", "high")
+            quality = inputs.get("quality", "low")
             output_format = inputs.get("output_format", "png")
             from jsonschema import validate
 
@@ -248,6 +261,11 @@ class OpenAIImage(BaseTool):
                 success=False, error=f"OpenAI image generation failed: {e}"
             )
 
+        try:
+            cost_usd = self.estimate_cost(inputs)
+        except PriceQuoteRequired:
+            cost_usd = None
+
         return ToolResult(
             success=True,
             data={
@@ -263,11 +281,11 @@ class OpenAIImage(BaseTool):
                 and hasattr(response.usage, "model_dump")
                 else None,
                 "cost_status": "estimated"
-                if model == "gpt-image-2"
+                if cost_usd is not None
                 else "usage_reported_unpriced",
             },
             artifacts=outputs,
-            cost_usd=self.estimate_cost(inputs) if model == "gpt-image-2" else None,
+            cost_usd=cost_usd,
             duration_seconds=round(time.time() - start, 2),
             model=model,
         )

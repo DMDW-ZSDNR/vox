@@ -2,6 +2,29 @@
 
 Record accepted changes, benchmark evidence, reviewer and rollback method.
 
+## 2026-10-19 — Milestone K (Kilo), factory scope only (docs/tools/config)
+
+### K1 NICHE PROFILE (DONE)
+- Created docs/openmontage/NICHE_PROFILE_SPACE_ASTRONOMY_HD.md — niche profile spec for "Space & Astronomy on HD Public-Domain Footage" (NASA SVS, images.nasa.gov, ESA/Hubble where rights allow, archive.org, Wikimedia), following NICHE_PROFILE_SPEC.md schema; storage_policy enum, excluded_content, required_primary_doc_types, viability/added-value gates, episode templates, rights notes per RIGHTS_MODEL.md.
+- Updated docs/openmontage/NICHE_DECISION.md: CID stays as pilot/test video only (demand measured: DEMAND_SIGNAL_PRESENT, top videos ~100k–138k views/365d), but all licensable CID clips are 320x240 (below the HD>=720p bar) → CID remains test fixture for claim-ledger/QC/rebuild tooling, not primary niche rollout.
+
+### K2 FOOTAGE PROBE (DONE)
+- docs/openmontage/footage/K2_FOOTAGE_PROBE_SPACE_ASTRONOMY.md — probed 10 candidate topics keyless via NASA images-api; all NASA-produced, rights=None → source_policy_us_gov candidates, no third-party credit; HD>=720p verified via ffprobe for 3 downloaded clips (Artemis 3840x2160, Hubble 1920x1080, Perseverance 3840x2160). Beat counts per candidate 6-beat structure. Top 3 topics: (1) Artemis/SLS launch — 672 hits, 4K, all 6 beats; (2) Perseverance — 117 hits, 4K; (3) Hubble — 152 hits, 1080p, best astronomy fit. Best topic for K3: Artemis/SLS launch. Downloads: 3 (at cap). Requests: 16 (<40 cap).
+
+### K3 SCRIPT + LEDGER + SHORTS (DONE)
+- docs/openmontage/evidence/ARTEMIS_CLAIM_LEDGER.md — 12 claims (ARTEMIS-01..12); load-bearing claims TWO_SOURCES (multiple distinct NASA records agree); hardware-detail claims SINGLE_SOURCE honestly flagged; all paraphrased from NASA image-library descriptions, page/record cited; nasa.gov HTML rate-limited (429) and not used.
+- docs/openmontage/slice/ARTEMIS_FULL_SCRIPT_v0.md — 6 beats, 19 sentences, ≈3.5–4 min, claim_ids on every sentence, 4 single-source sentences flagged.
+- docs/openmontage/slice/ARTEMIS_CLAIM_IDS.json — 21 entries.
+- docs/openmontage/package/ARTEMIS_SHORTS_PLAN.md — 45s Shorts cut plan, EDL, source cards, static_by_design cards.
+- QC: claim_ids PASS (21/21), claim_ids_resolve PASS (21/21).
+
+### K4 tooling (DONE)
+- Generalized qc.py `_parse_claim_ledger` regex from CID-only (`CID-\d+`) to any `<ID>-<digits>` (e.g. ARTEMIS-01); CID regression re-verified PASS (52/52 claim_ids + claim_ids_resolve).
+- py_compile exit 0 on changed files; ruff not available.
+
+### K4 CLOSE (DONE — this session)
+- MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md updated.
+
 ## 2026-10-19 — Milestone I (Kilo), factory scope only
 
 ### I1 SECOND SOURCES (DONE)

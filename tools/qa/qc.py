@@ -173,11 +173,12 @@ def _load_json(path: str | None):
 
 
 def _parse_claim_ledger(path: str | None) -> dict[str, str]:
-    """Parse the CID claim ledger markdown table -> {claim_id: source_type}.
+    """Parse a claim ledger markdown table -> {claim_id: source_type}.
 
-    Only rows whose first cell matches a CID-<digits> pattern are treated as
-    claim rows; the header and the Markdown separator row are skipped.
-    source_type is taken from the 4th table cell (source_type column).
+    Only rows whose first cell matches an <ID>-<digits> pattern (e.g.
+    CID-01, ARTEMIS-01) are treated as claim rows; the header and the
+    Markdown separator row are skipped. source_type is taken from the 4th
+    table cell (source_type column).
     """
     if not path:
         return {}
@@ -189,6 +190,7 @@ def _parse_claim_ledger(path: str | None) -> dict[str, str]:
     except OSError:
         return {}
     ledger: dict[str, str] = {}
+    id_pattern = re.compile(r"^[A-Za-z][A-Za-z0-9]*-[0-9]+$")
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped.startswith("|") or not stripped.endswith("|"):
@@ -198,7 +200,7 @@ def _parse_claim_ledger(path: str | None) -> dict[str, str]:
             continue
         claim_id = cells[0]
         source_type = cells[3] if len(cells) > 3 else ""
-        if re.fullmatch(r"CID-\d+", claim_id) and source_type:
+        if id_pattern.fullmatch(claim_id) and source_type:
             ledger[claim_id] = source_type
     return ledger
 

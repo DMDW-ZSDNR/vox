@@ -33,3 +33,15 @@ The niche is CONFIG, not hardcoded.
 - No claim about YouTube thresholds — the added-value numbers in
   `NICHE_PROFILE_SPEC.md` are initial guesses to tune after human review.
 - No code, adapter, or pipeline change follows from this file alone.
+
+## Test video status
+
+**CID (1984 NASA/FAA Controlled Impact Demonstration, Boeing 720) stays as the pilot/test video only.**
+
+Reason: demand is measured for CID (aviation-test-history demand report: DEMAND_SIGNAL_PRESENT; top videos reach ~100k–138k views in 365d), but every licensable CID clip surfaced keyless is **320x240 h.264** (archive.org NIX collection), i.e. below the HD (>=720p) bar of the space & astronomy niche profile. CID remains useful as a test fixture for claim-ledger, QC, and rebuild tooling; it is NOT a candidate for the primary niche rollout until HD (>=720p) licensable footage is verified.
+
+## Companion niche profile
+
+- `docs/openmontage/NICHE_PROFILE_SPACE_ASTRONOMY_HD.md` — niche profile spec for
+  "Space & Astronomy on HD Public-Domain Footage" (NASA SVS, images.nasa.gov,
+  ESA/Hubble where rights allow, archive.org, Wikimedia), created 2026-10-19.

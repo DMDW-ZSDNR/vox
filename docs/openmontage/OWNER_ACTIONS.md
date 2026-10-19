@@ -98,15 +98,22 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 - [ ] I5: FULL-VIDEO DRAFT BLOCKED — Kokoro-82M not installed in this environment; no cleared alternative TTS without secrets. Wrote docs/openmontage/slice/artifacts/FULL_DRAFT_STATUS.md (EDL plan, NOT_PUBLISHABLE reasons). Owner to install Kokoro + synthesize narration to unblock.
 - [x] I6: MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md, EVALS.md updated.
 
+## 11. Milestone K (Kilo), factory scope only — COMPLETE this session
+
+- [x] K1: Niche profile docs/openmontage/NICHE_PROFILE_SPACE_ASTRONOMY_HD.md created (space & astronomy HD public-domain footage); NICHE_DECISION.md updated — CID stays pilot/test video (demand measured, 320x240 below HD bar).
+- [x] K2: Footage probe docs/openmontage/footage/K2_FOOTAGE_PROBE_SPACE_ASTRONOMY.md — 10 topics, rights_basis per RIGHTS_MODEL.md, 3 HD-verified clips (Artemis 4K, Hubble 1080p, Perseverance 4K); top 3 topics: Artemis/SLS, Perseverance, Hubble.
+- [x] K3: Artemis claim ledger (12 claims, TWO_SOURCES/SINGLE_SOURCE flagged), ARTEMIS_FULL_SCRIPT_v0.md (6 beats, 19 sentences, ~3.5–4 min), ARTEMIS_CLAIM_IDS.json, ARTEMIS_SHORTS_PLAN.md (45s Shorts). QC claim_ids PASS (21/21), claim_ids_resolve PASS (21/21). qc.py ledger parser generalized to any <ID>-<digits>; CID regression PASS (52/52).
+- [x] K4: MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md updated (this block).
+
 ## Owner's remaining decisions (consolidated)
 
 1. Voice license: Kokoro-82M weights/code Apache-2.0 (clear, VOICE_DECISION.md); UNKNOWN only synthetic-data training provenance — residual risk, owner decision required.
-2. Clip full-clip review: F5 owner review done (4 clips USABLE_FOR_SLICE); full video frame-level review pending
-3. NASA insignia clearance: decide if incidental insignia requires separate clearance per NASA Media Usage Guidelines
-4. Synthetic-voice disclosure: evaluate against current YouTube rules for synthetic/altered content
-5. Guardian/AdSense: no monetization eligibility review performed
-6. Thumbnail selection: choose one of 3 candidates (docs/openmontage/package/THUMBNAIL_NOTES.md)
-7. AI upscaling of 320x240 archive video: NEEDS OWNER APPROVAL (4th component, not applied)
-8. Install Kokoro-82M + synthesize narration to unblock Milestone I5 (kokoro not installed in this environment)
+2. Clip full-clip review + frame review: identifiable persons, NASA logo/insignia flags UNKNOWN → NEEDS_REVIEW before timeline use (all CID and Artemis candidates).
+3. NASA insignia clearance: decide if incidental insignia requires separate clearance per NASA Media Usage Guidelines.
+4. Synthetic-voice disclosure: evaluate against current YouTube rules for synthetic/altered content.
+5. Guardian/AdSense: no monetization eligibility review performed.
+6. Thumbnail selection: choose one of 3 CID candidates (docs/openmontage/package/THUMBNAIL_NOTES.md).
+7. AI upscaling of 320x240 CID archive video: NEEDS OWNER APPROVAL (4th component, not applied).
+8. Install Kokoro-82M + synthesize narration to unblock Milestone I5 and K3 narration (kokoro not installed in this environment).
 
-**Rollback:** `git revert` of the I commit on branch `factory/business-documentary-pilot`.
+**Rollback:** `git revert` of the K commit on branch `factory/business-documentary-pilot`.

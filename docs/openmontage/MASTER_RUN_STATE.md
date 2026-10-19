@@ -167,4 +167,38 @@
 - **Owner's remaining decisions:** voice license (Kokoro-82M weights/code Apache-2.0 clear; UNKNOWN only synthetic-data training provenance residual risk), clip full-clip review + frame review (identifiable persons, NASA logo/insignia), NASA insignia clearance, synthetic-voice disclosure, Guardian/AdSense, thumbnail selection, AI upscaling approval, install Kokoro + synthesize narration to unblock I5/K3 narration.
 - **Rollback:** `git revert` of the K commit on branch `factory/business-documentary-pilot`.
 
+## Z — Milestone Z (Kilo), factory scope only (2026-10-19)
+
+- **Status:** DONE Z1-Z8, Z9 this close. No publishing, no AI upscaling, no secrets printed. No paid routes. curl -L for downloads. Max 60 requests per phase. Roles inline, not independent. Never touched youtube-niche-finder/ or the owner's .env.example/AGENTS.md. Disk: ~6.2 GB free /workspaces, ~39 GB free /tmp (above 800 MB stop threshold).
+
+| Phase | Status | Evidence | Commit hash |
+|---|---|---|---|
+| Z1 VOICE ENV | DONE | docs/openmontage/Z1_VOICE_ENV.md; python3.12 venv at /tmp/kilo/z1_venv; kokoro==0.2.2/misaki==0.7.17/torch==2.6.0+cpu; Kokoro-82M weights in /tmp/kilo/hf_cache (gitignored); 14.625s sample, finish_audio PASS, qc.py PASS | 580d1d9 |
+| Z2 ARTEMIS DRAFT | DONE | docs/openmontage/slice/artifacts/* (qc.py PASS, 11 PASS + 1 REVIEW); video projects/slice_artemis_v0/renders/final_artemis_draft.mp4 1920x1080p30 185.43s (gitignored); NOT_PUBLISHABLE | e0739ed |
+| Z3 PIPELINE | DONE code+tests, BLOCKED smoke | scripts/run_episode.py + z3_kokoro_narrate.py + z3_subtitles.py + tests/test_run_episode.py (6/6 pass); Kokoro weights unreachable — HF xet/CDN blocked from network | 554ab91 |
+| Z4 CHAPTER MODE | DONE code+tests+spec, BLOCKED dry-run | run_episode.py --chapters + tests/test_run_chapters.py (5/5 pass); docs/openmontage/LONGFORM_SPEC.md | adfbb9e |
+| Z5 SERIES PLAN | DONE | docs/openmontage/SERIES_PLAN.md — 12 ranked space topics | ee3db4a |
+| Z6 SCRIPTS | DONE | 3 topic scripts + claim ledgers + Shorts plans; claim_ids resolve ALL OK | dbd0276 |
+| Z7 PACKAGING | DONE | docs/openmontage/slice/artifacts/ARTEMIS_PACKAGING.md | a798db6 |
+| Z8 REVIEW PACK | DONE | docs/openmontage/REVIEW_PACK.md + Z_STATE.md updated | 3476815 |
+| Z9 CLOSE | In progress | this block | — |
+
+**Blocker carried across Z1/Z3/Z4:** Kokoro-82M weights cannot be downloaded — cas-server.xethub.hf.co (xet) and us.aws.cdn.hf.co (CDN) both unreachable from this network; HF_HUB_DISABLE_XET=1 regular HTTP stuck at 0 bytes. /tmp/kilo venv + weights were wiped mid-session. Owner action: restore Kokoro weights cache on a network with HF access, or reinstall kokoro==0.2.2 + misaki==0.7.17 + torch==2.6.0+cpu in python3.12 venv.
+
+**Rules observed (Z):**
+- KAGGLE_API_TOKEN: never printed/logged/committed; env check yes/no only
+- Network: NASA images-api, archive.org (curl -L), YouTube help page (websearch/webfetch, read-only). HF/GitHub/PyPI for package installs (kokoro, misaki, torch, stable-ts, pillow, torchaudio). NTRS blocked — do not retry.
+- Downloads only into gitignored projects/ or /tmp, never committed; delete temp files
+- Disk < 800 MB free → write state and STOP whole run (disk was ~6.2 GB free, well above threshold)
+- ERROR/HTTP/EMPTY separate states; fail-closed; unmeasured = BLOCKED or NOT_RUN
+- Code test-first (red then green); run new + existing tests; report exact commands/exit codes
+- Roles inline; never claim unobserved work
+
+**Stop Codespace commands (for owner):**
+- `gh codespace stop -c <codespace-name>` — stop the current Codespace
+- `gh codespace list` — list all Codespaces
+- Or from the VS Code Codespaces panel: stop the active codespace
+
+**Rollback:** `git revert` of the Z commits on branch `factory/business-documentary-pilot`.
+
 

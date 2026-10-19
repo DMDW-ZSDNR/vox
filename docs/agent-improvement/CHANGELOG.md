@@ -25,6 +25,52 @@ Record accepted changes, benchmark evidence, reviewer and rollback method.
 ### K4 CLOSE (DONE — this session)
 - MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md updated.
 
+## 2026-10-19 — Milestone Z (Kilo), factory scope only (docs/tools/config)
+
+### Z1 VOICE ENV (DONE)
+- Isolated python3.12 venv at /tmp/kilo/z1_venv (NOT system 3.14.2); pinned kokoro==0.2.2, misaki==0.7.17, soundfile==0.14.0, torch==2.6.0+cpu; Kokoro-82M weights into gitignored /tmp/kilo/hf_cache; 10s sample synthesized (14.625s, RTF 1.38 CPU); finish_audio PASS (loudnorm to -14 LUFS); qc.py PASS (decode/loudness/silence/freeze; ffprobe_streams FAILED expected — audio-only).
+- docs/openmontage/Z1_VOICE_ENV.md written; docs/openmontage/z1_voice_venv.requirements.txt pinned.
+- Blocker: venv + weights wiped mid-session; HF xet CAS + CDN unreachable from this network.
+
+### Z2 ARTEMIS DRAFT (DONE, 3:05)
+- 20-sentence Kokoro narration (af_heart), stable-ts/whisper-tiny word alignment (387 words), 20-cue subtitles, 8 original graphics cards with claim_ids, EDL with per-cut rationale + static_by_design cards, 4x16s HD inserts from NASA GX010506 (1920x1080, used unscaled).
+- qc.py with ALL inputs: PASS (11 PASS + 1 REVIEW freezedetect on static_by_design cards).
+- NOT_PUBLISHABLE: voice-license residual risk, no frame-level review, NASA insignia clearance pending, synthetic-voice disclosure pending, 4 single-source claims flagged (ARTEMIS-02, ARTEMIS-04, ARTEMIS-12).
+- docs/openmontage/slice/artifacts/* (qa_report.json, subtitles.srt, edit_decisions.json, narration_manifest.json, credits.txt, rights_records.json, claim_ids.json, word-timestamps.json).
+- tools/qa/qc.py claim_ids_resolve now splits comma-separated claim_ids (regression test added).
+- Video in gitignored projects/slice_artemis_v0/renders/ — not committed.
+
+### Z3 PIPELINE (DONE code+tests, BLOCKED smoke)
+- scripts/run_episode.py: claim_ledger_check → script_validation → footage_manifest_rights → narration → subtitles → edl → render → finish_audio → qc → package_draft. Per-stage checkpoint with wall-time + disk logging, resume of OK stages, idempotency via output hash, fail-closed (any unverified stage = BLOCKED, non-zero exit), 800MB disk budget fail-closed, STAGE_REGISTRY pluggable for fake-stage tests.
+- scripts/z3_kokoro_narrate.py, scripts/z3_subtitles.py: Kokoro-82M CPU narration + stable-ts alignment helpers.
+- tests/test_run_episode.py: 6 orchestration tests pass (resume skips done stages, mid-chain failure blocks, unknown claim_id blocked, rights unknown blocked, hash mismatch triggers rerun, disk threshold blocks).
+- Real smoke test BLOCKED — Kokoro-82M weights unreachable (same HF network block as Z1).
+
+### Z4 CHAPTER MODE (DONE code+tests+spec, BLOCKED dry-run)
+- scripts/run_episode.py --chapters: split script into <=6 min chapters, per-chapter checkpoint+resume, disk budget check before each chapter, xfade concatenation, final loudness pass on final file.
+- tests/test_run_chapters.py: 5 chapter mode tests pass (split respects max duration, single chapter when short, per-chapter checkpoint+resume, chapter failure blocks remaining, disk budget before each chapter).
+- docs/openmontage/LONGFORM_SPEC.md: 40-50 min targets (7-9 chapters, 80-120 claims, 35-45 min usable visuals), added-value gate per chapter (narration share >=60%, original graphics >=1 per 90s, archive clip <=20s unannotated, still-only <=15s), step ladder 3-4 -> 8-10 -> 15-20 -> 40-50 min with go/no-go driven by owner's YouTube Studio metrics (no invented thresholds).
+- Dry-run on Artemis BLOCKED — Kokoro weights unreachable.
+
+### Z5 SERIES PLAN (DONE)
+- docs/openmontage/SERIES_PLAN.md: 12 ranked space topics; per topic: HD clip count, rights_basis, primary docs reachable, est. usable minutes, max feasible length.
+- Demand from T1 (MEASURED: 5/300 breakouts, weak signal — only 1 English on-topic breakout = JWST first images); footage from T5/T12 (ESTIMATE/MEASURED); primary docs from T15 (MEASURED Apollo 9/10/11 NASA public domain).
+- SpaceX Tier C excluded (no PD footage, copyrighted). No demand claims beyond measured data.
+
+### Z6 SCRIPTS (DONE)
+- Apollo test flights / Saturn V (13 claims), ISS (12 claims), JWST (12 claims) — full scripts (3-5 min each) + claim ledgers + 45s Shorts plans.
+- Apollo: 4 TWO_SOURCE + 9 SINGLE/UNVERIFIED flagged. ISS/JWST: all UNVERIFIED pending NASA primary page verification.
+- claim_ids resolve check: ALL OK — every script sentence's claim_id resolves to its ledger, all SINGLE/UNVERIFIED claims flagged in scripts.
+
+### Z7 PACKAGING (DONE)
+- docs/openmontage/slice/artifacts/ARTEMIS_PACKAGING.md: 3 truthful titles, 3 thumbnail text options, 1280x720 PNG thumbnails (gitignored projects/slice_artemis_v0/thumbnails/, from own graphics cards + NASA Causeway frame, no emblem/people), description with chapters + credits block, synthetic-voice disclosure checklist citing https://support.google.com/youtube/answer/14328491 with paraphrased wording and owner action items.
+
+### Z8 REVIEW PACK (DONE)
+- docs/openmontage/REVIEW_PACK.md: files a fresh session must read (Z_STATE.md, Z1_VOICE_ENV.md, SERIES_PLAN.md, LONGFORM_SPEC.md, ARTEMIS_PACKAGING.md, run_episode.py, test files, claim ledger, example script), verification commands with observed exit codes (29 fast tests pass exit 0, py_compile OK), EVALS.md task status, paste-ready read-only reviewer prompt.
+
+### Z9 CLOSE (this session)
+- OWNER_ACTIONS.md, MASTER_RUN_STATE.md, this CHANGELOG, LESSONS.md updated; stop Codespace commands printed.
+
 ## 2026-10-19 — Milestone I (Kilo), factory scope only
 
 ### I1 SECOND SOURCES (DONE)

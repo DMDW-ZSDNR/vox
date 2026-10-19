@@ -102,18 +102,35 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 
 - [x] K1: Niche profile docs/openmontage/NICHE_PROFILE_SPACE_ASTRONOMY_HD.md created (space & astronomy HD public-domain footage); NICHE_DECISION.md updated — CID stays pilot/test video (demand measured, 320x240 below HD bar).
 - [x] K2: Footage probe docs/openmontage/footage/K2_FOOTAGE_PROBE_SPACE_ASTRONOMY.md — 10 topics, rights_basis per RIGHTS_MODEL.md, 3 HD-verified clips (Artemis 4K, Hubble 1080p, Perseverance 4K); top 3 topics: Artemis/SLS, Perseverance, Hubble.
-- [x] K3: Artemis claim ledger (12 claims, TWO_SOURCES/SINGLE_SOURCE flagged), ARTEMIS_FULL_SCRIPT_v0.md (6 beats, 19 sentences, ~3.5–4 min), ARTEMIS_CLAIM_IDS.json, ARTEMIS_SHORTS_PLAN.md (45s Shorts). QC claim_ids PASS (21/21), claim_ids_resolve PASS (21/21). qc.py ledger parser generalized to any <ID>-<digits>; CID regression PASS (52/52).
+- [x] K3: Artemis claim ledger (12 claims, TWO_SOURCES/SINGLE_SOURCE flagged), ARTEMIS_FULL_SCRIPT_v0.md (6 beats, 19 sentences, ~3.5–4 min), ARTEMIS_CLAIM_IDS.json, ARTEMIS_SHORTS_PLAN.md (45s Shorts). QC claim_ids PASS (21/21), claim_ids_resolve PASS (21/21). Generalized qc.py `_parse_claim_ledger` regex from CID-only to any <ID>-<digits>; CID regression PASS (52/52).
 - [x] K4: MASTER_RUN_STATE.md, OWNER_ACTIONS.md, CHANGELOG.md updated (this block).
 
-## Owner's remaining decisions (consolidated)
+## 12. Milestone Z (Kilo), factory scope only — DONE Z1-Z8, Z9 this close
 
-1. Voice license: Kokoro-82M weights/code Apache-2.0 (clear, VOICE_DECISION.md); UNKNOWN only synthetic-data training provenance — residual risk, owner decision required.
-2. Clip full-clip review + frame review: identifiable persons, NASA logo/insignia flags UNKNOWN → NEEDS_REVIEW before timeline use (all CID and Artemis candidates).
-3. NASA insignia clearance: decide if incidental insignia requires separate clearance per NASA Media Usage Guidelines.
-4. Synthetic-voice disclosure: evaluate against current YouTube rules for synthetic/altered content.
-5. Guardian/AdSense: no monetization eligibility review performed.
-6. Thumbnail selection: choose one of 3 CID candidates (docs/openmontage/package/THUMBNAIL_NOTES.md).
-7. AI upscaling of 320x240 CID archive video: NEEDS OWNER APPROVAL (4th component, not applied).
-8. Install Kokoro-82M + synthesize narration to unblock Milestone I5 and K3 narration (kokoro not installed in this environment).
+- [x] Z1 VOICE ENV: isolated python3.12 venv at /tmp/kilo/z1_venv (NOT system 3.14.2), pinned kokoro==0.2.2/misaki==0.7.17/torch==2.6.0+cpu, Kokoro-82M weights into gitignored /tmp/kilo/hf_cache; 10s sample synthesized, finish_audio PASS, qc.py PASS (decode/loudness/silence/freeze). **BLOCKER: venv + weights wiped during session; HF xet CAS + CDN unreachable from this network; HF_HUB_DISABLE_XET=1 regular HTTP stuck at 0 bytes. Owner action: restore /tmp/kilo/z1_venv + /tmp/kilo/hf_cache on a network with HF access.**
+- [x] Z2 ARTEMIS DRAFT (3:05): 20-sentence Kokoro narration, stable-ts word alignment, 20-cue subtitles, 8 original graphics cards with claim_ids, EDL with per-cut rationale + static_by_design cards, 4x16s HD inserts from NASA GX010506 (1920x1080, used unscaled). qc.py with ALL inputs: PASS (11 PASS + 1 REVIEW freezedetect on static_by_design cards). NOT_PUBLISHABLE (voice-license residual risk, no frame-level review, NASA insignia clearance pending, synthetic-voice disclosure pending, 4 single-source claims flagged).
+- [x] Z3 PIPELINE: scripts/run_episode.py (claim_ledger_check → … → package_draft), per-stage checkpoint + resume + idempotency via output hash + fail-closed + 800MB disk budget + wall-time/disk logging. 6/6 orchestration tests pass with fake stages (resume, mid-chain failure, unknown claim_id, rights unknown, hash mismatch, disk threshold). Real smoke test BLOCKED — same Kokoro weight download issue as Z1.
+- [x] Z4 CHAPTER MODE: --chapters splits script into <=6 min chapters, per-chapter checkpoint+resume + disk budget before each chapter + xfade concat + final loudness pass. 5/5 chapter tests pass. docs/openmontage/LONGFORM_SPEC.md written (40-50 min targets, added-value gate, step ladder, no invented thresholds). Dry-run BLOCKED — Kokoro weights.
+- [x] Z5 SERIES PLAN: docs/openmontage/SERIES_PLAN.md — 12 ranked space topics, per topic: HD clip count, rights_basis, primary docs reachable, est. usable minutes, max feasible length; T1 demand measured (5/300 breakouts, weak signal); SpaceX Tier C excluded (no PD footage).
+- [x] Z6 SCRIPTS: Apollo test flights / Saturn V, ISS, JWST — full scripts (3-5 min each) + claim ledgers + 45s Shorts plans. claim_ids resolve check: ALL OK (every claim_id resolves to ledger, all SINGLE/UNVERIFIED flagged). Apollo: 4 TWO_SOURCE + 9 SINGLE/UNVERIFIED flagged. ISS/JWST: all UNVERIFIED pending NASA primary page verification.
+- [x] Z7 PACKAGING: docs/openmontage/slice/artifacts/ARTEMIS_PACKAGING.md — 3 truthful titles, 3 thumbnail text options, 1280x720 PNG thumbnails (gitignored projects/ from own graphics + NASA still, no emblem/people), description with chapters + credits block, synthetic-voice disclosure checklist citing https://support.google.com/youtube/answer/14328491 with owner action items.
+- [x] Z8 REVIEW PACK: docs/openmontage/REVIEW_PACK.md — files a fresh session must read, paste-ready read-only reviewer prompt, verification commands with exit codes. All 29 fast tests pass (exit 0), py_compile OK.
+- [ ] Z9 CLOSE: this block — update OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CHANGELOG.md, LESSONS.md; print stop-Codespace commands.
 
-**Rollback:** `git revert` of the K commit on branch `factory/business-documentary-pilot`.
+## Owner's remaining decisions (consolidated, incl. Z additions)
+
+1. **Kokoro weights restore (REQUIRED for any narration):** /tmp/kilo/z1_venv + /tmp/kilo/hf_cache wiped; HF xet CAS server (cas-server.xethub.hf.co) and CDN (us.aws.cdn.hf.co) unreachable from this network. Restore on a network with HF access, or reinstall kokoro==0.2.2 + misaki==0.7.17 + torch==2.6.0+cpu in python3.12 venv.
+2. **Voice license:** Kokoro-82M weights/code Apache-2.0 (clear); UNKNOWN only synthetic-data training provenance — residual risk, owner decision required.
+3. **Clip full-clip review + frame review:** identifiable persons, NASA logo/insignia flags UNKNOWN → NEEDS_REVIEW before timeline use (all Artemis candidates).
+4. **NASA insignia clearance:** decide if incidental insignia requires separate clearance per NASA Media Usage Guidelines.
+5. **Synthetic-voice disclosure:** evaluate against https://support.google.com/youtube/answer/14328491; set "AI use" = Yes in YouTube Studio before any upload.
+6. **Guardian/AdSense:** no monetization eligibility review performed.
+7. **Thumbnail selection:** choose one of 3 Artemis candidates (projects/slice_artemis_v0/thumbnails/, gitignored).
+
+**Rollback:** `git revert` of the Z commit on branch `factory/business-documentary-pilot`.
+
+**Stop Codespace commands (for owner):**
+- `gh codespace stop -c <codespace-name>` — stop the current Codespace
+- `gh codespace list` — list all Codespaces
+- Or from the VS Code Codespaces panel: stop the active codespace
+

@@ -1,9 +1,13 @@
-"""HeyGen-backed cloud video generation."""
+"""HeyGen-backed cloud video generation (retired).
+
+HeyGen removed the v1 Workflows API (`POST /v1/workflows/executions`,
+`GenerateVideoNode`) on 2026-10-31 and v3 has no replacement, so this tool
+always reports itself unavailable. HeyGen avatar videos live in
+`tools/avatar/heygen_avatar.py` (v3).
+"""
 
 from __future__ import annotations
 
-import os
-import time
 from typing import Any
 
 from tools.base_tool import (
@@ -18,7 +22,7 @@ from tools.base_tool import (
     ToolStatus,
     ToolTier,
 )
-from tools.video._shared import HEYGEN_PROVIDERS, estimate_quality_cost, estimate_speed_runtime, generate_heygen_video
+from tools.video._shared import HEYGEN_PROVIDERS, estimate_quality_cost, estimate_speed_runtime
 
 
 class HeyGenVideo(BaseTool):
@@ -33,9 +37,8 @@ class HeyGenVideo(BaseTool):
     runtime = ToolRuntime.API
 
     install_instructions = (
-        "Set the HEYGEN_API_KEY environment variable:\n"
-        "  set HEYGEN_API_KEY=your_key_here\n"
-        "Get a key at https://app.heygen.com/settings/api"
+        "Retired: HeyGen shut down the v1 Workflows API on 2026-10-31 with no v3 "
+        "replacement. Use video_selector with another provider."
     )
     fallback = "wan_video"
     fallback_tools = ["wan_video", "hunyuan_video", "ltx_video_local", "cogvideo_video", "ltx_video_modal", "image_selector"]
@@ -93,7 +96,7 @@ class HeyGenVideo(BaseTool):
     user_visible_verification = ["Watch generated clip for motion quality and prompt adherence"]
 
     def get_status(self) -> ToolStatus:
-        return ToolStatus.AVAILABLE if os.environ.get("HEYGEN_API_KEY") else ToolStatus.UNAVAILABLE
+        return ToolStatus.UNAVAILABLE
 
     def estimate_cost(self, inputs: dict[str, Any]) -> float:
         meta = HEYGEN_PROVIDERS.get(inputs.get("provider_variant", "veo_3_1"), HEYGEN_PROVIDERS["veo_3_1"])
@@ -104,14 +107,4 @@ class HeyGenVideo(BaseTool):
         return estimate_speed_runtime(meta["speed"])
 
     def execute(self, inputs: dict[str, Any]) -> ToolResult:
-        if self.get_status() != ToolStatus.AVAILABLE:
-            return ToolResult(success=False, error="HeyGen video generation is unavailable. " + self.install_instructions)
-        start = time.time()
-        try:
-            result = generate_heygen_video(inputs)
-        except Exception as exc:
-            return ToolResult(success=False, error=f"HeyGen video generation failed: {exc}")
-        result.duration_seconds = round(time.time() - start, 2)
-        result.cost_usd = self.estimate_cost(inputs)
-        return result
-
+        return ToolResult(success=False, error=self.install_instructions)

@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-import time
 from pathlib import Path
 from typing import Any
 
@@ -482,38 +481,6 @@ def generate_local_video(
     )
 
 
-def poll_heygen(execution_id: str, api_key: str, timeout: int = 600) -> str:
-    import requests
-
-    headers = {"X-Api-Key": api_key}
-    url = f"https://api.heygen.com/v1/workflows/executions/{execution_id}"
-    deadline = time.time() + timeout
-    interval = 5.0
-
-    while time.time() < deadline:
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()
-        data = response.json().get("data", {})
-        status = data.get("status", "")
-
-        if status == "completed":
-            video_url = (
-                data.get("output", {}).get("video", {}).get("video_url")
-                or data.get("output", {}).get("video_url")
-            )
-            if video_url:
-                return video_url
-            raise RuntimeError(f"Completed but no video_url in output: {data}")
-
-        if status in {"failed", "error"}:
-            raise RuntimeError(f"HeyGen generation failed: {data.get('error', 'Unknown')}")
-
-        time.sleep(min(interval, max(0.0, deadline - time.time())))
-        interval = min(interval * 1.2, 30.0)
-
-    raise TimeoutError(f"HeyGen execution {execution_id} timed out after {timeout}s")
-
-
 def upload_image_fal(image_path: str) -> str:
     """Upload a local image to fal.ai storage and return a public URL."""
     import requests
@@ -551,118 +518,6 @@ def upload_image_fal(image_path: str) -> str:
     put_resp.raise_for_status()
 
     return data["file_url"]
-
-
-def upload_image_heygen(image_path: str, api_key: str) -> str:
-    """Upload a local image to HeyGen and return a public URL.
-
-    Tries the v2 presigned-upload endpoint first, falls back to fal.ai storage.
-    """
-    import requests
-
-    path = Path(image_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Image not found: {image_path}")
-
-    # Try HeyGen v2 presigned upload
-    try:
-        resp = requests.post(
-            "https://api.heygen.com/v2/assets/upload",
-            headers={"X-Api-Key": api_key, "Content-Type": "application/json"},
-            json={"content_type": "image/png", "file_name": path.name},
-            timeout=30,
-        )
-        if resp.status_code == 200:
-            data = resp.json().get("data", {})
-            upload_url = data.get("upload_url")
-            file_url = data.get("url") or data.get("file_url")
-            if upload_url and file_url:
-                put_resp = requests.put(
-                    upload_url,
-                    headers={"Content-Type": "image/png"},
-                    data=path.read_bytes(),
-                    timeout=60,
-                )
-                put_resp.raise_for_status()
-                return file_url
-    except Exception:
-        pass
-
-    # Fallback to fal.ai storage upload
-    return upload_image_fal(image_path)
-
-
-def generate_heygen_video(inputs: dict[str, Any]) -> ToolResult:
-    import requests
-
-    api_key = os.environ.get("HEYGEN_API_KEY")
-    if not api_key:
-        return ToolResult(success=False, error="HEYGEN_API_KEY not set.")
-
-    provider = inputs.get("provider_variant", "veo_3_1")
-    if provider not in HEYGEN_PROVIDERS:
-        return ToolResult(
-            success=False,
-            error=f"Unknown provider_variant: {provider}. Available: {', '.join(sorted(HEYGEN_PROVIDERS))}",
-        )
-
-    prompt = inputs["prompt"]
-    aspect_ratio = inputs.get("aspect_ratio", "16:9")
-    operation = inputs.get("operation", "text_to_video")
-    workflow_input: dict[str, Any] = {
-        "prompt": prompt,
-        "provider": provider,
-        "aspect_ratio": aspect_ratio,
-    }
-    if operation == "image_to_video":
-        ref_url = inputs.get("reference_image_url")
-        ref_path = inputs.get("reference_image_path")
-        if ref_path and not ref_url:
-            ref_url = upload_image_heygen(ref_path, api_key)
-        if not ref_url:
-            return ToolResult(
-                success=False,
-                error="image_to_video requires reference_image_url or reference_image_path",
-            )
-        workflow_input["reference_image_url"] = ref_url
-
-    response = requests.post(
-        "https://api.heygen.com/v1/workflows/executions",
-        headers={"X-Api-Key": api_key, "Content-Type": "application/json"},
-        json={"workflow_type": "GenerateVideoNode", "input": workflow_input},
-        timeout=30,
-    )
-    response.raise_for_status()
-    payload = response.json()
-    execution_id = payload.get("data", {}).get("execution_id")
-    if not execution_id:
-        return ToolResult(success=False, error=f"No execution_id in response: {payload}")
-
-    video_url = poll_heygen(execution_id, api_key, timeout=600)
-    output_path = Path(inputs.get("output_path", f"heygen_video_{execution_id}.mp4"))
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    download = requests.get(video_url, timeout=120)
-    download.raise_for_status()
-    output_path.write_bytes(download.content)
-
-    meta = HEYGEN_PROVIDERS[provider]
-    return ToolResult(
-        success=True,
-        data={
-            "provider": "heygen",
-            "provider_variant": provider,
-            "provider_name": meta["name"],
-            "mode": "api",
-            "prompt": prompt,
-            "aspect_ratio": aspect_ratio,
-            "operation": operation,
-            "execution_id": execution_id,
-            "output": str(output_path),
-            "format": "mp4",
-        },
-        artifacts=[str(output_path)],
-        model=provider,
-    )
 
 
 def generate_ltx_modal_video(inputs: dict[str, Any]) -> ToolResult:

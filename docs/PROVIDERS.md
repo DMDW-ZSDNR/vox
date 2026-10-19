@@ -47,7 +47,7 @@ quality require live validation in the intended environment.
 | 9 | **pay-as-you-go** | Volcengine Ark | Official direct Seedance 2.0 Standard/Fast/Mini API |
 | 10 | **$12/month** | Runway | Gen-4 video — highest quality AI video |
 | 11 | **pay-as-you-go** | Hunyuan cloud video | Chinese-friendly T2V + I2V |
-| 12 | **pay-as-you-go** | HeyGen | Avatar videos, multi-model video gateway |
+| 12 | **pay-as-you-go** | HeyGen | Avatar V videos (API v3) |
 | 13 | **pay-as-you-go** | Suno | Full song generation with vocals and lyrics |
 | 14 | **$0 + GPU** | Local video gen | WAN 2.1, Hunyuan, CogVideo, LTX — free, offline |
 | 15 | **$0 + GPU** | Local Diffusion | Stable Diffusion images — free, offline |
@@ -90,7 +90,7 @@ KLING_API_BASE_URL=          # Optional; default https://api-singapore.klingai.c
 ARK_API_KEY=                 # API key body only; do not include the "Bearer " prefix
 
 # VIDEO
-HEYGEN_API_KEY=              # HeyGen avatar video gateway
+HEYGEN_API_KEY=              # HeyGen avatar video (API v3)
 RUNWAY_API_KEY=              # Runway native + Seedance 2.5, Gemini Omni, MiniMax H3
 SUNO_API_KEY=                # Suno music generation
 
@@ -1008,9 +1008,10 @@ Gen-3 Alpha Turbo and Gen-4 Aleph were removed from the Runway API on
 
 ### HeyGen — Avatar Video Gateway
 
-> **Multi-model video gateway.** Access VEO, Sora, Runway, Kling, and Seedance through a single API.
+> **Avatar video, API v3 only.** HeyGen shut down every v1/v2 endpoint on 2026-10-31. The old
+> multi-model gateway (`heygen_video`, v1 Workflows API) had no v3 replacement and is retired.
 
-**Tools unlocked:** `heygen_video`
+**Tools unlocked:** `heygen_avatar` · **Skills:** `heygen-video`, `heygen-avatar`, `heygen-translate`
 **Env var:** `HEYGEN_API_KEY`
 
 #### Setup
@@ -1454,7 +1455,7 @@ These tools require only FFmpeg or Python packages — no GPU, no API key.
 | **xAI** | `XAI_API_KEY` | `grok_image`, `grok_video` | Paid only |
 | **Runway** | `RUNWAY_API_KEY` | `runway_video` | Free trial + paid |
 | **Higgsfield** | `HIGGSFIELD_API_KEY` + `HIGGSFIELD_API_SECRET` | `higgsfield_video` | Subscription ($15-84/mo) |
-| **HeyGen** | `HEYGEN_API_KEY` | `heygen_video` | Pay-as-you-go |
+| **HeyGen** | `HEYGEN_API_KEY` | `heygen_avatar` | Pay-as-you-go |
 | **Suno** | `SUNO_API_KEY` | `suno_music` | Pay-as-you-go |
 | **Tencent Hunyuan** | `TENCENT_TOKENHUB_API_KEY` | `hunyuan_cloud_video` | Pay-as-you-go (~$0.25–0.83/gen) |
 | **Local GPU** | `VIDEO_GEN_LOCAL_ENABLED` | `wan_video`, `hunyuan_video`, `cogvideo_video`, `ltx_video_local` | Free (GPU required) |

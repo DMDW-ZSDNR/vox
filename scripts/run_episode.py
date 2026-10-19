@@ -106,6 +106,25 @@ def shared_assets():
     return ROOT / "docs/openmontage/slice/artifacts"
 
 
+def _chap_idx(state):
+    return state.get("chapter_index")
+
+
+def _narration_paths(topic_id, state):
+    """Per-chapter narration wavs so chapters don't clobber each other."""
+    base = slice_dir(topic_id)
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    return base / f"narration_raw{tag}.wav", base / f"narration_finished{tag}.wav"
+
+
+def _render_out(topic_id, state):
+    base = slice_dir(topic_id) / "renders"
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    return base / f"final_{topic_id}_draft{tag}.mp4"
+
+
 # ---------------------------------------------------------------------------
 # Stage implementations
 # ---------------------------------------------------------------------------
@@ -115,7 +134,7 @@ def cmd_claim_ledger_check(topic_id, state):
         return {"status": "BLOCKED", "error": f"no claim ledger for topic {topic_id}"}
     text = ledger.read_text(encoding="utf-8")
     import re
-    ids = re.findall(r"ARTEMIS-\d+", text)
+    ids = re.findall(r"\b[A-Za-z][A-Za-z0-9]*-[0-9]+\b", text)
     claim_ids = sorted(set(ids))
     if not claim_ids:
         return {"status": "BLOCKED", "error": "claim ledger has no claim_ids"}
@@ -131,7 +150,7 @@ def cmd_script_validation(topic_id, state):
         if not line.strip().startswith("| B"):
             continue
         cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 3 and cells[0][:2] in ("B1", "B2", "B3", "B4", "B5", "B6"):
+        if len(cells) >= 3 and cells[0][0] == "B" and cells[0][1:].isdigit():
             sentences.append(cells[1])
     missing = [i for i, s in enumerate(sentences) if not s]
     if missing:
@@ -153,11 +172,12 @@ def cmd_footage_manifest_rights(topic_id, state):
 
 def cmd_narration(topic_id, state):
     slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
-    raw = slice_dir(topic_id) / "narration_raw.wav"
-    wav = slice_dir(topic_id) / "narration_finished.wav"
+    raw, wav = _narration_paths(topic_id, state)
     if wav.exists():
         return {"status": "OK", "outputs": {"narration_wav": str(wav)}}
-    script = topic_script(topic_id)
+    # Chapter mode: synthesize only this chapter's sentences (chapter_script),
+    # otherwise the full topic script.
+    script = state.get("chapter_script") or topic_script(topic_id)
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     if not raw.exists():
@@ -176,28 +196,58 @@ def cmd_narration(topic_id, state):
     )
     if not result.success:
         return {"status": "BLOCKED", "error": f"finish_audio failed: {result.error}"}
-    return {"status": "OK", "outputs": {"narration_wav": str(wav), **result.data}}
+    # Record the ACTUAL synthesized duration so QC duration_vs_script compares
+    # video against the narration that was actually produced (not a stale value).
+    dur = result.data.get("duration_s")
+    if dur is None:
+        import subprocess as _sp, json as _json
+        probe = _sp.run(["ffprobe", "-v", "quiet", "-print_format", "json",
+                         "-show_format", str(wav)], capture_output=True, text=True)
+        try:
+            dur = round(float(_json.loads(probe.stdout)["format"]["duration"]), 6)
+        except Exception:
+            dur = None
+    manifest = {
+        "expected_duration": dur,
+        "tolerance": 1.0,
+        "sample_rate": 44100,
+        "voice": "af_heart",
+        "engine": "kokoro_onnx_82m_cpu",
+        "sentences": len(sentences),
+    }
+    shared_assets().mkdir(parents=True, exist_ok=True)
+    chap = _chap_idx(state)
+    mtag = f"_chapter{chap}" if chap is not None else ""
+    (shared_assets() / f"narration_manifest{mtag}.json").write_text(
+        json.dumps(manifest, indent=2), encoding="utf-8"
+    )
+    return {"status": "OK", "outputs": {"narration_wav": str(wav), **result.data,
+                                        "narration_duration_s": dur}}
 
 
 def cmd_subtitles(topic_id, state):
-    wav = slice_dir(topic_id) / "narration_finished.wav"
+    _raw, wav = _narration_paths(topic_id, state)
     if not wav.exists():
         return {"status": "BLOCKED", "error": "no finished narration for subtitles"}
     slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
-    words_out = slice_dir(topic_id) / "word-timestamps.json"
-    srt_out = slice_dir(topic_id) / "subtitles.srt"
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    words_out = slice_dir(topic_id) / f"word-timestamps{tag}.json"
+    srt_out = slice_dir(topic_id) / f"subtitles{tag}.srt"
     if words_out.exists() and srt_out.exists():
         return {"status": "OK", "outputs": {"words": str(words_out), "subtitles": str(srt_out)}}
     helper = ROOT / "scripts" / "z3_subtitles.py"
     if not helper.exists():
         return {"status": "BLOCKED", "error": "subtitle helper missing"}
-    script = topic_script(topic_id)
+    script_path = state.get("chapter_script") or topic_script(topic_id)
+    if not script_path:
+        return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     sentences = []
-    for line in script.read_text(encoding="utf-8").splitlines():
+    for line in Path(script_path).read_text(encoding="utf-8").splitlines():
         if not line.strip().startswith("| B"):
             continue
         cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 3 and cells[0][:2] in ("B1", "B2", "B3", "B4", "B5", "B6"):
+        if len(cells) >= 3 and cells[0][0] == "B" and cells[0][1:].isdigit():
             sentences.append(cells[1])
     text = " ".join(sentences)
     res = subprocess.run(
@@ -210,7 +260,9 @@ def cmd_subtitles(topic_id, state):
 
 
 def cmd_edl(topic_id, state):
-    out = slice_dir(topic_id) / "edit_decisions.json"
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    out = slice_dir(topic_id) / f"edit_decisions{tag}.json"
     if out.exists():
         return {"status": "OK", "outputs": {"edit_decisions": str(out)}}
     total = 185.43
@@ -296,10 +348,12 @@ def _ffmpeg(args, timeout=3600):
 
 def cmd_render(topic_id, state):
     out_dir = slice_dir(topic_id) / "renders"
-    out = out_dir / f"final_{topic_id}_draft.mp4"
+    out = _render_out(topic_id, state)
     if out.exists():
         return {"status": "OK", "outputs": {"video": str(out)}}
-    edl = slice_dir(topic_id) / "edit_decisions.json"
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    edl = slice_dir(topic_id) / f"edit_decisions{tag}.json"
     if not edl.exists():
         return {"status": "BLOCKED", "error": "no EDL to render"}
     footage = ROOT / "projects/slice_artemis_v0/footage/artemis_launch_source.mp4"
@@ -366,6 +420,19 @@ def cmd_finish_audio(topic_id, state):
     wav = slice_dir(topic_id) / "narration_finished.wav"
     if not wav.exists():
         return {"status": "BLOCKED", "error": "no narration to finish"}
+    # Idempotent: finish_audio output is 44100 Hz; raw kokoro output is 24000 Hz.
+    # If already 44100 Hz, narration was finished by the narration stage -> skip.
+    import subprocess as _sp, json as _json
+    probe = _sp.run(["ffprobe", "-v", "quiet", "-print_format", "json",
+                     "-show_streams", str(wav)], capture_output=True, text=True)
+    try:
+        streams = _json.loads(probe.stdout).get("streams", [])
+        audio_streams = [s for s in streams if s.get("codec_type") == "audio"]
+        if audio_streams and int(audio_streams[0].get("sample_rate", 0)) == 44100:
+            return {"status": "OK", "outputs": {"finished_wav": str(wav),
+                                                "already_finished": True}}
+    except Exception:
+        pass  # fall through to re-finish if probe is inconclusive
     from tools.audio.finish_audio import FinishAudioTool  # noqa: WPS433
     finished = wav.with_name("narration_finished.wav")
     result = FinishAudioTool().execute({"input_path": str(wav), "output_path": str(finished)})
@@ -382,16 +449,18 @@ def cmd_qc(topic_id, state):
         return {"status": "BLOCKED", "error": "no rendered video for QC"}
     if not ledger:
         return {"status": "BLOCKED", "error": f"no claim ledger for topic {topic_id}"}
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
     inputs = {
         "input_path": str(video),
-        "output_path": str(assets / "qa_report.json"),
-        "narration_manifest": str(assets / "narration_manifest.json"),
-        "subtitle_path": str(slice_dir(topic_id) / "subtitles.srt"),
+        "output_path": str(assets / f"qa_report{tag}.json"),
+        "narration_manifest": str(shared_assets() / f"narration_manifest{tag}.json"),
+        "subtitle_path": str(slice_dir(topic_id) / f"subtitles{tag}.srt"),
         "credits_path": str(assets / "credits.txt"),
         "claim_ids_path": str(assets / "claim_ids.json"),
         "claim_ledger_path": str(ledger),
         "rights_records_path": str(assets / "rights_records.json"),
-        "edit_decisions_path": str(slice_dir(topic_id) / "edit_decisions.json"),
+        "edit_decisions_path": str(slice_dir(topic_id) / f"edit_decisions{tag}.json"),
     }
     for k in ("narration_manifest", "subtitle_path", "credits_path", "claim_ids_path",
               "rights_records_path", "edit_decisions_path"):
@@ -531,7 +600,7 @@ def split_script_into_chapters(script_path, max_duration_s=MAX_CHAPTER_DURATION)
         if not line.strip().startswith("| B"):
             continue
         cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 3 and cells[0][:2] in ("B1", "B2", "B3", "B4", "B5", "B6"):
+        if len(cells) >= 3 and cells[0][0] == "B" and cells[0][1:].isdigit():
             sentences.append(cells[1])
 
     chapters = []

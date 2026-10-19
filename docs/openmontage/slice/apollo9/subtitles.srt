@@ -1,0 +1,536 @@
+1
+00:00:01,180 --> 00:00:03,120
+Did Apollo 9 almost fail?
+
+2
+00:00:03,240 --> 00:00:04,380
+You may never have heard of it,
+
+3
+00:00:04,480 --> 00:00:07,900
+but this ten‑day mission in March 1969 was
+
+4
+00:00:07,960 --> 00:00:10,220
+the first flight of the full Apollo spacecraft
+
+5
+00:00:10,760 --> 00:00:11,840
+— command module,
+
+6
+00:00:12,320 --> 00:00:12,780
+service module,
+
+7
+00:00:13,120 --> 00:00:15,200
+and lunar module flying together as one.
+
+8
+00:00:16,180 --> 00:00:19,380
+A single engine misfire nearly derailed the entire Moon program.
+
+9
+00:00:20,280 --> 00:00:21,760
+Here is what actually happened,
+
+10
+00:00:22,040 --> 00:00:22,920
+from NASA's own records.
+
+11
+00:00:24,360 --> 00:00:28,520
+Three men flew Apollo 9. Commander James A. McDivitt,
+
+12
+00:00:28,780 --> 00:00:32,100
+a Gemini 4 veteran and commander of Apollo 9,
+
+13
+00:00:32,460 --> 00:00:34,260
+first flight of the complete set of Apollo
+
+14
+00:00:34,260 --> 00:00:37,440
+hardware and first flight of the Lunar Module.
+
+15
+00:00:38,040 --> 00:00:40,640
+Command Module Pilot David R. Scott,
+
+16
+00:00:40,740 --> 00:00:43,090
+who flew Gemini 8 and Apollo 9,
+
+17
+00:00:43,400 --> 00:00:45,480
+later commanded Apollo 15,
+
+18
+00:00:45,480 --> 00:00:49,480
+and logged 546 hours and 54 minutes in space
+
+19
+00:00:49,680 --> 00:00:53,480
+including 20 hours 46 minutes of EVA; he later became
+
+20
+00:00:53,480 --> 00:00:56,640
+Director of NASA's Dryden Flight Research Center.
+
+21
+00:00:57,240 --> 00:00:59,760
+Lunar Module Pilot Russell L. Schweickart,
+
+22
+00:01:00,140 --> 00:01:03,090
+from NASA's third astronaut group in October 1963,
+
+23
+00:01:03,840 --> 00:01:08,240
+logged 241 hours in space on Apollo 9 — the first manned flight
+
+24
+00:01:08,240 --> 00:01:11,600
+of the Lunar Module; during EVA tested the portable life support
+
+25
+00:01:11,740 --> 00:01:14,900
+system backpack subsequently used on lunar surface explorations.
+
+26
+00:01:15,860 --> 00:01:16,460
+Their backup crew:
+
+27
+00:01:17,000 --> 00:01:19,380
+Charles Conrad Jr. (CDR),
+
+28
+00:01:19,560 --> 00:01:21,020
+Alan L. Bean (LMP),
+
+29
+00:01:21,720 --> 00:01:24,060
+Richard F. Gordon Jr. (CMP).
+
+30
+00:01:25,220 --> 00:01:26,560
+The two spacecraft had names:
+
+31
+00:01:27,200 --> 00:01:28,180
+the Lunar Module,
+
+32
+00:01:28,360 --> 00:01:30,050
+nicknamed Spider (LM‑3),
+
+33
+00:01:30,420 --> 00:01:32,270
+and the Command and Service Module,
+
+34
+00:01:32,580 --> 00:01:34,770
+nicknamed Gumdrop (CSM‑104).
+
+35
+00:01:36,180 --> 00:01:39,240
+This was the first manned flight of the LM — the first
+
+36
+00:01:39,240 --> 00:01:41,700
+manned flight of all lunar hardware in Earth orbit.
+
+37
+00:01:42,920 --> 00:01:45,390
+Two hours and 41 minutes after launch,
+
+38
+00:01:45,480 --> 00:01:47,380
+CSM Gumdrop turned to face Spider,
+
+39
+00:01:47,820 --> 00:01:50,590
+still attached to the S‑IVB third stage,
+
+40
+00:01:50,720 --> 00:01:54,040
+and completed the first successful docking of the Apollo program.
+
+41
+00:01:54,700 --> 00:01:55,630
+About an hour later,
+
+42
+00:01:56,020 --> 00:01:59,780
+springs ejected the docked spacecraft from the S‑IVB. The
+
+43
+00:01:59,780 --> 00:02:02,850
+crew pressurized the tunnel between Gumdrop and Spider,
+
+44
+00:02:02,980 --> 00:02:04,740
+removed the CM hatch,
+
+45
+00:02:04,900 --> 00:02:07,360
+connected umbilicals to power the LM while docked,
+
+46
+00:02:07,840 --> 00:02:09,640
+then replaced the hatch.
+
+47
+00:02:10,000 --> 00:02:11,240
+On flight day 3,
+
+48
+00:02:11,540 --> 00:02:14,860
+McDivitt and Schweickart put on spacesuits and transferred to the
+
+49
+00:02:14,860 --> 00:02:18,540
+LM through the tunnel connection to perform a systems checkout.
+
+50
+00:02:18,860 --> 00:02:23,200
+This included a 367‑second firing of the LM descent engine
+
+51
+00:02:23,520 --> 00:02:26,340
+to simulate the throttle pattern to be used during a lunar
+
+52
+00:02:26,340 --> 00:02:30,560
+landing mission — McDivitt controlled the final 59 seconds,
+
+53
+00:02:30,980 --> 00:02:34,200
+varying the thrust from 10 to 40 percent and shutting it off
+
+54
+00:02:34,200 --> 00:02:37,600
+manually — the first crewed throttling of an engine in space.
+
+55
+00:02:38,540 --> 00:02:41,420
+They also tested the landing and rendezvous radars and
+
+56
+00:02:41,420 --> 00:02:44,660
+made a 5‑minute television broadcast from inside Spider.
+
+57
+00:02:45,600 --> 00:02:48,380
+The flight plan called for a two‑hour EVA to simulate
+
+58
+00:02:48,630 --> 00:02:51,340
+external transfer rescue techniques — the only
+
+59
+00:02:51,340 --> 00:02:54,420
+planned EVA from the LM before an actual lunar landing.
+
+60
+00:02:55,340 --> 00:02:58,000
+But Schweickart suffered space motion sickness,
+
+61
+00:02:58,340 --> 00:03:00,020
+vomiting twice during the first two days,
+
+62
+00:03:00,440 --> 00:03:02,700
+so the EVA was delayed and then shortened
+
+63
+00:03:02,700 --> 00:03:06,370
+from a planned 2 hours to 37.5 minutes.
+
+64
+00:03:06,600 --> 00:03:07,160
+Instead,
+
+65
+00:03:07,320 --> 00:03:11,360
+he climbed out of the LM porch for a 37.5‑minute EVA,
+
+66
+00:03:11,740 --> 00:03:14,060
+testing the EVA mobility unit including
+
+67
+00:03:14,200 --> 00:03:16,260
+the portable life support system backpack
+
+68
+00:03:16,880 --> 00:03:20,020
+— this was the first and only EVA before the lunar landing
+
+69
+00:03:20,360 --> 00:03:23,540
+and the only opportunity to test the PLSS in space.
+
+70
+00:03:24,780 --> 00:03:27,380
+Schweickart floated out the LM side hatch onto the front porch
+
+71
+00:03:27,380 --> 00:03:31,400
+using gold‑painted foot restraints ("golden slippers"); Scott
+
+72
+00:03:31,400 --> 00:03:34,640
+opened the CM side hatch and floated partway out (stand‑up
+
+73
+00:03:35,280 --> 00:03:37,790
+EVA); both spent about 37 minutes outside.
+
+74
+00:03:38,460 --> 00:03:42,520
+Schweickart's only connection to the LM was a 25‑foot nylon rope;
+
+75
+00:03:42,520 --> 00:03:45,380
+he maneuvered on handrails near the hatch (found them easy),
+
+76
+00:03:45,940 --> 00:03:46,480
+took photographs,
+
+77
+00:03:46,960 --> 00:03:50,980
+and described rain squalls over KSC. Scott performed a stand‑up
+
+78
+00:03:50,980 --> 00:03:55,470
+EVA (about 1 hour 4 minutes) from the CM hatch without a PLSS,
+
+79
+00:03:56,180 --> 00:03:57,980
+connected to CM life support via
+
+80
+00:03:57,980 --> 00:03:59,840
+umbilicals and a Pressure Control Valve,
+
+81
+00:04:00,200 --> 00:04:01,220
+and filmed Schweickart.
+
+82
+00:04:02,420 --> 00:04:04,460
+Scott stood in the open side hatch of Gumdrop
+
+83
+00:04:04,580 --> 00:04:07,440
+observing Schweickart's EVA activities.
+
+84
+00:04:07,580 --> 00:04:10,520
+Mission Control called it a complete success — the first
+
+85
+00:04:10,620 --> 00:04:14,980
+and only spacesuit/PLSS test before the Moon landing.
+
+86
+00:04:15,560 --> 00:04:19,360
+Flight day 5: McDivitt and Schweickart undocked in Spider for a 6
+
+87
+00:04:19,360 --> 00:04:22,900
+hour 23‑minute independent flight while Scott remained in Gumdrop.
+
+88
+00:04:23,840 --> 00:04:25,950
+About 45 minutes after undocking,
+
+89
+00:04:26,300 --> 00:04:31,400
+Spider's DPS engine fired 19 seconds (first at 10% thrust then throttled
+
+90
+00:04:32,060 --> 00:04:36,060
+to 40%) beginning separation and placing it about 50 miles from
+
+91
+00:04:36,250 --> 00:04:41,400
+Gumdrop; a 22‑second DPS burn opened the distance to about 100 miles.
+
+92
+00:04:42,360 --> 00:04:45,500
+To begin rendezvous Spider fired ascent‑stage RCS
+
+93
+00:04:45,520 --> 00:04:48,980
+thrusters for 32 seconds while jettisoning the Descent
+
+94
+00:04:49,040 --> 00:04:52,520
+Stage (which remained in orbit until March 22,
+
+95
+00:04:53,160 --> 00:04:58,040
+burning up over the Indian Ocean); first APS burn lasted 3 seconds,
+
+96
+00:04:58,620 --> 00:05:01,200
+second APS burn 38 seconds put Spider
+
+97
+00:05:01,200 --> 00:05:02,840
+on an intercept course with Gumdrop;
+
+98
+00:05:03,760 --> 00:05:06,140
+two small course corrections refined the trajectory.
+
+99
+00:05:07,600 --> 00:05:10,180
+Spider stopped about 100 feet from Gumdrop for
+
+100
+00:05:10,180 --> 00:05:12,820
+a pitchover maneuver; Scott photographed the
+
+101
+00:05:12,840 --> 00:05:16,000
+ascent stage including its engine ("the biggest,
+
+102
+00:05:16,200 --> 00:05:16,440
+friendliest,
+
+103
+00:05:17,000 --> 00:05:19,410
+funniest looking Spider I've ever seen");
+
+104
+00:05:19,720 --> 00:05:21,420
+McDivitt brought Spider in for smooth
+
+105
+00:05:22,360 --> 00:05:25,260
+docking; the craft flew separately for 6 hours 23 minutes.
+
+106
+00:05:26,480 --> 00:05:28,980
+Two hours after docking McDivitt and Schweickart
+
+107
+00:05:29,100 --> 00:05:32,100
+rejoined Scott in Gumdrop and shortly after
+
+108
+00:05:32,100 --> 00:05:35,820
+jettisoned Spider; Mission Control commanded Spider's
+
+109
+00:05:36,360 --> 00:05:39,360
+APS to fire for six minutes into a highly elliptical
+
+110
+00:05:39,380 --> 00:05:42,640
+Earth orbit from which it did not decay until October
+
+111
+00:05:42,640 --> 00:05:48,100
+23 1981. Apollo 9 was the first manned flight of the
+
+112
+00:05:48,980 --> 00:05:52,080
+LM; first manned flight of all lunar hardware in Earth orbit.
+
+113
+00:05:52,920 --> 00:05:56,500
+The mission demonstrated docked and undocked maneuvers,
+
+114
+00:05:56,620 --> 00:05:58,840
+performed a lunar module–command module rendezvous,
+
+115
+00:05:59,160 --> 00:06:01,760
+and demonstrated extra‑vehicular capability —
+
+116
+00:06:02,340 --> 00:06:05,660
+everything Apollo 11 would need to land on the Moon.
+
+117
+00:06:05,720 --> 00:06:08,300
+The backpack Schweickart tested in space was
+
+118
+00:06:08,300 --> 00:06:11,390
+subsequently used on the lunar surface explorations.
+
+119
+00:06:12,220 --> 00:06:13,600
+Every system that would later carry
+
+120
+00:06:13,620 --> 00:06:15,760
+humans to the Moon had been flown,
+
+121
+00:06:16,180 --> 00:06:16,740
+tested,
+
+122
+00:06:16,740 --> 00:06:18,000
+and proven in Earth orbit.
+
+123
+00:06:19,300 --> 00:06:21,400
+Every claim in this video comes from NASA primary
+
+124
+00:06:21,710 --> 00:06:25,590
+sources: the NASA Apollo 9 Mission Details page,
+
+125
+00:06:25,840 --> 00:06:26,990
+NASA mission pages,
+
+126
+00:06:27,320 --> 00:06:28,760
+NASA history articles,
+
+127
+00:06:28,880 --> 00:06:32,620
+the Lunar and Planetary Institute Apollo 9 mission overview,
+
+128
+00:06:32,700 --> 00:06:33,780
+the Apollo Flight Journal,
+
+129
+00:06:34,140 --> 00:06:36,900
+and the Apollo 9 Mission Report (MSC‑PA‑R‑69‑2,
+
+130
+00:06:39,200 --> 00:06:45,180
+May 1969). All are U.S. government works in the public domain; NASA
+
+131
+00:06:45,180 --> 00:06:52,160
+logos and insignia are restricted by law (14 CFR 1221). If you see
+
+132
+00:06:52,180 --> 00:06:55,840
+a claim about Apollo 9 that doesn't trace back to a primary source,
+
+133
+00:06:56,220 --> 00:06:57,060
+ask to see the document.
+
+134
+00:06:58,180 --> 00:06:59,620
+That's how you know what really happened.
+

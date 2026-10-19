@@ -11,7 +11,7 @@
 | Phase | Status | Evidence | Commit |
 |-------|--------|----------|--------|
 | Z1 VOICE ENV | DONE | docs/openmontage/Z1_VOICE_ENV.md; venv /tmp/kilo/z1_venv (python3.12.3), kokoro==0.2.2, misaki==0.7.17, torch==2.6.0+cpu, weights in /tmp/kilo/hf_cache; 14.625 s sample synthesized, finish_audio PASS, qc.py decode/loudness/silence/freeze PASS (ffprobe_streams FAILED expected: audio-only) | pending |
-| Z2 ARTEMIS DRAFT (3-4 min) | NOT_DONE | — | — |
+| Z2 ARTEMIS DRAFT (3-4 min) | DONE | docs/openmontage/slice/artifacts/* (qa_report PASS, 13 checks: 11 PASS, 1 REVIEW freezedetect=static_by_design cards, 1 NOT_RUN n/a); video projects/slice_artemis_v0/renders/final_artemis_draft.mp4 1920x1080p30 h264/aac 185.43s (gitignored media); NOT_PUBLISHABLE per credits.txt | a7ca003 |
 | Z3 ONE-COMMAND PIPELINE | NOT_DONE | — | — |
 | Z4 CHAPTER MODE | NOT_DONE | — | — |
 | Z5 SERIES PLAN | NOT_DONE | — | — |

@@ -31,6 +31,7 @@
 | S17 | Wikiarchives.space Apollo 9 | https://wikiarchives.space/album/226 | Archive mirror |
 | S18 | LPI Apollo 9 Mission Overview | https://www.lpi.usra.edu/lunar/missions/apollo/apollo_9 | Lunar and Planetary Institute |
 | S19 | NASA Apollo 9 Crew Completes First Command and Lunar Module Docking | https://www.nasa.gov/humans-in-space/apollo-9-crew-completes-first-command-and-lunar-module-docking-in-space | NASA history article |
+| S20 | NASA Manned Spacecraft Center Apollo 9 Press Kit | https://www.nasa.gov/wp-content/uploads/static/apollo50th/pdf/A09_PressKit.pdf | NASA press kit (PDF) |
 
 ---
 
@@ -73,7 +74,7 @@
 | A9-033 | Splashdown March 13 1969 in the Atlantic Ocean about 670 miles south-southwest of Bermuda and about 3 miles from USS Guadalcanal, within 3 miles and in full view of the recovery ship; total mission duration 241 hours 54 seconds (10 seconds longer than planned); 151 revolutions. | S1, S4, S11 | Splashdown | TWO_SOURCES (S1, S4) |
 | A9-034 | Eighth and final SPS burn lasted just under 12 seconds and brought Apollo 9 out of orbit; the CM separated from its Service Module and pointed its heat shield into the direction of flight; during reentry the heat shield reached a maximum of 2,700°F while the crew remained at room temperature. | S4 | Reentry | TWO_SOURCES (S4, S16) |
 | A9-035 | An ionized gas sheath formed during rapid deceleration causing a 4-minute radio blackout; drogue parachutes deployed and three main parachutes opened at 10,000 feet slowing the craft to about 22 mph at splashdown. | S4 | Reentry | TWO_SOURCES (S4, S16) |
-| A9-036 | CSM Gumdrop is on display at the San Diego Air and Space Museum. | S4 | After mission | TWO_SOURCES (S4, S17) |
+| A9-036 | CSM Gumdrop is on display at the San Diego Air and Space Museum. | S4 | After mission | TWO_SOURCES (S4, S16) |
 | A9-037 | An S-IVB restart after transposition and docking produced less than the desired maximum velocity increase, off nominal by about 11 percent; it did not affect Apollo 9 but a lunar mission might have been aborted. | S1 | Mission Details | TWO_SOURCES (S1, S14) |
 | A9-038 | When Scott released Spider it initially hung on the latches at the end of the docking probe; he pressed the button again and Spider was released. | S11 | Transposition/docking | TWO_SOURCES (S11, S11-alt) |
 | A9-039 | Splashdown was delayed one revolution on Flight Day 10 due to expected inclement weather at the planned time. | S4 | Mission timeline | TWO_SOURCES (S4, S16) |

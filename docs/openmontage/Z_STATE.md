@@ -17,9 +17,8 @@
 | Z5 SERIES PLAN | DONE | docs/openmontage/SERIES_PLAN.md — 12 topics ranked (space niche); per topic: HD clip count, rights_basis, primary docs reachable, est. usable minutes, max feasible length; demand from T1 (5/300 breakouts, weak signal), footage from T5/T12, primary docs from T15; no demand claims beyond measured data; SpaceX Tier C excluded (no PD footage) | ee3db4a |
 | Z6 SCRIPTS | DONE | docs/openmontage/slice/{APOLLO_TEST_FLIGHTS,ISS,JWST}_FULL_SCRIPT_v0.md (3–5 min each), docs/openmontage/evidence/*_CLAIM_LEDGER.md, docs/openmontage/slice/*_SHORTS_PLAN.md (45 s each); claim_ids resolve check ALL OK (all claim_ids resolve to ledger, all SINGLE/UNVERIFIED claims flagged); Apollo 4 TWO_SOURCE + 9 flagged; ISS/JWST all UNVERIFIED pending NASA primary page verification | dbd0276 |
 | Z7 PACKAGING | DONE | docs/openmontage/slice/artifacts/ARTEMIS_PACKAGING.md (3 truthful titles, 3 thumbnail text options, 1280x720 PNG thumbnails in gitignored projects/ from own graphics+NASA still, no emblem/people, description with chapters+credits, synthetic-voice disclosure checklist citing support.google.com/youtube/answer/14328491 with owner action items) | a798db6 |
-| Z8 INDEPENDENT REVIEW PACK | NOT_DONE | — | — |
-| Z9 CLOSE | NOT_DONE | — | -- |
-
+| Z8 INDEPENDENT REVIEW PACK | DONE | docs/openmontage/REVIEW_PACK.md + Z_STATE.md updated; 29 fast tests pass exit 0; py_compile OK | 3476815 |
+| Z9 CLOSE | DONE | OWNER_ACTIONS.md, MASTER_RUN_STATE.md, CHANGELOG.md, LESSONS.md updated; stop Codespace commands printed | a660c5c |
 ## Notes
 - No `docs/openmontage/Z_STATE.md` existed at session start → resuming at Z1 (first phase not DONE).
 - Pre-existing uncommitted modifications to `docs/openmontage/slice/*` and `docs/openmontage/slice/artifacts/*` are not mine; I do not commit or claim them.

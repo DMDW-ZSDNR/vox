@@ -805,10 +805,15 @@ class QCTool(BaseTool):
                         if not cid:
                             problems.append(f"sentence {i}: missing claim_id")
                             continue
-                        if cid not in ledger:
-                            problems.append(f"sentence {i}: unknown claim_id {cid}")
+                        parts = [p.strip() for p in re.split(r"[,;]", cid) if p.strip()]
+                        unresolved = [p for p in parts if p not in ledger]
+                        if unresolved:
+                            problems.append(
+                                f"sentence {i}: unknown claim_id(s) {', '.join(unresolved)}"
+                            )
                             continue
-                        source_type = ledger[cid]
+                        for part in parts:
+                            source_type = ledger[part]
                         is_single = "SINGLE" in source_type.upper()
                         flags = c.get("source_flags") or ""
                         if is_single and not str(flags).strip():

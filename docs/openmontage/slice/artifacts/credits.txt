@@ -1,19 +1,21 @@
-CID Slice — Controlled Impact Demonstration (CID) Technical Slice v1
+Artemis I — SLS / Orion Mission Draft (openMontage space & astronomy draft)
 
-Title: CID Slice — Controlled Impact Demonstration Technical Slice
+Title: Artemis I — SLS / Orion Mission Draft
 Director: OpenMontage Factory Pipeline
 Production: OpenMontage (YouTube Factory)
 
 Assets:
-- ECN-31803_initial_impact.jpg — NASA/Armstrong — source_policy_us_gov — S1
-- EM-0004-01.mp4 — archive.org NIX — NASA/Dryden — source_policy_us_gov — S1/S2
-- EC84-3167-A_practice_run.jpg — NASA/Armstrong — source_policy_us_gov — S2
-- ECN-31808_erupts_after_impact.jpg — NASA/Armstrong — source_policy_us_gov — S3
-- EC84-31809_engulfed_wing_cutter.jpg — NASA/Armstrong — source_policy_us_gov — S4
-- ECN-28307_crash_test_dummies.jpg — NASA/Armstrong — source_policy_us_gov — S5
-- LV-1998-00090.mp4 — archive.org NIX — NASA/Langley — source_policy_us_gov — S6
-- LV-1998-00092.mp4 — archive.org NIX — NASA/Langley — source_policy_us_gov — S7
-- Graphics card S8 — OpenMontage original — source_policy_us_gov — S8
+- artemis_launch (GX010506) — NASA Image and Video Library (images-api.nasa.gov) — NASA/MSFC — Artemis I Launch from NASA Causeway (Slo Mo), 16 Nov 2022 — source_policy_us_gov — archive inserts, 4x 16s segments, source 1920x1080 used unscaled
+- card_title.png — OpenMontage original graphics card — source_policy_us_gov — Title
+- card_b1.png — OpenMontage original graphics card — source_policy_us_gov — B1
+- card_b2.png — OpenMontage original graphics card — source_policy_us_gov — B2
+- card_b3.png — OpenMontage original graphics card — source_policy_us_gov — B3
+- card_b4.png — OpenMontage original graphics card — source_policy_us_gov — B4
+- card_b5.png — OpenMontage original graphics card — source_policy_us_gov — B5
+- card_b6.png — OpenMontage original graphics card — source_policy_us_gov — B6
+- card_credits.png — OpenMontage original graphics card — source_policy_us_gov — Credits
 
-Narration: Kokoro-82M (af_heart), Apache-2.0 weights, synthetic voice.
-No third-party credit. No identifiable persons (crash test dummies only). No logos visible.
+Narration: Kokoro-82M (af_heart), Apache-2.0 weights, synthetic voice, local CPU synthesis. 20 sentences, 185.45s.
+Subtitles: sentence SRT from measured Kokoro timings; word-level timestamps from stable-ts (whisper-tiny) forced alignment.
+No third-party credit. Identifiable persons / NASA logo flags unreviewed from metadata (NEEDS_REVIEW).
+NOT_PUBLISHABLE: voice-license residual risk (Kokoro-82M synthetic-data training provenance unknown — owner decision pending) • no clip frame-level review • NASA insignia clearance pending • synthetic-voice disclosure not yet verified against current YouTube help page • 4 single-source claims flagged (ARTEMIS-02, ARTEMIS-04, ARTEMIS-12).

@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT))
 VENV_PY = Path(os.environ.get("OPENMONTAGE_VENV", "/tmp/kilo/z1_venv/bin/python"))
 
 MIN_FREE_BYTES = 800 * 1024 * 1024  # global stop threshold (zero-cost mode)
+MAX_CHAPTER_DURATION = 360  # 6 minutes per chapter (Z4)
 
 STAGES = [
     "claim_ledger_check",
@@ -513,11 +514,288 @@ def run_pipeline(topic_id, state_path=None, state_root=None, stages=None, initia
     return {"verdict": "OK", "state": state}
 
 
+# ---------------------------------------------------------------------------
+# Chapter mode (Milestone Z4)
+# ---------------------------------------------------------------------------
+def _estimate_sentence_duration(sentence):
+    """Rough narration duration: ~2.5 words/sec + 0.3s breath per sentence."""
+    words = len([w for w in sentence.split() if w.strip()])
+    return max(2.0, words / 2.5 + 0.3)
+
+
+def split_script_into_chapters(script_path, max_duration_s=MAX_CHAPTER_DURATION):
+    """Split a script markdown into chapters, each <= max_duration_s narration."""
+    sentences = []
+    script_path = Path(script_path)
+    for line in script_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip().startswith("| B"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) >= 3 and cells[0][:2] in ("B1", "B2", "B3", "B4", "B5", "B6"):
+            sentences.append(cells[1])
+
+    chapters = []
+    current = []
+    current_dur = 0.0
+    chapter_index = 0
+    for sentence in sentences:
+        dur = _estimate_sentence_duration(sentence)
+        if current and current_dur + dur > max_duration_s:
+            chapters.append({
+                "chapter_index": chapter_index,
+                "sentences": list(current),
+                "duration_s": round(current_dur, 3),
+            })
+            chapter_index += 1
+            current = []
+            current_dur = 0.0
+        current.append(sentence)
+        current_dur += dur
+    if current:
+        chapters.append({
+            "chapter_index": chapter_index,
+            "sentences": list(current),
+            "duration_s": round(current_dur, 3),
+        })
+    return chapters
+
+
+def _chapter_script_path(state_root, topic_id, chapter_index):
+    return Path(state_root) / topic_id / f"chapter_{chapter_index}.md"
+
+
+def _write_chapter_script(state_root, topic_id, chapter_index, sentences):
+    path = _chapter_script_path(state_root, topic_id, chapter_index)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["| Beat | Sentence | claim_ids | flags |", "|---|---|---|---|"]
+    for i, s in enumerate(sentences, 1):
+        lines.append(f"| B{chapter_index + 1}-{i} | {s} | CH-{chapter_index + 1}-{i} | |")
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def _extract_video_path(result):
+    """Pull a video path out of a run_pipeline result dict."""
+    state = result.get("state", {})
+    stages = state.get("stages", {})
+    for stage_name in ("render", "edl", "narration", "subtitles"):
+        stage = stages.get(stage_name, {})
+        outputs = stage.get("outputs", {})
+        if isinstance(outputs, dict) and outputs.get("video"):
+            return outputs["video"]
+    return None
+
+
+def concatenate_chapters(videos, output_path, crossfade_duration_s=1.0):
+    """Concatenate chapter videos with crossfades using ffmpeg xfade filter."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if len(videos) == 1:
+        import shutil
+        shutil.copy2(videos[0], output_path)
+        return {"status": "OK", "outputs": {"video": str(output_path)}}
+    if crossfade_duration_s <= 0:
+        lst = output_path.parent / "chapter_concat.txt"
+        lst.write_text("\n".join(f"file '{v}'" for v in videos), encoding="utf-8")
+        _ffmpeg(["-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(output_path)])
+        return {"status": "OK", "outputs": {"video": str(output_path)}}
+    # Build xfade filter chain: each crossfade overlaps the end of prev with start of next
+    inputs = []
+    filter_parts = []
+    for i, v in enumerate(videos):
+        inputs.extend(["-i", str(v)])
+    # Start with first video
+    prev_label = f"[{0}:v]"
+    prev_audio = f"[{0}:a]"
+    total_dur = 0.0
+    # Probe durations to place crossfades
+    durations = []
+    for v in videos:
+        res = subprocess.run(["ffprobe", "-v", "quiet", "-print_format", "json",
+                              "-show_format", str(v)], capture_output=True, text=True)
+        d = float(json.loads(res.stdout)["format"]["duration"])
+        durations.append(d)
+    offset = 0.0
+    for i in range(1, len(videos)):
+        xfade_start = offset + durations[i - 1] - crossfade_duration_s
+        filter_parts.append(
+            f"{prev_label}[{i}:v]xfade=transition=fade:duration={crossfade_duration_s}:offset={xfade_start}[v{i}];"
+            f"{prev_audio}[{i}:a]acrossfade=d={crossfade_duration_s}[a{i}];"
+        )
+        prev_label = f"[v{i}]"
+        prev_audio = f"[a{i}]"
+        offset += durations[i - 1]
+    filter_str = "".join(filter_parts) + f"{prev_label},format=yuv420p[v];{prev_audio}[a]"
+    _ffmpeg(inputs + ["-filter_complex", filter_str, "-map", "[v]", "-map", "[a]",
+                      "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30",
+                      "-c:a", "aac", "-b:a", "192k", str(output_path)])
+    return {"status": "OK", "outputs": {"video": str(output_path)}}
+
+
+def final_loudness_pass(video_path):
+    """Run finish_audio-style loudnorm on the final video's audio."""
+    from tools.audio.finish_audio import FinishAudioTool  # noqa: WPS433
+    video_path = Path(video_path)
+    wav_tmp = video_path.parent / (video_path.stem + "_audio.wav")
+    out_tmp = video_path.parent / (video_path.stem + "_loud.wav")
+    # Extract audio
+    _ffmpeg(["-i", str(video_path), "-vn", "-acodec", "pcm_s16le", "-ar", "44100",
+             "-ac", "2", str(wav_tmp)])
+    result = FinishAudioTool().execute({"input_path": str(wav_tmp), "output_path": str(out_tmp)})
+    if not result.success:
+        return {"status": "BLOCKED", "error": f"final loudness pass failed: {result.error}"}
+    # Remux video with new audio
+    final = video_path.parent / (video_path.stem + "_final.mp4")
+    _ffmpeg(["-i", str(video_path), "-i", str(out_tmp), "-c:v", "copy", "-c:a", "aac",
+             "-b:a", "192k", "-shortest", str(final)])
+    wav_tmp.unlink(missing_ok=True)
+    out_tmp.unlink(missing_ok=True)
+    return {"status": "OK", "outputs": {"video": str(final)}, "loudness": result.data}
+
+
+def run_chapter_mode(topic_id, script_path=None, chapters=None, max_chapter_duration_s=None,
+                     state_path=None, state_root=None, stages=None):
+    """Run the full pipeline per chapter, then concatenate with crossfades + final loudness."""
+    if stages is None:
+        stages = STAGE_REGISTRY
+    if state_path is None:
+        state_root = Path(state_root) if state_root else ROOT / "docs/openmontage/slice"
+        state_path = Path(state_root) / topic_id / "chapter_state.json"
+    state_path = Path(state_path)
+
+    if max_chapter_duration_s is None:
+        max_chapter_duration_s = MAX_CHAPTER_DURATION
+
+    if chapters is None:
+        if script_path is None:
+            return {"verdict": "BLOCKED", "error": "need script_path or chapters"}
+        chapters = split_script_into_chapters(script_path, max_chapter_duration_s)
+
+    state = {"topic_id": topic_id, "chapters": chapters, "updated_at": iso_now(),
+             "stages": {}}
+    if state_path.exists():
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["topic_id"] = topic_id
+        state["updated_at"] = iso_now()
+        state.setdefault("stages", {})
+
+    # Global disk budget
+    if disk_free_bytes(state_path.parent) < MIN_FREE_BYTES:
+        cp = {"status": "BLOCKED", "started_at": iso_now(), "finished_at": iso_now(),
+              "wall_time_s": 0.0, "disk_before_bytes": disk_free_bytes(state_path.parent),
+              "disk_after_bytes": disk_free_bytes(state_path.parent), "outputs": {},
+              "output_hash": _hash_obj({}),
+              "error": f"free disk below {MIN_FREE_BYTES} bytes"}
+        state["stages"]["disk"] = cp
+        _save_state(state_path, state)
+        return {"verdict": "BLOCKED", "stage": "disk", "state": state}
+
+    chapter_videos = []
+    any_executed = False
+    for ch in chapters:
+        ci = ch["chapter_index"]
+        cp = state["stages"].get(f"chapter_{ci}")
+        if cp and cp.get("status") == "OK":
+            stored_hash = cp.get("output_hash")
+            recorded_outputs = cp.get("outputs")
+            if stored_hash and recorded_outputs is not None \
+                    and stored_hash != _hash_obj(recorded_outputs):
+                pass  # corrupt -> re-run
+            else:
+                cp["resumed"] = True
+                state["stages"][f"chapter_{ci}"] = cp
+                chapter_videos.append(cp["outputs"].get("video"))
+                continue
+
+        # Per-chapter disk budget
+        if disk_free_bytes(state_path.parent) < MIN_FREE_BYTES:
+            cp = {"status": "BLOCKED", "started_at": iso_now(), "finished_at": iso_now(),
+                  "wall_time_s": 0.0,
+                  "disk_before_bytes": disk_free_bytes(state_path.parent),
+                  "disk_after_bytes": disk_free_bytes(state_path.parent), "outputs": {},
+                  "output_hash": _hash_obj({}),
+                  "error": f"free disk below {MIN_FREE_BYTES} bytes before chapter {ci}"}
+            state["stages"][f"chapter_{ci}"] = cp
+            _save_state(state_path, state)
+            return {"verdict": "BLOCKED", "stage": "disk", "chapter": ci, "state": state}
+
+        chapter_script = _write_chapter_script(Path(state_path).parent, topic_id, ci,
+                                               ch["sentences"])
+        t0 = time.time()
+        disk_before = disk_free_bytes(state_path.parent)
+        try:
+            result = run_pipeline(topic_id, state_path=state_path,
+                                  stages=stages,
+                                  initial_state={
+                                      "topic_id": topic_id, "chapter_index": ci,
+                                      "chapter_script": str(chapter_script),
+                                      "chapters": chapters,
+                                  })
+            status = result.get("verdict", "BLOCKED")
+        except Exception as exc:  # fail-closed
+            status = "BLOCKED"
+            result = {"error": f"{type(exc).__name__}: {exc}"}
+        wall = round(time.time() - t0, 3)
+        disk_after = disk_free_bytes(state_path.parent)
+        video_path = _extract_video_path(result)
+        cp = {
+            "status": status,
+            "chapter_index": ci,
+            "started_at": iso_now(),
+            "finished_at": iso_now(),
+            "wall_time_s": wall,
+            "disk_before_bytes": disk_before,
+            "disk_after_bytes": disk_after,
+            "outputs": {"video": video_path, "duration_s": ch["duration_s"]},
+            "output_hash": _hash_obj({"video": video_path, "duration_s": ch["duration_s"]}),
+            "error": result.get("error"),
+        }
+        state["stages"][f"chapter_{ci}"] = cp
+        _save_state(state_path, state)
+        if status != "OK":
+            return {"verdict": "BLOCKED", "stage": f"chapter_{ci}", "chapter": ci, "state": state}
+        chapter_videos.append(video_path)
+        any_executed = True
+
+    # Skip concat+loudness if all chapters were resumed and already done
+    concat_cp = state["stages"].get("concatenate")
+    loud_cp = state["stages"].get("final_loudness")
+    if not any_executed and concat_cp and concat_cp.get("status") == "OK" \
+            and loud_cp and loud_cp.get("status") == "OK":
+        return {"verdict": "OK", "state": state,
+                "final_video": loud_cp["outputs"]["video"]}
+
+    # Concatenate with crossfades
+    concat_out = Path(state_path).parent / f"final_{topic_id}_chapters.mp4"
+    concat_res = concatenate_chapters(chapter_videos, concat_out, crossfade_duration_s=1.0)
+    if concat_res["status"] != "OK":
+        return {"verdict": "BLOCKED", "stage": "concatenate", "state": state}
+
+    # Final loudness pass
+    loud_res = final_loudness_pass(concat_out)
+    if loud_res["status"] != "OK":
+        return {"verdict": "BLOCKED", "stage": "final_loudness", "state": state}
+
+    state["stages"]["concatenate"] = {"status": "OK", "outputs": {"video": str(concat_out)}}
+    state["stages"]["final_loudness"] = {"status": "OK", "outputs": {"video": loud_res["outputs"]["video"]}}
+    _save_state(state_path, state)
+    return {"verdict": "OK", "state": state, "final_video": loud_res["outputs"]["video"]}
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="One-command episode pipeline (Z3)")
+    parser = argparse.ArgumentParser(description="One-command episode pipeline (Z3/Z4)")
     parser.add_argument("topic_id", help="topic id, e.g. artemis")
+    parser.add_argument("--chapters", action="store_true",
+                        help="run chapter mode: split script into <=6 min chapters")
     args = parser.parse_args(argv)
-    res = run_pipeline(args.topic_id)
+    if args.chapters:
+        script = topic_script(args.topic_id)
+        if not script:
+            print(json.dumps({"verdict": "BLOCKED", "error": f"no script for {args.topic_id}"}))
+            return 1
+        res = run_chapter_mode(args.topic_id, script_path=script)
+    else:
+        res = run_pipeline(args.topic_id)
     print(json.dumps({"verdict": res["verdict"], "stage": res.get("stage"),
                       "state": res["state"]}, indent=2))
     return res.get("exit_code", 0 if res["verdict"] == "OK" else 1)

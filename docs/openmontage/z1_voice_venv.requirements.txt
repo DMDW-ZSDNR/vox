@@ -1,0 +1,6 @@
+kokoro==0.2.2
+misaki==0.7.17
+soundfile==0.14.0
+numpy==2.5.4
+torch==2.6.0+cpu
+en-core-web-sm==3.8.0

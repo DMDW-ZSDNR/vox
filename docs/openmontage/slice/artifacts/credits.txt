@@ -1,21 +1,29 @@
-Artemis I — SLS / Orion Mission Draft (openMontage space & astronomy draft)
+Apollo 9 — Spider's First Mission (Draft)
 
-Title: Artemis I — SLS / Orion Mission Draft
+Title: Apollo 9 — Spider's First Mission
 Director: OpenMontage Factory Pipeline
 Production: OpenMontage (YouTube Factory)
 
-Assets:
-- artemis_launch (GX010506) — NASA Image and Video Library (images-api.nasa.gov) — NASA/MSFC — Artemis I Launch from NASA Causeway (Slo Mo), 16 Nov 2022 — source_policy_us_gov — archive inserts, 4x 16s segments, source 1920x1080 used unscaled
-- card_title.png — OpenMontage original graphics card — source_policy_us_gov — Title
-- card_b1.png — OpenMontage original graphics card — source_policy_us_gov — B1
-- card_b2.png — OpenMontage original graphics card — source_policy_us_gov — B2
-- card_b3.png — OpenMontage original graphics card — source_policy_us_gov — B3
-- card_b4.png — OpenMontage original graphics card — source_policy_us_gov — B4
-- card_b5.png — OpenMontage original graphics card — source_policy_us_gov — B5
-- card_b6.png — OpenMontage original graphics card — source_policy_us_gov — B6
-- card_credits.png — OpenMontage original graphics card — source_policy_us_gov — Credits
+Topic: Apollo 9 (LM Spider / CSM Gumdrop Earth-orbital test, March 3-13 1969)
+Estimated duration: ~7:09 (428.6s narration). Full 15-17 min script draft reconciled;
+narration synthesized cover the complete corrected script.
 
-Narration: Kokoro-82M (af_heart), Apache-2.0 weights, synthetic voice, local CPU synthesis. 20 sentences, 185.45s.
-Subtitles: sentence SRT from measured Kokoro timings; word-level timestamps from stable-ts (whisper-tiny) forced alignment.
-No third-party credit. Identifiable persons / NASA logo flags unreviewed from metadata (NEEDS_REVIEW).
-NOT_PUBLISHABLE: voice-license residual risk (Kokoro-82M synthetic-data training provenance unknown — owner decision pending) • no clip frame-level review • NASA insignia clearance pending • synthetic-voice disclosure not yet verified against current YouTube help page • 4 single-source claims flagged (ARTEMIS-02, ARTEMIS-04, ARTEMIS-12).
+Graphics: original cards per a4-graphics-list (G1-1 .. G7-1 + sources), each with claim_ids.
+Stills (NASA public domain):
+- AS09-21-3199 LM interior (sha256 1ece124dafcfcbf85f0d5308d94d02e364adcb2d0ef49493cdcaabd922ddf5db)
+- GPN-2000-001283 splashdown (sha256 c3e020915ac9801d5ce2a3fbabeb27e7635008fc4fe8900c933e40db7f3a5974)
+
+Narration: Kokoro-82M (af_heart), Apache-2.0 weights, kokoro-onnx CPU, local synthesis.
+Subtitles: stable-ts / whisper-tiny forced alignment (1037 words, 135 cues).
+
+claim_ids: every sentence carries claim_id(s); all resolve to APOLLO9_CLAIM_LEDGER.md;
+all 42 claims are TWO_SOURCES (0 SINGLE_SOURCE). NOTE: beat B8 (sources card) is a
+meta-claim about sourcing; per apollo9-script-review.md it carries no factual claim ID,
+but the pipeline requires a claim_id per sentence, so B8 is assigned A9-001 (mission
+overview) as a structural placeholder — flagged as a NOT_PUBLISHABLE deviation.
+
+NOT_PUBLISHABLE: no clean native-HD public-domain Apollo 9 motion footage available
+(splashdown clip is CC BY-NC-ND with creator=None → not usable; 16mm film is
+AI-upscaled/rejected). Build uses original graphics cards + two NASA PD stills only.
+Synthetic-voice disclosure pending (YouTube AI-content policy). NASA insignia/frame
+review pending (NEEDS_REVIEW).

@@ -134,3 +134,134 @@ def test_disk_below_threshold_blocks(tmp_path, monkeypatch):
     assert res["verdict"] == "BLOCKED", res
     assert res["stage"] == "disk", res
     assert calls == [], calls
+
+
+# ---------------------------------------------------------------------------
+# Generalized render stage tests (Milestone Y1)
+# ---------------------------------------------------------------------------
+import subprocess  # noqa: E402
+
+
+def _ffmpeg(args):
+    return subprocess.run(["ffmpeg", "-hide_banner", "-y"] + args,
+                          capture_output=True, text=True)
+
+
+def _probe_duration(path):
+    res = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", str(path)],
+        capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        return None
+    try:
+        return float(__import__("json").loads(res.stdout)["format"]["duration"])
+    except Exception:
+        return None
+
+
+def _has_stream(path, codec_type):
+    res = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", str(path)],
+        capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        return False
+    try:
+        return any(s.get("codec_type") == codec_type
+                   for s in __import__("json").loads(res.stdout).get("streams", []))
+    except Exception:
+        return False
+
+
+def _make_png(path):
+    _ffmpeg(["-f", "lavfi", "-i", "color=c=blue:size=320x240",
+             "-frames:v", "1", str(path)])
+
+
+def _make_mp4(path, dur=5.0):
+    _ffmpeg(["-f", "lavfi", "-i", "testsrc=size=640x480:rate=30",
+             "-t", str(dur), "-c:v", "libx264", "-pix_fmt", "yuv420p", str(path)])
+
+
+def _make_wav(path, dur=3.0):
+    _ffmpeg(["-f", "lavfi", "-i", "anoisesrc",
+             "-t", str(dur), "-ar", "44100", "-ac", "2", str(path)])
+
+
+def _render_state(tmp_path, png, mp4, wav, cuts, out_name="out.mp4"):
+    edl = tmp_path / "edit_decisions.json"
+    edl.write_text(__import__("json").dumps({
+        "version": 1, "topic_id": "testep",
+        "resolution": "1920x1080", "fps": 30,
+        "cuts": cuts,
+    }, indent=2), encoding="utf-8")
+    manifest = tmp_path / "render_manifest.json"
+    manifest.write_text(__import__("json").dumps({
+        "version": 1, "topic_id": "testep",
+        "resolution": "1920x1080", "fps": 30,
+        "assets": {
+            "card_title": {"kind": "graphics", "path": str(png)},
+            "apollo9_clip": {"kind": "footage", "path": str(mp4)},
+        },
+    }, indent=2), encoding="utf-8")
+    out = tmp_path / out_name
+    return {
+        "edl_path": str(edl),
+        "render_manifest_path": str(manifest),
+        "narration_wav": str(wav),
+        "render_output_path": str(out),
+    }, out
+
+
+def test_render_generalized_uses_edl_and_manifest(tmp_path):
+    """Render builds from EDL cuts + per-episode manifest (no Artemis hardcode)."""
+    png = tmp_path / "card.png"; _make_png(png)
+    mp4 = tmp_path / "clip.mp4"; _make_mp4(mp4, dur=6.0)
+    wav = tmp_path / "narration.wav"; _make_wav(wav, dur=5.0)
+    cuts = [
+        {"cut_id": 1, "start": 0.0, "end": 2.0, "asset_id": "card_title",
+         "role": "graphics_card", "clip": "Title", "layout": "static_card",
+         "rationale": "title card", "rights_basis": "source_policy_us_gov"},
+        {"cut_id": 2, "start": 2.0, "end": 5.0, "asset_id": "apollo9_clip",
+         "role": "archive_insert", "clip": "Launch", "layout": "1080p_scaled",
+         "source_segment": "0.0-3.0s", "rationale": "archive insert", "rights_basis": "source_policy_us_gov"},
+    ]
+    state, out = _render_state(tmp_path, png, mp4, wav, cuts)
+    res = run_episode.cmd_render("testep", state)
+    assert res["status"] == "OK", res
+    assert out.exists(), out
+    dur = _probe_duration(out)
+    assert dur is not None and abs(dur - 5.0) < 0.5, dur
+    assert _has_stream(out, "video"), "missing video stream"
+    assert _has_stream(out, "audio"), "missing audio stream"
+
+
+def test_render_blocked_when_manifest_missing(tmp_path):
+    state, out = _render_state(tmp_path, tmp_path / "a.png", tmp_path / "b.mp4",
+                               tmp_path / "c.wav", [])
+    state.pop("render_manifest_path")
+    res = run_episode.cmd_render("testep", state)
+    assert res["status"] == "BLOCKED", res
+
+
+def test_render_blocked_when_asset_missing(tmp_path):
+    png = tmp_path / "card.png"; _make_png(png)
+    wav = tmp_path / "narration.wav"; _make_wav(wav)
+    edl = tmp_path / "edit_decisions.json"
+    edl.write_text(__import__("json").dumps({
+        "version": 1, "topic_id": "testep", "resolution": "1920x1080", "fps": 30,
+        "cuts": [{"cut_id": 1, "start": 0.0, "end": 2.0, "asset_id": "card_title",
+                  "role": "graphics_card", "clip": "T", "layout": "static_card",
+                  "rationale": "t", "rights_basis": "source_policy_us_gov"}],
+    }, indent=2), encoding="utf-8")
+    manifest = tmp_path / "render_manifest.json"
+    # manifest intentionally lacks card_title
+    manifest.write_text(__import__("json").dumps({
+        "version": 1, "topic_id": "testep", "resolution": "1920x1080", "fps": 30,
+        "assets": {},
+    }, indent=2), encoding="utf-8")
+    state = {"edl_path": str(edl), "render_manifest_path": str(manifest),
+             "narration_wav": str(wav), "render_output_path": str(tmp_path / "out.mp4")}
+    res = run_episode.cmd_render("testep", state)
+    assert res["status"] == "BLOCKED", res

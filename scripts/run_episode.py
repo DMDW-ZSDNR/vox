@@ -125,6 +125,23 @@ def _render_out(topic_id, state):
     return base / f"final_{topic_id}_draft{tag}.mp4"
 
 
+def _render_paths(topic_id, state):
+    """Per-episode render locations, overridable via state for testing.
+
+    EDL path, render manifest path (asset_id -> file), narration wav and
+    output mp4 all default to the slice-dir conventions but can be
+    overridden through state keys so the render stage is testable with
+    temp files and is not tied to any single episode.
+    """
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    edl = state.get("edl_path") or slice_dir(topic_id) / f"edit_decisions{tag}.json"
+    manifest = state.get("render_manifest_path") or slice_dir(topic_id) / "render_manifest.json"
+    wav = state.get("narration_wav") or _narration_paths(topic_id, state)[1]
+    out = state.get("render_output_path") or _render_out(topic_id, state)
+    return Path(edl), Path(manifest), Path(wav), Path(out)
+
+
 # ---------------------------------------------------------------------------
 # Stage implementations
 # ---------------------------------------------------------------------------
@@ -346,71 +363,129 @@ def _ffmpeg(args, timeout=3600):
         raise RuntimeError(res.stderr[-800:])
 
 
+def _ffprobe_duration(path):
+    """Return duration in seconds, or None if unreadable."""
+    res = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", str(path)],
+        capture_output=True, text=True,
+    )
+    if res.returncode != 0:
+        return None
+    try:
+        return float(json.loads(res.stdout)["format"]["duration"])
+    except Exception:
+        return None
+
+
+def _loop_to_duration(src, target_dur, out):
+    """Loop src enough times and trim to exactly target_dur seconds."""
+    d = _ffprobe_duration(src) or target_dur
+    n = max(1, int(__import__("math").ceil(target_dur / d)))
+    lst = Path(src).parent / "loop_concat.txt"
+    lst.write_text("\n".join(f"file '{src}'" for _ in range(n)), encoding="utf-8")
+    _ffmpeg(["-f", "concat", "-safe", "0", "-i", str(lst), "-t", str(target_dur),
+             "-c", "copy", str(out)])
+
+
+def _render_graphics(path, dur, width, height, fps, out):
+    """Loop a graphics PNG for dur seconds, scaled to the render resolution."""
+    _ffmpeg(["-loop", "1", "-i", str(path), "-t", str(dur),
+             "-vf", f"scale={width}:{height}",
+             "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+             "-r", str(fps), "-an", str(out)])
+
+
+def _render_archive(footage, src_start, dur, width, height, fps, out):
+    """Trim dur seconds from footage starting at src_start, framed to resolution.
+
+    Footage shorter than needed is loop-filled so the segment is exactly dur.
+    """
+    vf = (f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+          f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p")
+    tmp = Path(out).parent / (Path(out).stem + "_raw.mp4")
+    _ffmpeg(["-ss", str(src_start), "-i", str(footage), "-t", str(dur),
+             "-vf", vf, "-c:v", "libx264", "-crf", "18", "-r", str(fps), "-an", str(tmp)])
+    actual = _ffprobe_duration(tmp) or 0.0
+    if actual < dur - 0.05:
+        _loop_to_duration(tmp, dur, out)
+        tmp.unlink(missing_ok=True)
+    else:
+        tmp.replace(out)
+
+
 def cmd_render(topic_id, state):
-    out_dir = slice_dir(topic_id) / "renders"
-    out = _render_out(topic_id, state)
-    if out.exists():
-        return {"status": "OK", "outputs": {"video": str(out)}}
-    chap = _chap_idx(state)
-    tag = f"_chapter{chap}" if chap is not None else ""
-    edl = slice_dir(topic_id) / f"edit_decisions{tag}.json"
-    if not edl.exists():
+    """Render per EDL cuts using per-episode asset paths from the render manifest.
+
+    The render manifest (render_manifest.json) maps each asset_id to a
+    {kind, path} record. graphics_card cuts loop a PNG; archive_insert cuts
+    trim HD footage (framed/pillarboxed to 1080p when <1080p). All segments
+    are rendered to the same resolution/fps and concatenated, then muxed
+    with the narration wav. No episode-specific paths are hardcoded.
+    """
+    edl_path, manifest_path, wav, out = _render_paths(topic_id, state)
+    out_dir = out.parent
+    if not wav.exists():
+        return {"status": "BLOCKED", "error": "no narration wav for render"}
+    if not manifest_path.exists():
+        return {"status": "BLOCKED", "error": "render manifest missing"}
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {"status": "BLOCKED", "error": f"render manifest unreadable: {exc}"}
+    assets = manifest.get("assets", {})
+    if not edl_path.exists():
         return {"status": "BLOCKED", "error": "no EDL to render"}
-    footage = ROOT / "projects/slice_artemis_v0/footage/artemis_launch_source.mp4"
-    gfx = ROOT / "projects/slice_artemis_v0/graphics"
-    if not footage.exists() or not gfx.exists():
-        return {"status": "BLOCKED",
-                "error": "render needs projects/slice_artemis_v0 media (footage + graphics cards) from Z2"}
-    card_dur = {"card_title": 8.0, "card_b1": 14.0, "card_b2": 16.0, "card_b3": 14.0,
-                "card_b4": 18.0, "card_b5": 22.0, "card_b6": 22.0, "card_credits": 7.43}
-    clip_src = [(40.0, 56.0), (56.0, 72.0), (72.0, 88.0), (88.0, 104.0)]
-    order = ["card_title", "card_b1", ("clip", 0), "card_b2", ("clip", 1),
-             "card_b3", "card_b4", ("clip", 2), ("clip", 3), "card_b5", "card_b6", "card_credits"]
-    # NOTE: order maps to EDL cuts 1..12; clips consume source segments in order.
-    slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
+    try:
+        edl = json.loads(edl_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {"status": "BLOCKED", "error": f"EDL unreadable: {exc}"}
+    cuts = edl.get("cuts", [])
+    if not cuts:
+        return {"status": "BLOCKED", "error": "EDL has no cuts"}
+    width, height = [int(x) for x in str(manifest.get("resolution", "1920x1080")).split("x")]
+    fps = int(manifest.get("fps", 30))
     out_dir.mkdir(parents=True, exist_ok=True)
     build = out_dir / "build"
     shutil.rmtree(build, ignore_errors=True)
     build.mkdir()
     segs = []
-    clip_i = 0
-    for name in order:
+    for cut in cuts:
+        dur = round(float(cut["end"]) - float(cut["start"]), 6)
+        asset_id = cut["asset_id"]
+        role = cut.get("role")
+        asset = assets.get(asset_id)
+        if not asset:
+            return {"status": "BLOCKED", "error": f"asset {asset_id} not in render manifest"}
+        path = asset.get("path")
+        kind = asset.get("kind")
+        if not path:
+            return {"status": "BLOCKED", "error": f"asset {asset_id} has no path"}
         seg = build / f"seg_{len(segs):02d}.mp4"
-        if name == "card_title":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_title.png"), "-t", "8.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_b1":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_b1.png"), "-t", "14.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_b2":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_b2.png"), "-t", "16.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_b3":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_b3.png"), "-t", "14.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_b4":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_b4.png"), "-t", "18.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_b5":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_b5.png"), "-t", "22.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_b6":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_b6.png"), "-t", "22.00",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
-        elif name == "card_credits":
-            _ffmpeg(["-loop", "1", "-i", str(gfx / "card_credits.png"), "-t", "7.45",
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
+        if role == "graphics_card" or kind == "graphics":
+            if not Path(path).exists():
+                return {"status": "BLOCKED", "error": f"graphics asset missing: {path}"}
+            _render_graphics(path, dur, width, height, fps, seg)
+        elif role == "archive_insert" or kind == "footage":
+            if not Path(path).exists():
+                return {"status": "BLOCKED", "error": f"footage asset missing: {path}"}
+            src_start = 0.0
+            src_seg = cut.get("source_segment")
+            if src_seg:
+                try:
+                    src_start = float(str(src_seg).split("-")[0])
+                except ValueError:
+                    src_start = 0.0
+            _render_archive(path, src_start, dur, width, height, fps, seg)
         else:
-            s, e = clip_src[clip_i]
-            clip_i += 1
-            _ffmpeg(["-ss", str(s), "-i", str(footage), "-t", str(e - s),
-                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30", "-an", str(seg)])
+            return {"status": "BLOCKED", "error": f"unknown role {role} for {asset_id}"}
+        actual = _ffprobe_duration(seg) or 0.0
+        if actual < dur - 0.05:
+            return {"status": "BLOCKED", "error": f"segment {asset_id} too short ({actual}s < {dur}s)"}
         segs.append(str(seg))
     lst = build / "concat.txt"
-    lst.write_text("\n".join(f"file '{s}'" for s in segs), encoding="utf-8")
+    lst.write_text("\n".join(f"file '{Path(s).name}'" for s in segs), encoding="utf-8")
     silent = out_dir / "silent.mp4"
     _ffmpeg(["-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(silent)])
-    wav = slice_dir(topic_id) / "narration_finished.wav"
     _ffmpeg(["-i", str(silent), "-i", str(wav), "-c:v", "copy", "-c:a", "aac",
              "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(out)])
     return {"status": "OK", "outputs": {"video": str(out)}}

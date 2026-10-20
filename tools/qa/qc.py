@@ -41,7 +41,7 @@ DEFAULT_THRESHOLDS = {
 }
 
 REQUIRED_CREDIT_FIELDS = ("title", "director", "production")
-VALID_RIGHTS = ("explicit_license", "source_policy_us_gov")
+VALID_RIGHTS = ("explicit_license", "source_policy_us_gov", "ai_generated_illustration")
 
 VALID_STATUSES = ("PASS", "REVIEW", "BLOCKED", "FAILED", "NOT_RUN")
 
@@ -280,6 +280,7 @@ class QCTool(BaseTool):
             "claim_ledger_path": {"type": "string"},
             "rights_records_path": {"type": "string"},
             "edit_decisions_path": {"type": "string"},
+            "ai_label_max_share": {"type": "number", "default": 0.15},
             "static_segments": {
                 "type": "array",
                 "items": {
@@ -922,6 +923,72 @@ class QCTool(BaseTool):
                         )
             except Exception as exc:  # noqa: BLE001
                 report.append(entry("added_value", "BLOCKED", f"added_value unrunnable: {exc}"))
+
+        # ---- 13. ai_illustration_label: any clip with generator=AI must carry
+        # the "Illustration" label and stay within the configured runtime share ----
+        edit_path = inputs.get("edit_decisions_path")
+        ai_max_share = float(inputs.get("ai_label_max_share", 0.15))
+        if not edit_path or not Path(edit_path).is_file():
+            report.append(
+                entry(
+                    "ai_illustration_label", "NOT_RUN", "edit_decisions not provided"
+                )
+            )
+        else:
+            try:
+                data = _load_json(edit_path)
+                if not isinstance(data, dict) or "cuts" not in data:
+                    report.append(
+                        entry(
+                            "ai_illustration_label", "FAILED",
+                            "edit_decisions missing cuts[]",
+                        )
+                    )
+                else:
+                    cuts = data["cuts"]
+                    problems = []
+                    ai_cuts = 0
+                    for c in cuts:
+                        if c.get("generator") != "AI":
+                            continue
+                        ai_cuts += 1
+                        if c.get("label") != "Illustration":
+                            problems.append(
+                                f"cut {c.get('id','?')} generator=AI lacks Illustration label"
+                            )
+                            continue
+                        try:
+                            dur = float(c.get("duration", 0))
+                        except (TypeError, ValueError):
+                            dur = 0.0
+                        share = (dur / duration) if duration > 0 else 0.0
+                        if share > ai_max_share:
+                            problems.append(
+                                f"cut {c.get('id','?')} AI share {share:.2f} > {ai_max_share}"
+                            )
+                    if problems:
+                        report.append(
+                            entry(
+                                "ai_illustration_label", "FAILED",
+                                "; ".join(problems)[:300],
+                                ai_cuts, f"<= {ai_max_share} share each, all labeled Illustration",
+                            )
+                        )
+                    else:
+                        report.append(
+                            entry(
+                                "ai_illustration_label", "PASS",
+                                f"{ai_cuts} AI cut(s) all labeled Illustration within share",
+                                ai_cuts, f"<= {ai_max_share}",
+                            )
+                        )
+            except Exception as exc:  # noqa: BLE001
+                report.append(
+                    entry(
+                        "ai_illustration_label", "BLOCKED",
+                        f"ai_illustration_label unrunnable: {exc}",
+                    )
+                )
 
         # ---- overall verdict ----
         statuses = [e["status"] for e in report]

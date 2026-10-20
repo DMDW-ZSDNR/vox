@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -140,6 +141,8 @@ class KaggleBridgeTool(BaseTool):
             "run_py": {"type": "string"},
             "timeout": {"type": "integer", "default": 3600},
             "accelerator": {"type": "string", "default": "cpu"},
+            "enable_gpu": {"type": "boolean", "default": False},
+            "enable_internet": {"type": "boolean", "default": False},
             "max_retries": {"type": "integer", "default": 3},
             "retry_backoff": {"type": "number", "default": 1.0},
             "total_timeout": {"type": "integer", "default": 900},
@@ -213,6 +216,9 @@ class KaggleBridgeTool(BaseTool):
         folder = Path(job_folder)
         folder.mkdir(parents=True, exist_ok=True)
 
+        enable_gpu = bool(inputs.get("enable_gpu", False))
+        enable_internet = bool(inputs.get("enable_internet", False))
+
         # Generate kernel-metadata.json from `kaggle kernels init` output so we
         # never guess field names.
         init_cmd = [kaggle_cmd, "kernels", "init", "-p", str(folder)]
@@ -241,8 +247,8 @@ class KaggleBridgeTool(BaseTool):
                 "language": "python",
                 "kernel_type": "script",
                 "is_private": True,
-                "enable_gpu": False,
-                "enable_internet": False,
+                "enable_gpu": enable_gpu,
+                "enable_internet": enable_internet,
                 "dataset_sources": [],
                 "competition_sources": [],
             }
@@ -426,8 +432,13 @@ class KaggleBridgeTool(BaseTool):
                 status_strings.append(status)
             last_status = status
 
-            lower = status.lower()
-            if lower == "complete":
+            # Kaggle returns `<slug> has status "KernelWorkerStatus.<STATUS>"`.
+            # Parse the token generically; fall back to the raw line.
+            m = re.search(r'KernelWorkerStatus\.([A-Za-z_]+)', status)
+            token = m.group(1) if m else status
+            effective = token.lower()
+
+            if effective == "complete":
                 if not push_done:
                     push_done = True
                     push_to_running = round(elapsed, 2)
@@ -447,7 +458,7 @@ class KaggleBridgeTool(BaseTool):
                         },
                     },
                 )
-            if any(term in lower for term in ("error", "fail", "cancelled")):
+            if any(term in effective for term in ("error", "fail", "cancelled")):
                 return ToolResult(
                     success=False,
                     error=f"BLOCKED: kernel reached terminal error status: {status}",
@@ -460,7 +471,7 @@ class KaggleBridgeTool(BaseTool):
                         },
                     },
                 )
-            if lower == "timeout":
+            if effective == "timeout":
                 return ToolResult(
                     success=False,
                     error="BLOCKED: kernel run timed out",
@@ -589,8 +600,11 @@ class KaggleBridgeTool(BaseTool):
                 },
             )
 
-        # Required manifest fields.
-        required = ["job_id", "sha256"]
+        # Required manifest fields. A multi-image manifest carries per-image
+        # sha256/bytes inside `images[]` instead of a top-level `sha256`.
+        required = ["job_id"]
+        if not isinstance(manifest.get("images"), list):
+            required.append("sha256")
         missing = [f for f in required if f not in manifest]
         if missing:
             return ToolResult(
@@ -612,40 +626,78 @@ class KaggleBridgeTool(BaseTool):
                 },
             )
 
-        # Find the data file by matching its sha256 to the manifest's sha256
-        # (the kernel log and other sidecar files must not be mistaken for it).
-        data_files = [p for p in folder.iterdir() if p.is_file() and p.name != "manifest.json"]
-        if not data_files:
-            return ToolResult(
-                success=False,
-                error="REJECT: no data file alongside manifest",
-                data={
-                    "verdict": "REJECT",
-                    "verify": {"manifest_valid": True, "sha256_match": False},
-                },
-            )
+        manifest_valid = bool(manifest.get("job_id")) and (
+            bool(manifest.get("sha256")) or isinstance(manifest.get("images"), list)
+        )
 
-        manifest_sha = manifest.get("sha256")
         matched_file = None
         actual_sha = None
-        for p in data_files:
-            s = _sha256_file(p)
-            if s and s == manifest_sha:
-                matched_file = p
-                actual_sha = s
-                break
-        # If nothing matched the manifest, fall back to the single non-manifest
-        # file (common case: exactly one output artifact) so we can still report
-        # an informative mismatch.
-        if matched_file is None and len(data_files) == 1:
-            matched_file = data_files[0]
-            actual_sha = _sha256_file(matched_file)
+        manifest_sha = manifest.get("sha256")
 
-        sha_match = actual_sha is not None and actual_sha == manifest_sha
-        if expected_sha256 is not None:
-            sha_match = sha_match and (actual_sha == expected_sha256)
+        images = manifest.get("images")
+        image_results = None
+        if isinstance(images, list):
+            # Multi-image manifest: verify every listed image file (sha256 + bytes).
+            all_ok = True
+            image_results = []
+            for entry in images:
+                fname = entry.get("file")
+                entry_sha = entry.get("sha256")
+                entry_bytes = entry.get("bytes")
+                fpath = folder / fname if fname else None
+                ok = True
+                detail = {"file": fname}
+                if not fname or not fpath or not fpath.is_file():
+                    ok = False
+                    detail["error"] = "missing image file"
+                else:
+                    actual = _sha256_file(fpath)
+                    actual_bytes = fpath.stat().st_size
+                    detail.update(
+                        {
+                            "actual_sha256": actual,
+                            "manifest_sha256": entry_sha,
+                            "actual_bytes": actual_bytes,
+                            "manifest_bytes": entry_bytes,
+                        }
+                    )
+                    if actual != entry_sha:
+                        ok = False
+                    if entry_bytes is not None and actual_bytes != entry_bytes:
+                        ok = False
+                if not ok:
+                    all_ok = False
+                detail["sha256_match"] = ok
+                image_results.append(detail)
+            sha_match = all_ok
+        else:
+            # Single data file (legacy wav job): match manifest sha256.
+            data_files = [p for p in folder.iterdir() if p.is_file() and p.name != "manifest.json"]
+            if not data_files:
+                return ToolResult(
+                    success=False,
+                    error="REJECT: no data file alongside manifest",
+                    data={
+                        "verdict": "REJECT",
+                        "verify": {"manifest_valid": manifest_valid, "sha256_match": False},
+                    },
+                )
+            for p in data_files:
+                s = _sha256_file(p)
+                if s and s == manifest_sha:
+                    matched_file = p
+                    actual_sha = s
+                    break
+            # If nothing matched the manifest, fall back to the single non-manifest
+            # file (common case: exactly one output artifact) so we can still report
+            # an informative mismatch.
+            if matched_file is None and len(data_files) == 1:
+                matched_file = data_files[0]
+                actual_sha = _sha256_file(matched_file)
 
-        manifest_valid = bool(manifest.get("job_id")) and bool(manifest.get("sha256"))
+            sha_match = actual_sha is not None and actual_sha == manifest_sha
+            if expected_sha256 is not None:
+                sha_match = sha_match and (actual_sha == expected_sha256)
 
         if not sha_match:
             return ToolResult(
@@ -659,6 +711,7 @@ class KaggleBridgeTool(BaseTool):
                         "data_file": matched_file.name if matched_file else None,
                         "actual_sha256": actual_sha,
                         "manifest_sha256": manifest_sha,
+                        "images": image_results,
                     },
                 },
             )
@@ -673,6 +726,7 @@ class KaggleBridgeTool(BaseTool):
                     "data_file": matched_file.name if matched_file else None,
                     "sha256": actual_sha,
                     "manifest": manifest,
+                    "images": image_results,
                 },
             },
         )
@@ -756,6 +810,8 @@ class KaggleBridgeTool(BaseTool):
                 "job": job,
                 "run_py": run_py,
                 "kaggle_cmd": kaggle_cmd,
+                "enable_gpu": inputs.get("enable_gpu", False),
+                "enable_internet": inputs.get("enable_internet", False),
             }
         )
         if not bj.success:

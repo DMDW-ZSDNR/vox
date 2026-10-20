@@ -242,6 +242,46 @@ def test_build_job_folder_uses_init_template(tmp_path):
     assert "enable_tpu" in meta or "machine_shape" in meta
 
 
+def test_build_job_folder_enable_gpu_internet_true(tmp_path):
+    fake = write_fake_kaggle(tmp_path, "ok")
+    job_folder = tmp_path / "jobs" / "job_gpu"
+    res = tool().execute(
+        {
+            "command": "build_job_folder",
+            "job_folder": str(job_folder),
+            "job_id": "job_gpu",
+            "kernel_slug": "forts845/of-bridge-runner",
+            "job": {"job_id": "job_gpu"},
+            "enable_gpu": True,
+            "enable_internet": True,
+            "kaggle_cmd": fake,
+        }
+    )
+    assert res.success, res.error
+    meta = json.loads((job_folder / "kernel-metadata.json").read_text())
+    assert meta["enable_gpu"] is True
+    assert meta["enable_internet"] is True
+
+
+def test_build_job_folder_enable_gpu_internet_false_default(tmp_path):
+    fake = write_fake_kaggle(tmp_path, "ok")
+    job_folder = tmp_path / "jobs" / "job_cpu"
+    res = tool().execute(
+        {
+            "command": "build_job_folder",
+            "job_folder": str(job_folder),
+            "job_id": "job_cpu",
+            "kernel_slug": "forts845/of-bridge-runner",
+            "job": {"job_id": "job_cpu"},
+            "kaggle_cmd": fake,
+        }
+    )
+    assert res.success, res.error
+    meta = json.loads((job_folder / "kernel-metadata.json").read_text())
+    assert meta["enable_gpu"] is False
+    assert meta["enable_internet"] is False
+
+
 # ---------------------------------------------------------------------------
 # Command: push (happy + failure paths)
 # ---------------------------------------------------------------------------
@@ -336,6 +376,36 @@ def test_poll_status_sequence_complete(tmp_path):
     assert "queued" in res.data["poll"]["status_strings"]
     assert "running" in res.data["poll"]["status_strings"]
     assert "complete" in res.data["poll"]["status_strings"]
+
+
+def test_poll_kernel_worker_status_complete(tmp_path):
+    """Kaggle returns '<slug> has status "KernelWorkerStatus.COMPLETE"'; the
+    bridge must parse the token and treat COMPLETE as terminal success."""
+    fake = write_fake_kaggle(tmp_path, "ok")
+    state_path = os.environ.get("FAKE_KAGGLE_STATE", "/tmp/fake_kaggle_state.json")
+    with open(state_path) as f:
+        state = json.load(f)
+    slug = "forts845/of-bridge-runner"
+    state["status_seq"] = [
+        f'{slug} has status "KernelWorkerStatus.QUEUED"',
+        f'{slug} has status "KernelWorkerStatus.RUNNING"',
+        f'{slug} has status "KernelWorkerStatus.COMPLETE"',
+    ]
+    state["status_idx"] = 0
+    with open(state_path, "w") as f:
+        json.dump(state, f)
+    res = tool().execute(
+        {
+            "command": "poll",
+            "kernel_slug": slug,
+            "total_timeout": 60,
+            "backoff": 0,
+            "kaggle_cmd": fake,
+        }
+    )
+    assert res.success, res.error
+    assert res.data["poll"]["status"] == "complete"
+    assert any("COMPLETE" in s for s in res.data["poll"]["status_strings"])
 
 
 def test_poll_error_status_failed(tmp_path):
@@ -499,6 +569,66 @@ def test_verify_missing_manifest_reject(tmp_path):
     )
     assert not res.success
     assert res.data["verify"]["manifest_valid"] is False
+
+
+def _write_image(dest, name, content=b"imgdata"):
+    p = dest / name
+    p.write_bytes(content)
+    return p
+
+
+def test_verify_multi_image_manifest_ok(tmp_path):
+    fake = write_fake_kaggle(tmp_path, "ok")
+    dest = tmp_path / "out"
+    dest.mkdir(parents=True, exist_ok=True)
+    p1 = _write_image(dest, "a.png", b"AAA")
+    p2 = _write_image(dest, "b.png", b"BBBB")
+    manifest = {
+        "job_id": "jobimg",
+        "images": [
+            {"file": "a.png", "sha256": hashlib.sha256(b"AAA").hexdigest(), "bytes": 3},
+            {"file": "b.png", "sha256": hashlib.sha256(b"BBBB").hexdigest(), "bytes": 4},
+        ],
+    }
+    (dest / "manifest.json").write_text(json.dumps(manifest))
+    res = tool().execute(
+        {
+            "command": "verify",
+            "output_folder": str(dest),
+            "job_id": "jobimg",
+            "kaggle_cmd": fake,
+        }
+    )
+    assert res.success, res.error
+    assert res.data["verify"]["sha256_match"] is True
+    assert res.data["verify"]["manifest_valid"] is True
+    imgs = res.data["verify"]["images"]
+    assert len(imgs) == 2
+    assert all(i["sha256_match"] for i in imgs)
+
+
+def test_verify_multi_image_manifest_sha_mismatch_reject(tmp_path):
+    fake = write_fake_kaggle(tmp_path, "ok")
+    dest = tmp_path / "out"
+    dest.mkdir(parents=True, exist_ok=True)
+    _write_image(dest, "a.png", b"AAA")
+    manifest = {
+        "job_id": "jobimg",
+        "images": [
+            {"file": "a.png", "sha256": "deadbeef" * 8, "bytes": 3},
+        ],
+    }
+    (dest / "manifest.json").write_text(json.dumps(manifest))
+    res = tool().execute(
+        {
+            "command": "verify",
+            "output_folder": str(dest),
+            "job_id": "jobimg",
+            "kaggle_cmd": fake,
+        }
+    )
+    assert not res.success
+    assert res.data["verify"]["sha256_match"] is False
 
 
 # ---------------------------------------------------------------------------

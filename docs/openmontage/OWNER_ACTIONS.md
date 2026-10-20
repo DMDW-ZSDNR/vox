@@ -129,6 +129,24 @@ CID footage may show NASA insignia on vehicles/facilities. Per NASA Media Usage 
 
 **Rollback:** `git revert` of the Z commit on branch `factory/business-documentary-pilot`.
 
+## 13. Milestone M (Kilo), factory lane — COMPLETE this session
+
+- [x] M1: G2 image bake-off concluded FAILED (v1 bitsandbytes missing→0 images; v2 one fix+one re-push → CPU gen `TypeError: 'dict' object is not callable` for SDXL-Lightning/Z-Image-Turbo, FLUX.2-klein-4B OOM `Killed`; no further re-push allowed). Cause documented in docs/openmontage/image_gen/G2_STATE.md. ISS v2 complete: 25 scenes + watermark crop, 3 animated claim diagrams, 24-claim ledger (2 NASA primary sources), 37-sentence script claim_ids_resolve PASS, kokoro-82M narration + finish_audio, qc.py ALL inputs PASS, 12-frame contact sheet; NOT_PUBLISHABLE (creative reasons).
+- [x] M2: AI illustration module — docs/openmontage/image_gen/ILLUSTRATION_STYLE_BIBLE.md; tools/illustration/illustration_qc.py (blur Laplacian, p-hash dups, aspect/size, text-like flag); tools/illustration/illustration_batch.py (Kaggle bridge batch + manifest verify + Illustration label); 9 tests pass.
+- [x] M3: Niche profiles docs/openmontage/niches/{space_iss,art_history,speculative_science}.yaml (allowed_sources, excluded_content, required_primary_doc_types, viability_gate, added_value_gate, 3 episode_templates each); YAML validated.
+- [x] M4: Museum adapters tools/museum/adapters.py (Met, Smithsonian, Rijksmuseum, NGA, Wikimedia; http_get injectable), rights.py (CC0/PD only, reject third-party credit, fail-closed), asset_record.py (sha256, credit, URL, rights_basis, usable); 4 tests pass, recorded fixtures, no network/keys.
+- [x] M5: Motion variety tools/motion/motion_variety.py (pan/zoom easings in/out, detail crop, parallax, chapter card, subtitle styles) + lint_variation (no two consecutive identical moves); 8 tests pass.
+- [x] M6: Packaging tools/packaging/packaging.py (thumbnail from own graphics, no emblems/people; titles/description/credits block; disclosure checklist citing official YouTube support URLs); 3 tests pass.
+- [x] M7: Review harness scripts/review_pack.py (bundle reports+qa_report+ledger read-only, run_evals E1-E5); 3 tests pass; all EVALS tasks pass.
+- [x] M8: Analytics import tools/analytics/analytics_import.py (parse Studio CSV, retention drop points per chapter -> docs/openmontage/analytics/analytics.json); 3 tests pass.
+- [x] M9: Ops scripts/ci_fast_suite.py + scripts/portability_dry_run.py (disk/time logging, 800MB floor); MASTER_RUN_STATE.md + OWNER_ACTIONS.md updated; 3 tests pass.
+
+## Owner's remaining decisions (consolidated)
+
+(unchanged from section 12; no new publish-critical blockers beyond existing voice-license, clip review, NASA insignia, synthetic-voice disclosure, monetization)
+
+**Rollback:** `git revert` of the M commit on branch `factory/business-documentary-pilot`.
+
 **Stop Codespace commands (for owner):**
 - `gh codespace stop -c <codespace-name>` — stop the current Codespace
 - `gh codespace list` — list all Codespaces

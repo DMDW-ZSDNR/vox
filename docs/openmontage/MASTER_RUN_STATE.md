@@ -14,6 +14,7 @@
 | P6 Technical slice ~50s | DONE | 4 CID clips from archive.org NIX (all source_policy_us_gov, no third-party credit per RIGHTS_MODEL.md); final slice 48.93s at 1920x1080 30fps h264/aac in projects/slice_cid_v0/ (gitignored); QC qa_report.json ALL PASS (12/12 checks); EDL with per-cut rationale; credits.txt; subtitles.srt; contact_sheet.jpg; NOT_PUBLISHABLE (unreviewed flags, single-source claims, voice owner sign-off, S8 blocked) | 501585b |
 | P7 Global check | DONE | docs/openmontage/GLOBAL_CHECK_2026-10-17.md (all phases, tests, QC summary, repo hygiene, open gates); docs/openmontage/OWNER_ACTIONS.md (numbered owner steps); 32 tests passed | — |
 | P7 Global check | PENDING | — | — |
+| M Factory lane (M1-M9) | DONE | M1 G2 concluded FAILED (CPU gen TypeError; FLUX OOM; one fix+one re-push used), ISS v2 qc.py PASS; M2 illustration module (style bible + batch QC + label, 9 tests); M3 niche profiles (3 yaml); M4 museum adapters (Met/Smithsonian/Rijksmuseum/NGA/Wikimedia, CC0/PD gate, 4 tests); M5 motion variety + variation lint (8 tests); M6 packaging (thumbnail+metadata+disclosure URLs, 3 tests); M7 review pack + EVALS (3 tests, E1-E5 pass); M8 analytics import + retention drops (3 tests); M9 ops (CI fast suite + portability dry-run, disk/time logging) | — |
 
 ## Rules observed
 - KAGGLE_API_TOKEN: never printed/logged/committed/passed on CLI; env check yes/no only

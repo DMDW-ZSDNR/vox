@@ -1,26 +1,20 @@
-# G2 State — AI Image Generation Bake-off (Kilo)
+# G2 State — AI Image Generation Bake-off (Kilo) — FINAL (concluded FAILED)
 
 **Kernel slug:** forts845/g2-image-bakeoff  
 **Job id:** g2-bakeoff-1  
-**Submit time:** 2026-10-20T08:45:00Z (v1), 2026-10-20T~16:15Z (v2 re-push)  
-**Last known status:** KernelWorkerStatus.RUNNING (version 2 pushed OK; URL https://www.kaggle.com/code/forts845/g2-image-bakeoff)  
-**Root cause (v1, from log):** all 3 models failed at fp16 load attempt 0; error swallowed; bitsandbytes 8-bit fallback NOT installed on Kaggle image → 0 images, 0.0 GPU min.  
-**Fix applied (v2, run.py):** load_pipe now logs attempt-0 errors, skips bitsandbytes when unavailable, reaches CPU float32 fallback at reduced resolution (512px, steps/2) so generation completes even on CPU.  
-**Next steps (resume when COMPLETE):**
-1. `kaggle kernels status forts845/g2-image-bakeoff` (ONE call only)
-2. If COMPLETE: `kaggle kernels output` / bridge `fetch_output` to projects/image_gen/g2/ (expect manifest.json + imgs/ + contact sheets)
-3. Verify manifest job_id == g2-bakeoff-1; sha256+bytes of every file (non-zero exit on mismatch)
-4. Record seconds/image, peak VRAM, GPU minutes; build contact sheets A/B/C + g2_model_mapping.json
-5. Write docs/openmontage/image_gen/G2_REPORT.md with per-model verdicts (USEFUL|MARGINAL|NOT_USEFUL)
-6. If ERROR: read log, report exact cause (no further re-push allowed — v2 was the one fix)
+**Submit time:** 2026-10-20T08:45:00Z (v1), re-push v2 ~2026-10-20T16:15Z  
+**Final status:** ERROR (both versions). NO images produced, 0.0 GPU min. G2 bake-off concluded FAILED — ONE fix + ONE re-push already used; no further re-push allowed per G-rules.  
+**Resume:** N/A (G2 concluded). Owner judges visually from logs; G2_REPORT.md not written (kernel never produced outputs).
 
-**If still queued/running at end of session:** finish with this G2_STATE.md + the exact resume command above; do NOT wait/loop on status.
+## Root causes (from g2-image-bakeoff.log, /workspaces/OpenMontage/projects/image_gen/g2_v2/)
+- **v1:** every model failed at fp16 load attempt 0; error swallowed; bitsandbytes 8-bit fallback NOT installed on Kaggle image → pipe=None for all 3 models → 0 images.
+- **v2:** load_pipe fixed (logs attempt-0 errors, skips missing bitsandbytes, CPU float32 fallback). Models loaded via cpu_float32 fallback (peak VRAM 0.0 MB) but generation raised `TypeError: 'dict' object is not callable` for every seed on Model A (SDXL-Lightning) and Model B (Z-Image-Turbo). Model C (FLUX.2-klein-4B): fp16 variant files unavailable → fell to CPU float32 → OOM `Killed` during pipeline load (~340s, T4 16GB). Result: 0 images across all 3 models, 30 prompts total.
+- **Conclusion:** Kaggle T4 CPU float32 fallback is too slow/broken for these diffusion pipelines (dict-not-callable generation bug on CPU; FLUX OOM). G2 bake-off FAILED under the zero-cost/no-paid-route constraint. If owner wants image bake-off, use a GPU-enabled Kaggle job with bitsandbytes installed, or run locally with a GPU.
 
-## License pre-check (unchanged)
+## License pre-check (unchanged, informational only)
 - SDXL-Lightning + SDXL base: OpenRAIL++ — commercial OK.
 - Z-Image-Turbo: apache-2.0 — commercial OK.
-- FLUX.2-klein-4B: apache-2.0, commercial OK.
+- FLUX.2-klein-4B: apache-2.0 — commercial OK.
 
-## Constraints
-- Outputs → gitignored projects/image_gen/g2/ only; never commit media.
-- Disk < 800 MB free → STOP whole run.
+## M_STATE handoff
+G2 concluded FAILED (recorded in docs/openmontage/M_STATE.md). M2 AI illustration module proceeds independently via scripts/iss_narrate_all.py-style Kaggle bridge batch generation (new module, not the G2 kernel).

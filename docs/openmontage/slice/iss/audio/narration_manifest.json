@@ -1,6 +1,7 @@
 {
-  "sentences": 8,
-  "duration_s": 195.725333,
+  "sentences": 37,
+  "duration_s": 298.35,
+  "finished_duration_s": 298.35,
   "sample_rate": 24000,
   "beats": [
     "B1",
@@ -12,16 +13,8 @@
     "B7",
     "B8"
   ],
-  "sentence_durations": [
-    36.306,
-    32.988,
-    26.078667,
-    20.748667,
-    17.456,
-    19.188,
-    19.870667,
-    17.289333
-  ],
-  "engine": "kokoro_onnx_82m_cpu",
-  "voice": "af_heart"
+  "engine": "kokoro_82m_cpu",
+  "voice": "af_heart",
+  "script": "docs/openmontage/slice/iss/ISS_FULL_SCRIPT_v0.md",
+  "expected_duration": 298.35
 }

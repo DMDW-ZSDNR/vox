@@ -3,7 +3,7 @@
 **Branch:** factory/business-documentary-pilot  
 **HEAD:** K complete (8e96cda); Z1-Z9 this session  
 **Started / updated:** 2026-10-19  
-**Disk:** ~6.1 GB free /workspaces, ~29 GB free /tmp (above 800 MB stop threshold)  
+**Disk:** ~4.6 GB free /workspaces (above 800 MB stop threshold)  
 **Rules:** zero-cost only (unknown/unpriced route = BLOCKED), curl -L for downloads, max 60 requests/phase, no paid routes, no AI upscaling, no publishing/upload, no secrets printed/committed, never touch `youtube-niche-finder/` or owner's `.env.example`/`AGENTS.md`. Roles inline, not independent. Venv + weights live outside the repo (/tmp/kilo/*) and are never committed.
 
 ## Phase status
@@ -25,9 +25,12 @@
 | Y2 APOLLO 9 FOOTAGE | DONE (no clean HD motion) | Searched NASA images-api (no Apollo 9 HD video) + archive.org. Splashdown clip 17584-apollo-action-center-footage-mos-vwr is CC BY-NC-ND creator=None → NOT usable (ND blocks editing, non-commercial). 16mm film is AI-upscaled → rejected (no AI upscaling rule). Only clean PD NASA assets: 2 stills downloaded via curl -L with sha256 recorded (AS09-21-3199 LM, GPN-2000-001283 splashdown) into gitignored projects/slice_apollo9/stills/, copied to docs/openmontage/slice/apollo9/stills/. Cap 600MB respected (2.8MB total). | pending |
 | Y3 APOLLO 9 BUILD | DONE | Corrected script table (13->9 beats after review fixes), narration re-synthesized kokoro-onnx (428.6s), finish_audio PASS, subtitles stable-ts (135 cues). EDL 19 cuts partitioning full duration, per-cut rationale, all static_by_design. Render: graphics cards + 2 stills, 1920x1080p30 h264/aac, 428.6s. | pending |
 | Y4 APOLLO 9 QC | DONE | qc.py with ALL inputs: verdict PASS (12 PASS + 1 REVIEW freezedetect on static_by_design segments = expected, matches Artemis Z2 practice). duration_vs_script PASS (drift 0.00s), subtitle_sync PASS, credits_complete PASS, claim_ids 9/9 PASS, claim_ids_resolve 9/9 PASS, rights_basis 19/19 PASS, added_value PASS. NOT_PUBLISHABLE documented in artifacts/credits.txt. | pending |
+| W1 ISS TOPIC SELECTION | DONE | ISS Earth view / cupola selected (Comp 0.5, lowest among ISS sub-topics in T10). HD footage verified: NASA API NHQ_2019_0626 "Earth Views from the ISS" — 1280x720 HD, 44:00, Creator=None, PD, no NC/ND, third-party credit none. ~medium.mp4 (776 MB) downloaded via curl -L, sha256 recorded. Under 800 MB cap. | pending |
+| W2 ISS BUILD | DONE | Claim ledger ISS_CLAIM_LEDGER.md (4 claims, ISS-003 TWO_SOURCES, ISS-001/002/004 SINGLE_SOURCE flagged). Script ISS_FULL_SCRIPT_v0.md (8 beats, 8 chapters, claim_ids resolve ALL OK). Narration kokoro-onnx (195.7s, 8 sentences). finish_audio PASS. Subtitles from measured durations (8 cues, last ends <= audio). EDL 16 cuts with per-cut rationale, all graphics cards static_by_design. 9 graphics cards + NASA PD footage. Render: 1280x720p30 h264/aac, 195.6s. | pending |
+| W3 ISS QC | DONE | qc.py with ALL inputs: verdict PASS (12 PASS + 1 REVIEW freezedetect on static_by_design cards; duration drift 0.10s; expected 1280x720 native HD, no upscaling). NOT_PUBLISHABLE documented in artifacts/credits.txt (synthetic-voice disclosure pending, insignia review pending, single NASA clip). | pending |
 
-## Blocker carried (Z1/Z3/Z4)
-Kokoro-82M HF weights unreachable (cas-server.xethub.hf.co + us.aws.cdn.hf.co blocked; HF_HUB_DISABLE_XET=1 HTTP stuck at 0 bytes). Resolved for narration via kokoro-onnx GitHub Releases route (weights in /tmp/kilo/kokoro_onnx_weights/). Apollo 9 video build additionally blocked by missing Apollo 9 HD footage.
+## Blocker carried (Z1/Z3/Z4 + W)
+Kokoro-82M HF weights unreachable (cas-server.xethub.hf.co + us.aws.cdn.hf.co blocked; HF_HUB_DISABLE_XET=1 HTTP stuck at 0 bytes). Resolved for narration via kokoro-onnx GitHub Releases route (weights in /tmp/kilo/kokoro_onnx_weights/).
 
 ## Rules observed
 - KAGGLE_API_TOKEN never printed/logged/committed.

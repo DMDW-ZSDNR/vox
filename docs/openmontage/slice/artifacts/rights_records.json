@@ -9,7 +9,34 @@
     "logo_visible": "no"
   },
   {
-    "asset_id": "card_mission",
+    "asset_id": "card_orbit",
+    "kind": "graphics",
+    "rights_basis": "source_policy_us_gov",
+    "center": "OpenMontage original",
+    "third_party_credit": "no",
+    "identifiable_persons": "no",
+    "logo_visible": "no"
+  },
+  {
+    "asset_id": "card_cupola",
+    "kind": "graphics",
+    "rights_basis": "source_policy_us_gov",
+    "center": "OpenMontage original",
+    "third_party_credit": "no",
+    "identifiable_persons": "no",
+    "logo_visible": "no"
+  },
+  {
+    "asset_id": "card_earthobs",
+    "kind": "graphics",
+    "rights_basis": "source_policy_us_gov",
+    "center": "OpenMontage original",
+    "third_party_credit": "no",
+    "identifiable_persons": "no",
+    "logo_visible": "no"
+  },
+  {
+    "asset_id": "card_daynight",
     "kind": "graphics",
     "rights_basis": "source_policy_us_gov",
     "center": "OpenMontage original",
@@ -27,136 +54,13 @@
     "logo_visible": "no"
   },
   {
-    "asset_id": "card_callsigns",
+    "asset_id": "card_matters",
     "kind": "graphics",
     "rights_basis": "source_policy_us_gov",
     "center": "OpenMontage original",
     "third_party_credit": "no",
     "identifiable_persons": "no",
     "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_docking_1",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_docking_2",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_docking_3",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_systems_1",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_systems_2",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "AS09-21-3199_LM",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "NASA",
-    "source": "archive.org/details/AS09-21-3199",
-    "rights": "Public Domain",
-    "sha256": "1ece124dafcfcbf85f0d5308d94d02e364adcb2d0ef49493cdcaabd922ddf5db",
-    "third_party_credit": "no",
-    "identifiable_persons": "unreviewed",
-    "logo_visible": "unreviewed"
-  },
-  {
-    "asset_id": "card_eva",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_undock",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_dps",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_rendezvous",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_dockback",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "card_ascent",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "OpenMontage original",
-    "third_party_credit": "no",
-    "identifiable_persons": "no",
-    "logo_visible": "no"
-  },
-  {
-    "asset_id": "GPN-2000-001283_splashdown",
-    "kind": "graphics",
-    "rights_basis": "source_policy_us_gov",
-    "center": "NASA",
-    "source": "archive.org/details/GPN-2000-001283",
-    "rights": null,
-    "sha256": "c3e020915ac9801d5ce2a3fbabeb27e7635008fc4fe8900c933e40db7f3a5974",
-    "third_party_credit": "no",
-    "identifiable_persons": "unreviewed",
-    "logo_visible": "unreviewed"
   },
   {
     "asset_id": "card_end",
@@ -168,12 +72,24 @@
     "logo_visible": "no"
   },
   {
-    "asset_id": "card_sources",
+    "asset_id": "card_credits",
     "kind": "graphics",
     "rights_basis": "source_policy_us_gov",
     "center": "OpenMontage original",
     "third_party_credit": "no",
     "identifiable_persons": "no",
     "logo_visible": "no"
+  },
+  {
+    "asset_id": "iss_earth_views",
+    "kind": "footage",
+    "rights_basis": "source_policy_us_gov",
+    "center": "NASA HQ",
+    "source": "NASA Image & Video Library NHQ_2019_0626",
+    "rights": "Public domain (NASA), Creator=None, no NC/ND",
+    "sha256": "248b111940d65e4968950702206d6636eda8e2890f9c29dacdf0ea5e7416c0a5",
+    "third_party_credit": "none",
+    "identifiable_persons": "no",
+    "logo_visible": "unreviewed"
   }
 ]

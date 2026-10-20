@@ -1,47 +1,42 @@
 [
   {
     "beat": "B1",
-    "claim_id": "A9-037, A9-010",
-    "source_flags": ""
+    "claim_id": "ISS-001",
+    "source_flags": "SINGLE"
   },
   {
     "beat": "B2",
-    "claim_id": "A9-005, A9-006, A9-007, A9-008, A9-009, A9-010",
-    "source_flags": ""
+    "claim_id": "ISS-002, ISS-003",
+    "source_flags": "SINGLE"
   },
   {
     "beat": "B3",
-    "claim_id": "A9-018, A9-017",
-    "source_flags": ""
+    "claim_id": "ISS-001",
+    "source_flags": "SINGLE"
   },
   {
     "beat": "B4",
-    "claim_id": "A9-011",
-    "source_flags": ""
+    "claim_id": "ISS-004",
+    "source_flags": "SINGLE"
   },
   {
     "beat": "B5",
-    "claim_id": "A9-004, A9-025, A9-026, A9-027, A9-028, A9-029, A9-030",
+    "claim_id": "ISS-003",
     "source_flags": ""
   },
   {
     "beat": "B6",
-    "claim_id": "A9-020, A9-021, A9-022, A9-023, A9-024",
-    "source_flags": ""
+    "claim_id": "ISS-002, ISS-003",
+    "source_flags": "SINGLE"
   },
   {
     "beat": "B7",
-    "claim_id": "A9-010, A9-004, A9-019, A9-026",
-    "source_flags": ""
+    "claim_id": "ISS-004",
+    "source_flags": "SINGLE"
   },
   {
     "beat": "B8",
-    "claim_id": "A9-001",
-    "source_flags": ""
-  },
-  {
-    "beat": "B9",
-    "claim_id": "A9-010",
-    "source_flags": ""
+    "claim_id": "ISS-001, ISS-002",
+    "source_flags": "SINGLE"
   }
 ]

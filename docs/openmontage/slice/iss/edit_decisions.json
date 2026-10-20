@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "topic_id": "iss",
+  "total_duration_s": 195.725,
+  "resolution": "1280x720",
+  "fps": 30,
+  "codec": "h264",
+  "audio_codec": "aac",
+  "cuts": [
+    {
+      "cut_id": 1,
+      "start": 0.0,
+      "end": 5.0,
+      "asset_id": "card_title",
+      "role": "graphics_card",
+      "clip": "card_title",
+      "layout": "static_card",
+      "rationale": "Opening title card \u2014 hook question and station overview; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 2,
+      "start": 5.0,
+      "end": 24.466,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 1",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 1; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "0.0-60.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 3,
+      "start": 24.466,
+      "end": 29.466,
+      "asset_id": "card_orbit",
+      "role": "graphics_card",
+      "clip": "card_orbit",
+      "layout": "static_card",
+      "rationale": "Orbit context \u2014 250 miles, 17,500 mph; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 4,
+      "start": 29.466,
+      "end": 48.932,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 2",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 2; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "300.0-375.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 5,
+      "start": 48.932,
+      "end": 53.932,
+      "asset_id": "card_cupola",
+      "role": "graphics_card",
+      "clip": "card_cupola",
+      "layout": "static_card",
+      "rationale": "Seven-window cupola description; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 6,
+      "start": 53.932,
+      "end": 73.398,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 3",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 3; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "600.0-675.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 7,
+      "start": 73.398,
+      "end": 78.398,
+      "asset_id": "card_earthobs",
+      "role": "graphics_card",
+      "clip": "card_earthobs",
+      "layout": "static_card",
+      "rationale": "Earth observation \u2014 hurricanes, volcanoes, city lights, glaciers; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 8,
+      "start": 78.398,
+      "end": 97.864,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 4",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 4; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "900.0-975.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 9,
+      "start": 97.864,
+      "end": 102.864,
+      "asset_id": "card_daynight",
+      "role": "graphics_card",
+      "clip": "card_daynight",
+      "layout": "static_card",
+      "rationale": "Day/night cycle \u2014 sixteen sunrises per day; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 10,
+      "start": 102.864,
+      "end": 122.33,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 5",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 5; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "1200.0-1275.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 11,
+      "start": 122.33,
+      "end": 127.33,
+      "asset_id": "card_crew",
+      "role": "graphics_card",
+      "clip": "card_crew",
+      "layout": "static_card",
+      "rationale": "Crew perspective \u2014 overview effect, no borders; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 12,
+      "start": 127.33,
+      "end": 146.796,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 6",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 6; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "1500.0-1575.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 13,
+      "start": 146.796,
+      "end": 151.796,
+      "asset_id": "card_matters",
+      "role": "graphics_card",
+      "clip": "card_matters",
+      "layout": "static_card",
+      "rationale": "Why it matters \u2014 one interconnected system; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 14,
+      "start": 151.796,
+      "end": 171.262,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 7",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 7; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "1800.0-1875.0s",
+      "static_by_design": false
+    },
+    {
+      "cut_id": 15,
+      "start": 171.262,
+      "end": 176.262,
+      "asset_id": "card_end",
+      "role": "graphics_card",
+      "clip": "card_end",
+      "layout": "static_card",
+      "rationale": "Closing \u2014 one shared home; static_by_design.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "n/a (original graphics)",
+      "static_by_design": true
+    },
+    {
+      "cut_id": 16,
+      "start": 176.262,
+      "end": 195.725,
+      "asset_id": "iss_earth_views",
+      "role": "archive_insert",
+      "clip": "ISS Earth view seg 8",
+      "layout": "1080p_scaled",
+      "rationale": "Earth-view footage for chapter 8; HD footage trimmed to chapter duration.",
+      "rights_basis": "source_policy_us_gov",
+      "source_segment": "2100.0-2160.0s",
+      "static_by_design": false
+    }
+  ],
+  "static_segments": [
+    {
+      "start": 0.0,
+      "end": 5.0,
+      "reason": "Opening title card \u2014 hook question and station overview; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 24.466,
+      "end": 29.466,
+      "reason": "Orbit context \u2014 250 miles, 17,500 mph; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 48.932,
+      "end": 53.932,
+      "reason": "Seven-window cupola description; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 73.398,
+      "end": 78.398,
+      "reason": "Earth observation \u2014 hurricanes, volcanoes, city lights, glaciers; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 97.864,
+      "end": 102.864,
+      "reason": "Day/night cycle \u2014 sixteen sunrises per day; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 122.33,
+      "end": 127.33,
+      "reason": "Crew perspective \u2014 overview effect, no borders; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 146.796,
+      "end": 151.796,
+      "reason": "Why it matters \u2014 one interconnected system; static_by_design.",
+      "static_by_design": true
+    },
+    {
+      "start": 171.262,
+      "end": 176.262,
+      "reason": "Closing \u2014 one shared home; static_by_design.",
+      "static_by_design": true
+    }
+  ],
+  "notes": "ISS Earth view / cupola draft. Original graphics cards + NASA PD HD footage. All segments static_by_design for graphics cards."
+}

@@ -1,0 +1,27 @@
+{
+  "sentences": 8,
+  "duration_s": 195.725333,
+  "sample_rate": 24000,
+  "beats": [
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6",
+    "B7",
+    "B8"
+  ],
+  "sentence_durations": [
+    36.306,
+    32.988,
+    26.078667,
+    20.748667,
+    17.456,
+    19.188,
+    19.870667,
+    17.289333
+  ],
+  "engine": "kokoro_onnx_82m_cpu",
+  "voice": "af_heart"
+}

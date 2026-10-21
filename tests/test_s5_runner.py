@@ -72,3 +72,14 @@ def test_black_nan_oom_accounting_present():
     for token in ("black_count", "nan_count", "oom_count", "peak_vram_mb",
                   "steady_state_sec_per_image", "load_seconds"):
         assert token in SRC, f"manifest field {token} missing"
+
+
+def test_probe_classes_per_model():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("s5_runner_probe", RUNNER)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["s5_runner_probe"] = mod
+    spec.loader.exec_module(mod)
+    assert mod.PROBE_CLASSES["zimage"] == ["ZImagePipeline"]
+    assert mod.PROBE_CLASSES["klein"][0] == "Flux2Pipeline"
+    assert mod.PROBE_CLASSES["sdxl"] == ["StableDiffusionXLPipeline"]

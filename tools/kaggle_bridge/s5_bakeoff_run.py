@@ -41,6 +41,13 @@ IMAGES_DIR = OUT / "images"
 
 JOB_EMBEDDED = None
 
+# Pipeline classes whose import decides whether the installed release is usable.
+PROBE_CLASSES = {
+    "sdxl": ["StableDiffusionXLPipeline"],
+    "klein": ["Flux2Pipeline"],
+    "zimage": ["ZImagePipeline"],
+}
+
 # Two install attempts maximum per model (S5 stop rule).
 INSTALL_ATTEMPTS = [
     {"diffusers": ">=0.36,<0.37", "transformers": ">=4.57,<5"},
@@ -150,19 +157,16 @@ def main() -> None:
     IMAGES_DIR = OUT / "images"
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-    # --- Z-Image: verify the pipeline class BEFORE generating -------------
-    if model == "zimage":
-        ok, log = install_and_probe(["ZImagePipeline"])
-        (OUT / "install_log.json").write_text(json.dumps(log, indent=2), encoding="utf-8")
-        if not ok:
-            _blocked("ZImagePipeline import failed after 2 attempts: "
-                     f"{log['attempts'][-1]['import_error']}")
-    else:
-        ok, log = install_and_probe(["StableDiffusionXLPipeline"])
-        (OUT / "install_log.json").write_text(json.dumps(log, indent=2), encoding="utf-8")
-        if not ok:
-            _blocked(f"diffusers install/import failed after 2 attempts: "
-                     f"{log['attempts'][-1]['import_error']}")
+    # --- verify the pipeline class BEFORE generating ----------------------
+    # Z-Image is strict: no ZImagePipeline -> BLOCKED (no substitute model).
+    # klein prefers Flux2Pipeline but may fall back to FluxPipeline if only
+    # that class exists; SDXL has a single class.
+    probe_classes = PROBE_CLASSES[model]
+    ok, log = install_and_probe(probe_classes)
+    (OUT / "install_log.json").write_text(json.dumps(log, indent=2), encoding="utf-8")
+    if not ok and model == "zimage":
+        _blocked("ZImagePipeline import failed after 2 attempts: "
+                 f"{log['attempts'][-1]['import_error']}")
 
     import torch  # noqa: E402 - installed above
     import diffusers  # noqa: E402
@@ -175,7 +179,7 @@ def main() -> None:
     declared = job.get("pipeline_class")
     candidates = [declared] if declared else []
     if model == "klein":
-        candidates = ["Flux2Pipeline", "FluxPipeline"]
+        candidates = ["Flux2Pipeline", "FluxPipeline"]  # documented fallback order
     for name in candidates:
         try:
             pipe_cls = getattr(diffusers, name)

@@ -89,3 +89,27 @@ Record only useful, evidence-backed lessons. Do not include secrets or personal 
 - Regression test: tests/tools/test_s1_z_image_turbo_run.py (manifest records versions + diffusers_commit); tests/tools/test_s4_* (runner compiles, manifest has version fields).
 - Result: SDXL resubmitted with torchao pin and is RUNNING; Z-Image-Turbo marked BLOCKED (max attempts reached); FLUX.2-klein-4B pending.
 
+
+- Date / task: 2026-10-21 / S5 bake-off Kaggle harness (Kilo)
+- Observed failure and evidence: three kernel runs died before any GPU work.
+  (1) S4's last run: the runner imported ZImagePipeline/SDXL/Flux in one `from
+  diffusers import (...)` for every model, so the SDXL job crashed on
+  `ImportError: cannot import name 'ZImagePipeline'` (released diffusers lacks it)
+  and produced 0 images.
+  (2) S5 SDXL run 1: `SyntaxError: name 'OUT' is used prior to global declaration`
+  (the function used OUT at the top, `global OUT` came later).
+  (3) S5 SDXL run 2: `NameError: name 'null' is not defined` — the job was embedded
+  with plain json.dumps, and JSON `null/true/false` are not Python literals.
+- Confirmed cause / certainty: harness bugs in the runner/push script, not model,
+  network, or rights issues. Each is deterministic and cheap to test locally.
+- Fix or proposed rule: (a) import only the pipeline class the job needs and name
+  the class in the job payload; (b) declare `global` before first use; (c) embed a
+  job as a JSON *string* and `json.loads` it at runtime (`JOB_EMBEDDED =
+  json.loads("{...}")`); (d) never push a runner whose embedded payload has not
+  been exec'd locally for every model.
+- Regression test: tests/test_s5_runner.py (global-before-use AST check, compile,
+  probe classes, no bitsandbytes/git-main) and tests/test_s5_push_bakeoff.py
+  (exec the exact pushed runner text for sdxl/zimage/klein; asserts None stays
+  None). Both pass locally before every push.
+- Result: SDXL run 3 reached RUNNING with the same runner text that passed those
+  tests; the S4 zero-image failure cannot recur because each job now imports one class.

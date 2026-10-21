@@ -34,3 +34,27 @@ scripts/score_rubric.py,
 docs/openmontage/niches/speculative_evolution/creatures/{vent_grazer,filter_drifter,ice_burrower,vent_chimney_field,under_ice_cavern,frozen_ocean_food_web}.yaml,
 docs/openmontage/image_gen/{PROMPT_TEST_PLAN.md,prompt_test_matrix.json,prompt_test_mapping.json},
 docs/openmontage/evidence/spec_evo/{pilot2_no_land_ocean_world,pilot3_low_gravity_flying_food_web}.md
+
+## S5 (Kilo) — change request for tools/prompting/builder.py (read-only use, not patched)
+
+Two cosmetic duplications in the rendered text. They do not stop the bake-off,
+but they waste prompt budget and slightly muddy the model comparison. Kilo did
+**not** edit `tools/prompting/` (OpenCode-owned).
+
+1. **Z-Image style is duplicated.** `spec.style` is already
+   `"flat-vector field-guide plate"`, and `_render_zimage` prefixes
+   `f"A {style_phrase} field-guide plate."`, so the rendered prompt starts
+   `"A flat-vector field-guide plate field-guide plate."`.
+   Suggested fix: use `f"A {style_phrase}."` or drop the trailing words when
+   `style_phrase` already ends with "plate".
+2. **Anatomy counts are stated twice for klein (variants B and C).**
+   `first = f"{subject} has {anatomy_phrase}."` plus
+   `anatomy_phrase = "6 limbs, 2 eyes, 0 horns; long neck, spade-like forelimbs"`
+   in the same sentence, and variant C prepends `anatomy_phrase` again
+   (`"6 limbs, 2 eyes, 0 horns; ... . <subject> has 6 limbs, 2 eyes, 0 horns; ..."`).
+   Suggested fix: in variant C lead with the feature list only, or build `rest`
+   without repeating counts.
+
+Evidence: `docs/openmontage/image_gen/S5_TEST_SET.json` (renders r0001-r0039).
+No change made by Kilo; S5 ran on the builder exactly as-is so the comparison
+stays reproducible.

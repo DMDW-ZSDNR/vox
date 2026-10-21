@@ -141,7 +141,8 @@ def write_csv_template(out_dir: Path, scenes: List[str], n_panels: int = 3) -> P
 
 def instructions(scenes: List[str], n_panels: int = 3,
                  blocked_note: str = "") -> str:
-    labels = " / ".join("ABC"[:n_panels])
+    panel_list = list("ABC"[:n_panels])
+    labels = " / ".join(panel_list)
     return (
         "S7 blind pack - how to review (5-10 minutes)\n"
         "===========================================\n\n"
@@ -157,7 +158,7 @@ def instructions(scenes: List[str], n_panels: int = 3,
         "     missing limbs, fused bodies, duplicated heads or duplicated subjects.\n"
         "   - comment: optional, one short line (what is wrong / what works).\n\n"
         "3. Fill results.csv in any CSV editor or spreadsheet. Allowed values:\n"
-        f"   best_panel / worst_panel: {' or '.join(labels)} "
+        f"   best_panel / worst_panel: {' or '.join(panel_list)} "
         "(worst may be left empty)\n"
         f"   anatomy_ok_<panel>: yes or no (one column per panel: "
         f"{', '.join('anatomy_ok_' + l for l in 'ABC'[:n_panels])})\n"

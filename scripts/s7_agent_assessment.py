@@ -114,14 +114,38 @@ def rank(per_model: Dict[str, Dict[str, Any]]) -> List[str]:
                        per_model[m].get("sec_per_image") or 1e9))
 
 
+def emit_template(test_set: Path, out_csv: Path) -> int:
+    """Write a review sheet pre-filled with render_id / scene_id / model."""
+    doc = json.loads(test_set.read_text(encoding="utf-8"))
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    with out_csv.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["render_id", "scene_id", "model"] + DIMS + ["notes"])
+        for r in doc["renders"]:
+            w.writerow([r["render_id"], r["scene_id"], r["model"]] + [""] * len(DIMS) + [""])
+    return len(doc["renders"])
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scores", required=True, help="CSV of agent rubric scores")
-    ap.add_argument("--pick", required=True, help="the model the agent would pick")
-    ap.add_argument("--confidence", required=True, choices=["low", "medium", "high"])
+    ap.add_argument("--scores", help="CSV of agent rubric scores")
+    ap.add_argument("--pick", help="the model the agent would pick")
+    ap.add_argument("--confidence", choices=["low", "medium", "high"])
     ap.add_argument("--speed", default="", help="JSON {model: sec_per_image}")
+    ap.add_argument("--emit-template", metavar="CSV",
+                    help="write an empty review sheet and exit")
+    ap.add_argument("--test-set", default=str(
+        REPO / "docs/openmontage/image_gen/S7_TEST_SET.json"))
     ap.add_argument("--out", default=str(DEFAULT_OUT))
     args = ap.parse_args(argv)
+
+    if args.emit_template:
+        n = emit_template(Path(args.test_set), Path(args.emit_template))
+        print(f"wrote {args.emit_template} ({n} rows)")
+        return 0
+
+    if not (args.scores and args.pick and args.confidence):
+        ap.error("--scores, --pick and --confidence are required")
 
     rows = load_scores(Path(args.scores))
     speed = json.loads(args.speed) if args.speed else {}

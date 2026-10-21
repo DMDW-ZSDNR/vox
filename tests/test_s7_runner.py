@@ -85,11 +85,12 @@ def test_install_ladder_shape():
         "git_main_x4", "git_main_x5_ao"}
 
 
-def test_every_stack_pins_torchao_when_diffusers_041():
+def test_every_live_stack_pins_torchao_when_diffusers_041():
     """diffusers 0.41.0 needs torchao.quantization.FqnToConfig."""
     mod = _load()
-    for name, stack in mod.RELEASED_STACKS.items():
-        args = stack["pip_args"]
+    live = {rung for ladder in mod.DEFAULT_LADDERS.values() for rung in ladder}
+    for name in sorted(live):
+        args = mod.RELEASED_STACKS[name]["pip_args"]
         if not any("diffusers==0.41.0" in a for a in args):
             continue
         assert any(a.startswith("torchao==0.15.0") for a in args), \

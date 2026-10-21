@@ -2,6 +2,24 @@
 
 Record accepted changes, benchmark evidence, reviewer and rollback method.
 
+## 2026-10-21 — Milestone S4 (Kilo), model bakeoff (docs/tools/scripts/tests)
+
+### S4-1 PROMPTING FACTS (DONE)
+- docs/openmontage/image_gen/PROMPTING_FACTS.md — verified prompting claims against official sources (vendor-official / blog / UNVERIFIED labels). Key confirmations: Z-Image-Turbo guidance_scale=0.0 for Turbo, negative_prompt accepted at pipeline level but ignored when guidance_scale<1 (diffusers z_image docs); SDXL negative_prompt + guidance_scale default 5.0 (HF diffusers docs); FLUX.2-klein-4B local FluxPipeline honours guidance_scale (default 3.5, enabled >1) and negative_prompt (only when true_cfg_scale>1) (diffusers FluxPipeline docs). BFL docs.bfl.ai prompting applies to the cloud API service, not the local pipeline.
+
+### S4-2 RUN ORDER / MATRIX (IN_PROGRESS)
+- docs/openmontage/image_gen/prompt_test_matrix.json schema 1.1: 12 scenes x 2 seeds x 3 models x 3 variants = 216 renders; 24 images per cell (meets scorer >=24/cell minimum); neutral render IDs for blind naming; prompt_test_mapping.json regenerated to unblind.
+- tools/kaggle_bridge/s4_bakeoff_run.py: generalized one-model-per-kernel runner, fp16 only, NO bitsandbytes, NO CPU fallback (requires CUDA), non-zero exit if images < prompts, full tracebacks saved to output, exact versions (diffusers commit hash, transformers, huggingface_hub, torch) recorded in manifest via --force-reinstall pinned stack (hub 1.x + transformers 5.x + torchao 0.11-0.14 + diffusers git main).
+- scripts/s4_push_bakeoff.py: pre-renders prompts via OpenCode-owned tools/prompting.builder (read only), embeds job config as JOB_EMBEDDED (Kaggle copies only script.py), pushes to forts845/openmontage-runner (GPU + internet).
+- Model order (owner): 1) Z-Image-Turbo — BLOCKED after 5 attempts (final error: diffusers.loaders.single_file import failure, transformers 5.x vs git-main diffusers; max fix attempts reached, moved on per stop rule); 2) SDXL Base + madebyollin/sdxl-vae-fp16-fix — SUBMITTED s4-sdxl-1, RUNNING with torchao pin (1 fix attempt used, 1 remaining); 3) FLUX.2-klein-4B — PENDING.
+
+### S4-3 PROMPT-RULE EXPERIMENTS (DONE)
+- scripts/s4_verify_prompt_experiments.py: 12/12 assertions pass using tools/prompting.builder (read only). Confirms: zimage negative_prompt=None (ignored), negation!=positive phrasing, style-first; klein anatomy-first(C)!=anatomy-last(B), guidance=None (uses diffusers default 3.5); sdxl negative_prompt present, guidance 7.5, steps 50; determinism. Objective image measurement (text artifacts via QC detector, pHash duplicates, blur) requires generated images from S4-2 Kaggle jobs.
+
+### S4-4 BLIND PACK (IN_PROGRESS)
+- scripts/score_rubric.py (OpenCode-owned, read only) proven on dummy CSV: loads, validates columns + 0-2 score range, computes per-cell severe-artifact rate / repair burden / usable share / eligible (>=24 images), reports INSUFFICIENT when no cell qualifies, lists reviewer disagreements.
+- Contact sheets (R001... neutral IDs) + mapping file in projects/ (not committed) blocked pending generated images from S4-2.
+
 ## 2026-10-19 — Milestone K (Kilo), factory scope only (docs/tools/config)
 
 ### K1 NICHE PROFILE (DONE)

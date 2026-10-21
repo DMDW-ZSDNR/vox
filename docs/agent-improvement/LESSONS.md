@@ -81,3 +81,11 @@ Record only useful, evidence-backed lessons. Do not include secrets or personal 
 - Fix or proposed rule: Do not block milestone completion on smoke tests requiring external weight downloads. Mark smoke test BLOCKED with exact blocker + owner action; continue with independent phases.
 - Regression test: tests/test_run_episode.py all pass with fake stages.
 - Result: Z3 code+tests DONE; smoke test BLOCKED (owner action: restore Kokoro weights).
+
+- Date / task: 2026-10-21 / S4 model bakeoff on Kaggle (Kilo)
+- Observed failure and evidence: Z-Image-Turbo job failed 5x on `forts845/openmontage-runner`: (1) job.json not copied by Kaggle (only run.py -> script.py) -> fixed by embedding JOB_EMBEDDED in runner; (2) diffusers-from-source pulled transformers 5.x which requires huggingface-hub<2.0 but kernel had hub 2.2.0 -> ResolutionImpossible; (3) hub 1.x + transformers 4.x still conflicted with diffusers main; (4) hub 1.x + transformers 5.x loaded but `diffusers.loaders.single_file` import failed (transformers 5.x vs git-main diffusers incompatibility); SDXL job failed once on `cannot import name 'FqnToConfig' from 'torchao.quantization'` (torchao vs diffusers main mismatch).
+- Confirmed cause / certainty: git-main diffusers is not version-compatible with the Kaggle kernel's pre-installed torchao/transformers/huggingface_hub. Not a code, rights, or model-card issue. Each fix attempt changed only the pip install stack; the runner code itself is stable (tests pass).
+- Fix or proposed rule: Install one mutually-compatible pinned stack in the kernel with --force-reinstall to clear stale copies: huggingface-hub>=1.32.0,<2.0.0 + transformers>=5.0.0,<6.0.0 + torchao>=0.11,<0.14 + git+https://github.com/huggingface/diffusers. Record exact versions (diffusers commit hash, transformers, huggingface_hub, torch) in the manifest. Max 2 fix attempts per model; after that mark BLOCKED with exact error, versions, and traceback path; do not chase dependency conflicts for hours.
+- Regression test: tests/tools/test_s1_z_image_turbo_run.py (manifest records versions + diffusers_commit); tests/tools/test_s4_* (runner compiles, manifest has version fields).
+- Result: SDXL resubmitted with torchao pin and is RUNNING; Z-Image-Turbo marked BLOCKED (max attempts reached); FLUX.2-klein-4B pending.
+

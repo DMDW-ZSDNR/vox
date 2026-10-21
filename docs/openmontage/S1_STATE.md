@@ -8,11 +8,11 @@ phases. Never commit media. KAGGLE_API_TOKEN: env check yes/no only (never print
 
 | Phase | Status | Evidence | Commit hash |
 |-------|--------|----------|-------------|
-| S1-1 IMAGE MODEL (Z-Image-Turbo) | SUBMITTED | job `s1-z-image-turbo-1` pushed to `forts845/openmontage-runner` (GPU + internet), awaiting poll + manifest verify | e07c238+ |
+| S1-1 IMAGE MODEL (Z-Image-Turbo) | RUNNING | job `s1-z-image-turbo-1` on `forts845/openmontage-runner` (GPU+internet), status RUNNING; 4 submissions attempted (dep-conflict fixes), currently installing compatible hub 1.x + transformers 4.x + diffusers main | e07c238+ |
 | S1-1 FLUX.2-klein-4B | PENDING | license clear per LICENSE_EVIDENCE.md; ~13 GB VRAM — memory-fit TBD on T4 | — |
-| S1-2 BLIND COMPARISON | PENDING | needs S1-1 images | — |
+| S1-2 BLIND COMPARISON | BLOCKED | needs S1-1 images (>=1 USEFUL model) | — |
 | S1-3 STYLE BIBLE | DONE | docs/openmontage/niches/speculative_evolution/{STYLE_BIBLE.md,speculative_evolution.yaml}; tools/illustration/s1_speculative_gate.py; tests/illustration/test_s1_speculative_gate.py (6 pass) | — |
-| S1-4 PILOT SCRIPT + LEDGER | DONE | topic "How could life survive beneath a frozen alien ocean?" 10-12 min; claim ledger SE-01..SE-13 (8 KNOWN x TWO sources, 5 SPECULATION w/ constraint); script 9 chapters + hook + 3 truthful titles; claim_ids_resolve QC PASS (48/48) | — |
+| S1-4 PILOT SCRIPT + LEDGER | DONE | topic "How could life survive beneath a frozen alien ocean?" 10-12 min; claim ledger SE-01..SE-13; script 9 chapters + hook + 3 truthful titles; claim_ids_resolve QC PASS (48/48) | — |
 | S1-5 BUILD | BLOCKED | requires S1-1 >= 1 USEFUL model | — |
 | S1-6 CLOSE | PENDING | OWNER_ACTIONS.md, CHANGELOG.md, LESSONS.md, S1_STATE.md | — |
 
@@ -24,11 +24,11 @@ phases. Never commit media. KAGGLE_API_TOKEN: env check yes/no only (never print
 
 ## S1-1 submission detail
 
-- Submitted: 2026-10-21 (this session)
+- Submitted: 2026-10-21 (this session); 4 submissions attempted (dependency-conflict fixes), currently RUNNING
 - Job folder: /tmp/kilo/s1_jobs/s1-z-image-turbo-1 (not committed)
 - Runner: tools/kaggle_bridge/s1_z_image_turbo_run.py (committed)
+- Kaggle kernel: forts845/openmontage-runner, enable_gpu=true, enable_internet=true, timeout 3600s; status RUNNING (last checked this session)
 - 12 fixed prompts: 4 single-creature silhouettes, 3 habitat scenes, 2 anatomy-detail crops, 2 food-web background plates, 1 planet-surface wide; fixed seeds 4000-4011; 1024x1024; steps=9; guidance=0.0; dtype=float16
-- Kaggle kernel: forts845/openmontage-runner, enable_gpu=true, enable_internet=true (diffusers from source + HF weights), timeout 3600s
 - g2-image-bakeoff NOT reused (G-rules: no further re-push)
 
 ## Notes

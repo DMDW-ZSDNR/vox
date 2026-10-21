@@ -60,26 +60,21 @@ def _fail(msg: str, code: int = 1) -> None:
 def install_diffusers_from_source(timeout: int = 1200) -> None:
     """ZImagePipeline is not in released diffusers; install from source.
 
-    The Kaggle kernel pre-installs huggingface-hub 2.2.0. Installing diffusers
-    from source pulls transformers 5.x which requires hub<2.0, so we pin
-    transformers<5 (compatible with hub 2.x) afterwards.
+    Installs a mutually-compatible pinned set so the kernel's pre-installed
+    (often stale) huggingface-hub/transformers do not conflict:
+    huggingface-hub 1.x (>=1.32 for diffusers main, <2 for transformers 4.x)
+    + transformers 4.x + diffusers from git main (has ZImagePipeline).
     """
     try:
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "--quiet",
+             "huggingface-hub>=1.32.0,<2.0.0",
+             "transformers>=4.41.0,<5.0.0",
              "git+https://github.com/huggingface/diffusers"],
             check=True, timeout=timeout,
         )
     except Exception as exc:  # noqa: BLE001 - fail closed
-        _fail(f"diffusers from source install failed: {exc}")
-    try:
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--quiet",
-             "--force-reinstall", "transformers>=4.41,<5"],
-            check=True, timeout=timeout,
-        )
-    except Exception as exc:  # noqa: BLE001 - fail closed
-        _fail(f"transformers<5 pin failed: {exc}")
+        _fail(f"diffusers compatible install failed: {exc}")
 
 
 def build_manifest(job: Dict[str, Any], images: List[Dict[str, Any]],

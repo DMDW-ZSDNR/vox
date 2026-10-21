@@ -49,9 +49,15 @@ PROBE_CLASSES = {
 }
 
 # Two install attempts maximum per model (S5 stop rule).
-INSTALL_ATTEMPTS = [
+ATTEMPTS_COMMON = [
     {"diffusers": ">=0.36,<0.37", "transformers": ">=4.57,<5"},
-    {"diffusers": ">=0.37", "transformers": ">=4.57,<6"},
+    {"diffusers": ">=0.41", "transformers": ">=4.57,<6"},
+]
+# Z-Image ships in a newer release than SDXL/klein need, so it goes straight to
+# the newest release on attempt 1 and only falls back to the older release.
+ATTEMPTS_ZIMAGE = [
+    {"diffusers": ">=0.41", "transformers": ">=4.57,<6"},
+    {"diffusers": ">=0.41", "transformers": ">=4.57,<5"},
 ]
 
 
@@ -120,10 +126,12 @@ def _import_probe(module_attr: List[str]) -> Optional[str]:
     return tail[0] if tail else "import failed with no output"
 
 
-def install_and_probe(classes: List[str]) -> Tuple[bool, Dict[str, Any]]:
+def install_and_probe(classes: List[str],
+                      attempts: Optional[List[Dict[str, str]]] = None,
+                      ) -> Tuple[bool, Dict[str, Any]]:
     """Install the pinned stack (2 attempts max) and verify the pipeline class."""
     log: Dict[str, Any] = {"attempts": []}
-    for i, pin in enumerate(INSTALL_ATTEMPTS, start=1):
+    for i, pin in enumerate(attempts or ATTEMPTS_COMMON, start=1):
         pkgs = [f"diffusers{pin['diffusers']}", f"transformers{pin['transformers']}",
                 "huggingface-hub>=0.34,<2", "accelerate>=1.0"]
         ok, err = _pip(pkgs)
@@ -162,7 +170,8 @@ def main() -> None:
     # klein prefers Flux2Pipeline but may fall back to FluxPipeline if only
     # that class exists; SDXL has a single class.
     probe_classes = PROBE_CLASSES[model]
-    ok, log = install_and_probe(probe_classes)
+    attempts = ATTEMPTS_ZIMAGE if model == "zimage" else ATTEMPTS_COMMON
+    ok, log = install_and_probe(probe_classes, attempts)
     (OUT / "install_log.json").write_text(json.dumps(log, indent=2), encoding="utf-8")
     if not ok and model == "zimage":
         _blocked("ZImagePipeline import failed after 2 attempts: "
@@ -179,7 +188,9 @@ def main() -> None:
     declared = job.get("pipeline_class")
     candidates = [declared] if declared else []
     if model == "klein":
-        candidates = ["Flux2Pipeline", "FluxPipeline"]  # documented fallback order
+        # vendor class first (S7 finding: Flux2KleinPipeline is the FLUX.2 klein
+        # pipeline; Flux2Pipeline/FluxPipeline kept only as ordered fallbacks)
+        candidates = ["Flux2KleinPipeline", "Flux2Pipeline", "FluxPipeline"]
     for name in candidates:
         try:
             pipe_cls = getattr(diffusers, name)
@@ -197,18 +208,28 @@ def main() -> None:
     if not renders:
         _blocked("no renders in JOB_EMBEDDED", code=1)
 
+    offload_enabled = False
     torch.cuda.reset_peak_memory_stats()
     t0 = time.perf_counter()
     try:
         kwargs: Dict[str, Any] = {}
         if job.get("revision"):
             kwargs["revision"] = job["revision"]
+        if model in {"klein", "zimage"}:
+            # vendor card: avoid the meta-tensor path that broke S5's klein run
+            kwargs["low_cpu_mem_usage"] = False
         if job.get("vae_model_id"):
             from diffusers import AutoencoderKL
             kwargs["vae"] = AutoencoderKL.from_pretrained(
                 job["vae_model_id"], torch_dtype=torch.float16)
         pipe = pipe_cls.from_pretrained(job["model_id"], torch_dtype=torch.float16, **kwargs)
-        pipe.to("cuda")
+        if model == "klein":
+            # weights stream to the GPU per module: compute stays on CUDA, no CPU
+            # inference. Avoids `Cannot copy out of meta tensor` on pipe.to().
+            pipe.enable_model_cpu_offload()
+            offload_enabled = True
+        else:
+            pipe.to("cuda")
         pipe.set_progress_bar_config(disable=True)
     except Exception:  # noqa: BLE001
         tb = traceback.format_exc()
@@ -217,7 +238,6 @@ def main() -> None:
         _blocked(f"model load failed: {tb.strip().splitlines()[-1]}", code=2)
     load_seconds = time.perf_counter() - t0
 
-    offload_enabled = False
     images: List[Dict[str, Any]] = []
     oom_count = black_count = nan_count = 0
     t_total0 = time.perf_counter()

@@ -58,14 +58,14 @@ def test_no_forbidden_routes():
 
 
 def test_two_install_attempts_max():
-    assert "INSTALL_ATTEMPTS" in SRC
-    assert SRC.count("{") >= 0  # structural sanity, attempts counted below
+    assert "ATTEMPTS_COMMON" in SRC and "ATTEMPTS_ZIMAGE" in SRC
     import importlib.util
     spec = importlib.util.spec_from_file_location("s5_runner", RUNNER)
     mod = importlib.util.module_from_spec(spec)
     sys.modules["s5_runner"] = mod
     spec.loader.exec_module(mod)  # module-level only; main() is guarded
-    assert len(mod.INSTALL_ATTEMPTS) == 2
+    assert len(mod.ATTEMPTS_COMMON) == 2
+    assert len(mod.ATTEMPTS_ZIMAGE) == 2
 
 
 def test_black_nan_oom_accounting_present():
@@ -83,3 +83,10 @@ def test_probe_classes_per_model():
     assert mod.PROBE_CLASSES["zimage"] == ["ZImagePipeline"]
     assert mod.PROBE_CLASSES["klein"][0] == "Flux2Pipeline"
     assert mod.PROBE_CLASSES["sdxl"] == ["StableDiffusionXLPipeline"]
+
+
+def test_klein_uses_vendor_class_and_offload():
+    assert '"Flux2KleinPipeline"' in SRC, "klein needs the FLUX.2 klein class"
+    assert "enable_model_cpu_offload()" in SRC
+    # offload must be enabled at load time for klein, before generation
+    assert SRC.index("enable_model_cpu_offload()") < SRC.index("for rj in renders")

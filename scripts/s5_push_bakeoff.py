@@ -21,7 +21,9 @@ sys.path.insert(0, str(REPO))
 from tools.kaggle_bridge.kaggle_bridge import KaggleBridgeTool  # noqa: E402
 
 TEST_SET = REPO / "docs/openmontage/image_gen/S5_TEST_SET.json"
-KERNEL_SLUG = "forts845/openmontage-runner"
+# S5 runs on its OWN kernel so a parallel session cannot overwrite its output
+# (S5's klein job was overwritten on the shared runner slug on 2026-10-21).
+KERNEL_SLUG = "forts845/openmontage-s5-runner"
 RUN_PY = REPO / "tools/kaggle_bridge/s5_bakeoff_run.py"
 JOBS_DIR = Path("/tmp/kilo/s5_jobs")
 
@@ -104,6 +106,12 @@ def main() -> None:
     })
     if not bj.success:
         raise SystemExit(f"BUILD FAILED ({args.model}): {bj.error}")
+    # Kaggle requires a unique kernel title per account; the shared runner
+    # already owns "OpenMontage runner" (409 Conflict otherwise).
+    meta_path = work / "kernel-metadata.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    meta["title"] = "OpenMontage S5 runner"
+    meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"job folder: {bj.data['job_folder']} ({len(job['renders'])} renders)")
 
     ps = bridge.execute({

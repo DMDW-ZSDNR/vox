@@ -12,7 +12,12 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from scripts.s5_push_bakeoff import RUN_PY, build_job, embed_job  # noqa: E402
+from scripts.s5_push_bakeoff import (  # noqa: E402
+    KERNEL_SLUG,
+    RUN_PY,
+    build_job,
+    embed_job,
+)
 
 
 def _load(model: str):
@@ -47,3 +52,8 @@ def test_zimage_and_klein_have_no_negative_prompt_on_main_variant():
         _, ns = _load(model)
         r = next(x for x in ns["JOB_EMBEDDED"]["renders"] if x["variant"] == variant)
         assert r["negative_prompt"] is None
+
+
+def test_s5_has_its_own_kernel_slug():
+    # the shared runner slug belongs to other milestones; S5 must not overwrite it
+    assert KERNEL_SLUG == "forts845/openmontage-s5-runner"

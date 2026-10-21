@@ -22,8 +22,8 @@ reusable and nothing completed is redone.
 |---|---|---|
 | S7-1 FIXED TEST SET | DONE | 10 scenes (s02, s07 dropped as the 2 easiest), 1 seed/scene shared by all 3 models, 1024x1024, variants sdxl=A / zimage=B / klein=C, 30 renders: `docs/openmontage/image_gen/S7_TEST_SET.json` + `S7_TEST_SET_MAPPING.json` (built by `scripts/s7_build_testset.py` via tools/prompting.builder, read-only) |
 | S7-2 RUNNER + PUSH | DONE | `tools/kaggle_bridge/s7_bakeoff_run.py` (install ladder, import probe, fp16, 90 min wall cap, full measurements), `scripts/s7_push_bakeoff.py`; 25 local tests pass (`tests/test_s7_runner.py`, `tests/test_s7_push_bakeoff.py`, `tests/test_s7_tally.py`) |
-| S7-3 SDXL Base + madebyollin/sdxl-vae-fp16-fix | IN_PROGRESS | job `s7-sdxl-1` SUBMITTED (attempt 1, rung released_041_x4) |
-| S7-4 FLUX.2-klein-4B | PENDING | starts after SDXL is DONE or BLOCKED |
+| S7-3 SDXL Base + madebyollin/sdxl-vae-fp16-fix | DONE | job `s7-sdxl-1` COMPLETE, 10/10 images, bridge verify PASS (all sha256/bytes match). Load 86.233 s, steady 41.4 s/img, 1.42 usable img/min, peak VRAM 9169.58 MB, black/NaN/OOM = 0, `StableDiffusionXLPipeline`. Versions: diffusers 0.36.0, transformers 4.57.6, huggingface_hub 0.36.2, torch 2.11.0+cu128, accelerate 1.14.0, safetensors 0.8.0, numpy 2.1.3, pillow 12.3.0, CUDA 12.8, Tesla T4, Python 3.13.15 |
+| S7-4 FLUX.2-klein-4B | IN_PROGRESS | job `s7-klein-1` SUBMITTED 11:09:25Z (attempt 1, ladder released_037_x4 -> released_037_x5 -> released_041_x5_ao -> git_main_x5_ao, `Flux2KleinPipeline`, `enable_model_cpu_offload`, guidance 1.0) |
 | S7-5 Z-Image-Turbo | PENDING | starts after klein is DONE or BLOCKED |
 | S7-6 OBJECTIVE QC | PENDING | `scripts/s7_checks.py` (Laplacian blur, text-like heuristic, dHash duplicates, resolution, saturation/contrast outliers) |
 | S7-7 BLIND PACK | PENDING | `scripts/s7_blind_pack.py` -> `projects/s7_blind/` (gitignored) |
@@ -45,12 +45,25 @@ reusable and nothing completed is redone.
   install ladder released_041_x4 -> released_041_x5 -> released_036_x4 ->
   git_main_x4; fp16; VAE madebyollin/sdxl-vae-fp16-fix).
 - 2026-10-21 10:55Z: one status call -> `KernelWorkerStatus.RUNNING`.
+- 2026-10-21 11:05Z: SDXL attempt 1 -> DONE on internal rung 3 (`released_036_x4`).
+  Rung 1 `released_041_x4` died in pip: `ResolutionImpossible` (diffusers 0.41.0
+  needs huggingface_hub>=1.32,<2.0 but transformers 4.57.6 pins hub<1.0).
+  Rung 2 `released_041_x5` installed but the import failed:
+  `cannot import name 'FqnToConfig' from 'torchao.quantization'` (the kernel's
+  torchao is too old). Rung 3 `released_036_x4` (diffusers 0.36.0, torchao
+  0.15.0) worked. Attempt 1 succeeded, so 1 attempt was used.
+- 2026-10-21 11:09Z: klein attempt 1 SUBMITTED (job `s7-klein-1`, 10 renders,
+  ladder released_037_x4 -> released_037_x5 -> released_041_x5_ao ->
+  git_main_x5_ao; `Flux2KleinPipeline` + `enable_model_cpu_offload`; guidance 1.0).
+  The SDXL ladder was reworked afterwards: the dead rungs (041_x4 hub conflict,
+  041_x5 torchao) are no longer tried first.
 
 ## Attempt log (per model)
 
 | model | attempt | what changed | result |
 |---|---|---|---|
-| sdxl | 1 | released diffusers 0.41.0 + transformers 4.57.6 + hub<1.0 | RUNNING |
+| sdxl | 1 | released diffusers 0.41.0 + transformers 4.57.6 + hub<1.0 | DONE (10/10) via internal rung 3 `released_036_x4`; rungs 1-2 dead (hub conflict, torchao) |
+| klein | 1 | `Flux2KleinPipeline` + `enable_model_cpu_offload` (fixes the S5 meta-tensor failure), ladder released_037_x4 -> released_037_x5 -> released_041_x5_ao -> git_main_x5_ao | RUNNING (submitted 11:09:25Z) |
 
 ## Notes
 

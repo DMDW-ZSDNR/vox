@@ -58,9 +58,22 @@ def fetch(model: str, job_id: Optional[str] = None) -> Dict[str, Any]:
             f"Files fetched: {sorted(p.name for p in dest.iterdir())}")
 
     manifest = json.loads(man_path.read_text(encoding="utf-8"))
+    # The bridge's verify resolves each manifest image path relative to the
+    # folder that holds manifest.json, but the runner writes the images into
+    # an `images/` sub-folder. Stage a flat copy (manifest + images side by
+    # side) so the bridge verifies the real bytes without touching the
+    # kernel artefact.
+    stage = dest / "_verify_stage"
+    if stage.exists():
+        shutil.rmtree(stage)
+    stage.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(man_path, stage / "manifest.json")
+    for png in (man_path.parent / "images").glob("*.png"):
+        shutil.copy2(png, stage / png.name)
+
     vr = bridge.execute({
         "command": "verify",
-        "output_folder": str(man_path.parent),
+        "output_folder": str(stage),
         "job_id": manifest.get("job_id") or job_id,
         "kaggle_cmd": "kaggle",
     })

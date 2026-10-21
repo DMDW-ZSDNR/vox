@@ -53,18 +53,54 @@ MAX_WALL_SECONDS = 5400
 # --- install ladders -------------------------------------------------------
 # Each rung is a materially different, pinned stack. Rung 1 is always a
 # released diffusers; git-main diffusers only appears as a later rung.
+#
+# Measured constraints (S7 SDXL run 1 + vendor cards):
+#   * diffusers 0.41.0 requires huggingface-hub>=1.32,<2.0, so it can only be
+#     paired with transformers 5.x (transformers 4.57.x pins hub<1.0) ->
+#     `released_041_x4` is a dead rung (pip ResolutionImpossible).
+#   * diffusers 0.41.0 imports `torchao.quantization.FqnToConfig`; the Kaggle
+#     kernel's pre-installed torchao is too new and no longer exports it ->
+#     torchao==0.15.0 is pinned in the 0.41.0 stacks.
+#   * diffusers 0.37.0 requires hub>=0.34,<2.0 and ships BOTH
+#     Flux2KleinPipeline and ZImagePipeline -> the primary rung for
+#     klein and Z-Image.
 RELEASED_STACKS = {
     "released_041_x4": {
-        "note": "released diffusers 0.41.0 + transformers 4.x + hub <1.0",
+        "note": "released diffusers 0.41.0 + transformers 4.x + hub <1.0 "
+                "(DEAD: diffusers 0.41 needs hub>=1.32)",
         "pip_args": [
             "diffusers==0.41.0", "transformers==4.57.6",
             "huggingface-hub>=0.34,<1.0", "accelerate>=1.10", "safetensors>=0.4",
         ],
     },
     "released_041_x5": {
-        "note": "released diffusers 0.41.0 + transformers 5.x + hub 1.x",
+        "note": "released diffusers 0.41.0 + transformers 5.x + hub 1.x "
+                "(DEAD on this kernel: torchao.quantization.FqnToConfig)",
         "pip_args": [
             "diffusers==0.41.0", "transformers==5.20.2",
+            "huggingface-hub>=1.0,<2.0", "accelerate>=1.10", "safetensors>=0.4",
+        ],
+    },
+    "released_041_x5_ao": {
+        "note": "released diffusers 0.41.0 + transformers 5.x + torchao 0.15.0 pin",
+        "pip_args": [
+            "diffusers==0.41.0", "transformers==5.20.2",
+            "huggingface-hub>=1.0,<2.0", "torchao==0.15.0",
+            "accelerate>=1.10", "safetensors>=0.4",
+        ],
+    },
+    "released_037_x4": {
+        "note": "released diffusers 0.37.0 + transformers 4.x + hub <1.0 "
+                "(ships Flux2KleinPipeline and ZImagePipeline)",
+        "pip_args": [
+            "diffusers==0.37.0", "transformers==4.57.6",
+            "huggingface-hub>=0.34,<1.0", "accelerate>=1.10", "safetensors>=0.4",
+        ],
+    },
+    "released_037_x5": {
+        "note": "released diffusers 0.37.0 + transformers 5.x + hub 1.x",
+        "pip_args": [
+            "diffusers==0.37.0", "transformers==5.20.2",
             "huggingface-hub>=1.0,<2.0", "accelerate>=1.10", "safetensors>=0.4",
         ],
     },
@@ -83,12 +119,12 @@ RELEASED_STACKS = {
             "accelerate>=1.10", "safetensors>=0.4",
         ],
     },
-    "git_main_x5": {
-        "note": "git-main diffusers + transformers 5.x + torchao pin",
+    "git_main_x5_ao": {
+        "note": "git-main diffusers + transformers 5.x + torchao 0.15.0 pin",
         "pip_args": [
             "git+https://github.com/huggingface/diffusers.git",
             "transformers==5.20.2", "huggingface-hub>=1.0,<2.0",
-            "accelerate>=1.10", "safetensors>=0.4", "torchao>=0.11,<0.14",
+            "torchao==0.15.0", "accelerate>=1.10", "safetensors>=0.4",
         ],
     },
 }
@@ -129,9 +165,11 @@ LOAD_CONFIG = {
 }
 
 DEFAULT_LADDERS = {
-    "sdxl": ["released_041_x4", "released_041_x5", "released_036_x4", "git_main_x4"],
-    "klein": ["released_041_x4", "released_041_x5", "git_main_x4", "git_main_x5"],
-    "zimage": ["released_041_x4", "released_041_x5", "git_main_x4", "git_main_x5"],
+    # SDXL already ran: its ladder is kept as the historical record (rung 3,
+    # released_036_x4, is the one that worked).
+    "sdxl": ["released_036_x4", "released_037_x4", "released_041_x5_ao", "git_main_x4"],
+    "klein": ["released_037_x4", "released_037_x5", "released_041_x5_ao", "git_main_x5_ao"],
+    "zimage": ["released_037_x4", "released_037_x5", "released_041_x5_ao", "git_main_x5_ao"],
 }
 
 

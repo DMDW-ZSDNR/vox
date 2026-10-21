@@ -90,3 +90,30 @@ def test_pack_writes_sheets_mapping_and_csv_template(tmp_path):
     doc = json.loads((pack / "mapping.json").read_text(encoding="utf-8"))
     assert sorted(doc["scenes"]["s01"].values()) == ["klein", "sdxl", "zimage"]
     assert "sdxl" not in sheet.read_bytes().decode("latin-1")
+
+
+def test_two_model_pack_when_one_model_is_blocked(tmp_path):
+    """A model with no frames must not appear as an empty/black panel."""
+    root = tmp_path / "out"
+    for model in ("sdxl", "klein"):
+        d = root / f"s7_bakeoff_{model}"
+        (d / "images").mkdir(parents=True)
+        im = Image.new("RGB", (1024, 1024), (30, 30, 30))
+        im.save(d / "images" / "r0001.png")
+        (d / "manifest.json").write_text(json.dumps({
+            "model": model, "job_id": f"s7-{model}-1", "images": [
+                {"render_id": "r0001", "scene_id": "s01", "file": "r0001.png",
+                 "sha256": "x", "bytes": 1},
+            ],
+        }), encoding="utf-8")
+
+    pack = tmp_path / "pack"
+    mapping = run(root, pack, salt="s7",
+                  blocked_note="zimage: BLOCKED after 4 attempts, 0 usable images")
+    assert mapping["pack_models"] == ["sdxl", "klein"]
+    assert mapping["scenes"]["s01"].keys() == {"A", "B"}
+    with (pack / "results.csv").open(encoding="utf-8") as fh:
+        rows = list(csv.reader(fh))
+    assert rows[0] == ["scene", "best_panel", "worst_panel",
+                        "anatomy_ok_A", "anatomy_ok_B", "comment"]
+    assert "zimage" in (pack / "INSTRUCTIONS.txt").read_text(encoding="utf-8")

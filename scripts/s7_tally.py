@@ -63,10 +63,15 @@ def load_mapping(path: Path | str | Dict[str, Any] = DEFAULT_MAPPING) -> Dict[st
     else:
         doc = json.loads(Path(path).read_text(encoding="utf-8"))
     scenes = doc.get("scenes") or {}
+    labels = {tuple(sorted(panels)) for panels in scenes.values()}
+    if len(labels) > 1:
+        raise ValueError(f"every scene must use the same panels, got {labels}")
     for scene, panels in scenes.items():
         models = set(panels.values())
-        if len(models) != 3:
-            raise ValueError(f"mapping for {scene} must give 3 distinct models, got {panels}")
+        if len(models) != len(panels) or len(models) < 2:
+            raise ValueError(
+                f"mapping for {scene} must give at least 2 distinct models, "
+                f"got {panels}")
     return {
         "panels_by_scene": scenes,
         "model_metrics": doc.get("model_metrics") or {},
@@ -127,10 +132,17 @@ def _panels(mapping: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
 def tally(results: List[Dict[str, Any]],
           mapping: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     panels = _panels(mapping)
+    present: List[str] = []
+    for scene in panels:
+        for m in panels[scene].values():
+            if m not in present:
+                present.append(m)
+    ordered = [m for m in MODEL_ORDER if m in present] + \
+              [m for m in present if m not in MODEL_ORDER]
     stats: Dict[str, Dict[str, Any]] = {
         m: {"wins": 0, "losses": 0, "anatomy_ok": 0, "anatomy_judged": 0,
             "scenes_won": []}
-        for m in MODEL_ORDER
+        for m in ordered
     }
     for row in results:
         scene = row["scene"]
@@ -146,11 +158,15 @@ def tally(results: List[Dict[str, Any]],
         for panel, verdict in row["anatomy"].items():
             if verdict is None:
                 continue
+            if panel not in panels[scene]:
+                # a panel that is not in the pack (e.g. a leftover column from
+                # a 3-model template) is not judged, it is ignored
+                continue
             model = panels[scene][panel]
             stats[model]["anatomy_judged"] += 1
             stats[model]["anatomy_ok"] += int(verdict)
     for m, s in stats.items():
-        s["anatomy_out_of"] = TOTAL_SCENES
+        s["anatomy_out_of"] = len(panels)
     return stats
 
 
@@ -165,7 +181,7 @@ def _fmt(v: Any, digits: int = 2) -> str:
 def _owner_winner(stats: Dict[str, Dict[str, Any]], total: int
                   ) -> tuple[Optional[str], Optional[str], int]:
     """(winner, second, gap). winner is None when the top two are within 1 win."""
-    ranked = sorted(MODEL_ORDER, key=lambda m: (-stats[m]["wins"], m))
+    ranked = sorted(stats, key=lambda m: (-stats[m]["wins"], m))
     top, second = ranked[0], ranked[1]
     gap = stats[top]["wins"] - stats[second]["wins"]
     if gap <= 1:
@@ -185,7 +201,7 @@ def render_report(results: List[Dict[str, Any]], mapping: Dict[str, Any],
     lines.append("")
     lines.append("| model | wins | losses | anatomy ok |")
     lines.append("|---|---|---|---|")
-    for m in MODEL_ORDER:
+    for m in stats:
         s = stats[m]
         lines.append(f"| {m} | {s['wins']} | {s['losses']} | "
                      f"{s['anatomy_ok']}/{s['anatomy_out_of']} |")
@@ -195,7 +211,7 @@ def render_report(results: List[Dict[str, Any]], mapping: Dict[str, Any],
     lines.append("| model | s/image (steady) | usable img/min | peak VRAM MB | "
                  "black/NaN/OOM | load s |")
     lines.append("|---|---|---|---|---|---|")
-    for m in MODEL_ORDER:
+    for m in (metrics or stats):
         mm = metrics.get(m) or {}
         issues = "-".join(_fmt(mm.get(k)) for k in
                           ("black_count", "nan_count", "oom_count"))
@@ -215,7 +231,7 @@ def render_report(results: List[Dict[str, Any]], mapping: Dict[str, Any],
         return "\n".join(lines) + "\n"
 
     if owner_winner is None:
-        top = sorted(MODEL_ORDER, key=lambda m: (-stats[m]["wins"], m))[0]
+        top = sorted(stats, key=lambda m: (-stats[m]["wins"], m))[0]
         lines.append(f"TIE - {top} ({stats[top]['wins']}) and {second} "
                      f"({stats[second]['wins']}) differ by {gap} win(s); "
                      "no single recommended model.")

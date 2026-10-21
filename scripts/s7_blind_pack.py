@@ -51,26 +51,33 @@ def _font(size: int = 40):
         return ImageFont.load_default()
 
 
-def panel_order(scene: str, salt: str = "s7") -> List[str]:
-    """Random-but-reproducible model order for one scene -> ['A','B','C'] models."""
+def panel_order(scene: str, salt: str = "s7",
+                models: Optional[List[str]] = None) -> List[str]:
+    """Random-but-reproducible model order for one scene.
+
+    With three models the panels are A/B/C; with a blocked model only the
+    models that actually produced frames are compared, so the owner still
+    gets a blind choice between the models that worked.
+    """
     digest = hashlib.sha256(f"{salt}:{scene}".encode()).hexdigest()
     rng = random.Random(int(digest[:16], 16))
-    models = MODEL_ORDER[:]
-    rng.shuffle(models)
-    return models
+    order = list(models) if models else MODEL_ORDER[:]
+    rng.shuffle(order)
+    return order
 
 
 def build_sheet(images: Dict[str, Path], order: Dict[str, str],
                 out_path: Path) -> tuple[int, int]:
     """Compose one comparison sheet; returns (width, height)."""
-    width = MARGIN + 3 * PANEL + 2 * GAP + MARGIN
+    labels = "ABC"[:len(order)]
+    width = MARGIN + len(labels) * PANEL + (len(labels) - 1) * GAP + MARGIN
     if width > MAX_WIDTH:
         raise ValueError(f"sheet width {width} exceeds {MAX_WIDTH}")
     height = MARGIN + LABEL_H + PANEL + MARGIN
     sheet = Image.new("RGB", (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(sheet)
     font = _font(40)
-    for i, label in enumerate("ABC"):
+    for i, label in enumerate(labels):
         model = order[label]
         x = MARGIN + i * (PANEL + GAP)
         with Image.open(images[model]) as im:
@@ -117,27 +124,35 @@ def collect(root: Path) -> tuple[Dict[str, Dict[str, Path]], Dict[str, Any]]:
     return by_scene, metrics
 
 
-def write_csv_template(out_dir: Path, scenes: List[str]) -> Path:
+def csv_header(n_panels: int) -> str:
+    labels = "ABC"[:n_panels]
+    return ",".join(["scene", "best_panel", "worst_panel"]
+                    + [f"anatomy_ok_{l}" for l in labels] + ["comment"])
+
+
+def write_csv_template(out_dir: Path, scenes: List[str], n_panels: int = 3) -> Path:
     p = out_dir / "results.csv"
-    lines = [CSV_HEADER]
+    lines = [csv_header(n_panels)]
     for s in scenes:
         lines.append(f"{s},,,,,,")
     p.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return p
 
 
-def instructions(scenes: List[str]) -> str:
+def instructions(scenes: List[str], n_panels: int = 3,
+                 blocked_note: str = "") -> str:
+    labels = " / ".join("ABC"[:n_panels])
     return (
         "S7 blind pack - how to review (5-10 minutes)\n"
         "===========================================\n\n"
-        "1. Open sheet_s01.png ... on your phone (10 sheets).\n"
-        "   Each sheet shows the SAME scene drawn by 3 different models,\n"
-        "   panels A / B / C, in a different random order on every sheet.\n"
+        f"1. Open sheet_{scenes[0]}.png ... on your phone ({len(scenes)} sheets).\n"
+        f"   Each sheet shows the SAME scene drawn by {n_panels} different models,\n"
+        f"   panels {labels}, in a different random order on every sheet.\n"
         "   No model names are shown anywhere on the sheets.\n\n"
         "2. On each sheet decide:\n"
         "   - best_panel: the panel you would actually use\n"
         "   - worst_panel: the panel you would throw away\n"
-        "   - anatomy_ok_A / B / C: for EACH panel, yes if the creature's limbs /\n"
+        f"   - anatomy_ok_<panel>: for EACH panel, yes if the creature's limbs /\n"
         "     eyes / horns match the scene brief and there are no obvious extra /\n"
         "     missing limbs, fused bodies, duplicated heads or duplicated subjects.\n"
         "   - comment: optional, one short line (what is wrong / what works).\n\n"
@@ -154,14 +169,22 @@ def instructions(scenes: List[str]) -> str:
         "  open it until after you have filled the CSV, or the test is no longer\n"
         "  blind.\n"
         f"- Scenes: {', '.join(scenes)}\n"
+        + (f"- {blocked_note}\n" if blocked_note else "")
     )
 
 
-def run(root: Path, out_dir: Path, salt: str = "s7") -> Dict[str, Any]:
+def run(root: Path, out_dir: Path, salt: str = "s7",
+        blocked_note: str = "") -> Dict[str, Any]:
     by_scene, metrics = collect(root)
     scenes = sorted(by_scene)
-    complete = [s for s in scenes if len(by_scene[s]) == 3]
-    partial = [s for s in scenes if len(by_scene[s]) < 3]
+    # Only the models that produced a frame for EVERY scene are compared, so a
+    # blocked model never shows up as an empty/black panel.
+    common: set = set.intersection(*[set(v) for v in by_scene.values()]) \
+        if by_scene else set()
+    pack_models = [m for m in MODEL_ORDER if m in common] + \
+        sorted(common - set(MODEL_ORDER))
+    complete = [s for s in scenes if set(by_scene[s]) == set(pack_models)]
+    partial = [s for s in scenes if set(by_scene[s]) != set(pack_models)]
 
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -170,6 +193,8 @@ def run(root: Path, out_dir: Path, salt: str = "s7") -> Dict[str, Any]:
         "schema_version": "1.0",
         "milestone": "S7",
         "salt": salt,
+        "pack_models": pack_models,
+        "blocked_note": blocked_note,
         "note": "BLIND: this file unblinds the sheets. The owner must not open "
                 "it before filling results.csv.",
         "scenes": {},
@@ -178,17 +203,19 @@ def run(root: Path, out_dir: Path, salt: str = "s7") -> Dict[str, Any]:
         "partial_scenes": partial,
     }
     for scene in complete:
-        order = {label: model for label, model in zip("ABC", panel_order(scene, salt))}
+        order = {label: model for label, model
+                 in zip("ABC", panel_order(scene, salt, pack_models))}
         sheet_path = out_dir / f"sheet_{scene}.png"
         size = build_sheet(by_scene[scene], order, sheet_path)
         mapping["scenes"][scene] = order
         mapping["sheets"].append({"scene": scene, "file": sheet_path.name,
                                   "width": size[0], "height": size[1]})
 
-    write_csv_template(out_dir, complete)
+    write_csv_template(out_dir, complete, len(pack_models))
     (out_dir / "mapping.json").write_text(json.dumps(mapping, indent=2) + "\n",
                                           encoding="utf-8")
-    (out_dir / "INSTRUCTIONS.txt").write_text(instructions(complete), encoding="utf-8")
+    (out_dir / "INSTRUCTIONS.txt").write_text(
+        instructions(complete, len(pack_models), blocked_note), encoding="utf-8")
     return mapping
 
 
@@ -197,8 +224,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--root", default="/tmp/kilo/s7_out")
     ap.add_argument("--out", default=str(REPO / "projects/s7_blind"))
     ap.add_argument("--salt", default="s7")
+    ap.add_argument("--blocked-note", default="",
+                    help="one line naming a model that could not produce frames")
     args = ap.parse_args(argv)
-    m = run(Path(args.root), Path(args.out), args.salt)
+    m = run(Path(args.root), Path(args.out), args.salt, args.blocked_note)
     print(f"sheets: {len(m['sheets'])} in {args.out}")
     if m["partial_scenes"]:
         print(f"PARTIAL scenes (missing a model, no sheet): {m['partial_scenes']}")

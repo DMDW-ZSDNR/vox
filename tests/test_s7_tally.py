@@ -232,3 +232,15 @@ def test_load_agent_pick_reads_the_assessment_json(tmp_path):
     p = write_agent(tmp_path, "klein")
     assert load_agent_pick(p) == "klein"
     assert load_agent_pick(tmp_path / "missing.json") is None
+
+
+def test_two_model_pack_tallies(tmp_path):
+    """A blocked third model must not break the owner tally."""
+    panels2 = {s: {"A": "sdxl", "B": "klein"} for s in SCENES}
+    mapping = {"model_metrics": {}, "scenes": panels2}
+    m = load_mapping(mapping)
+    assert m["panels_by_scene"]["s01"]["B"] == "klein"
+    rows = fixed_rows({s: "A" for s in SCENES})
+    report = render_report(load_results(write_csv(tmp_path, rows)), mapping)
+    assert "recommended model: sdxl" in report.lower()
+    assert "zimage" not in report.lower()

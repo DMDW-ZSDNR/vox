@@ -12,6 +12,11 @@
    24-image minimum, so the winner table will print "INSUFFICIENT" (directional only).
    Either (a) approve running as-is for directional signal, or (b) approve expanding scenes
    to reach ≥24 images per cell before Kilo runs the bridge.
+   **UPDATE (S4, owner-directed):** Kilo expanded the matrix to 2 seeds per scene =
+   12 scenes x 2 seeds x 3 models x 3 variants = 216 renders; 24 images per cell
+   (docs/openmontage/image_gen/prompt_test_matrix.json schema 1.1, prompt_test_mapping.json
+   regenerated). This meets the scorer's ≥24/cell minimum. OpenCode's
+   tools/prompting.builder renders the prompts; Kilo's bridge job reads the matrix.
 2. **No niche recommended yet (S2 carryover):** YouTube search quota exhausted
    (search.list rateLimitExceeded, project 255936762081). S1-S5 demand metrics are
    NOT_MEASURED, not NOISE. Re-run niche breakout/replication measurement after the search

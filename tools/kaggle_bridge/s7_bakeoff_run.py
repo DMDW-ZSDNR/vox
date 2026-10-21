@@ -320,6 +320,16 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls, cfg: Dict[str, Any
     else:
         pipe.to("cuda")
         notes["model_cpu_offload"] = False
+    if cfg.get("force_upcast_vae"):
+        # fp16 VAE decoders overflow to NaN on the 16-channel latents these
+        # models use; diffusers' own guidance for the SD3/Flux lineage is
+        # `pipe.vae.config.force_upcast = True` (decode in fp32).
+        vae = getattr(pipe, "vae", None)
+        if vae is not None and hasattr(vae, "config"):
+            vae.config.force_upcast = True
+            notes["vae_force_upcast"] = True
+        else:
+            notes["vae_force_upcast"] = "no vae.config on this pipeline"
     pipe.set_progress_bar_config(disable=True)
     return pipe, notes
 

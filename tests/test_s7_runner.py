@@ -85,6 +85,12 @@ def test_install_ladder_shape():
         "git_main_x4", "git_main_x5_ao"}
 
 
+def test_force_upcast_vae_option_exists():
+    """fp16 VAE decode overflows to NaN -> black frames (seen on Z-Image)."""
+    assert "force_upcast_vae" in SRC
+    assert "vae.config.force_upcast = True" in SRC
+
+
 def test_every_live_stack_pins_torchao_when_diffusers_041():
     """diffusers 0.41.0 needs torchao.quantization.FqnToConfig."""
     mod = _load()

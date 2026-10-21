@@ -86,6 +86,7 @@ def install_stack(timeout: int = 1200) -> None:
             [sys.executable, "-m", "pip", "install", "--quiet", "--force-reinstall",
              "huggingface-hub>=1.32.0,<2.0.0",
              "transformers>=5.0.0,<6.0.0",
+             "torchao>=0.11,<0.14",
              "git+https://github.com/huggingface/diffusers"],
             check=True, timeout=timeout,
         )

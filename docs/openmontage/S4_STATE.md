@@ -9,12 +9,12 @@ for hours.
 
 ## Phase status
 
-| S4-2 RUN ORDER (fp16, version pins in manifest) | IN_PROGRESS | 1) Z-Image-Turbo BLOCKED (max fix attempts reached — see below); 2) SDXL Base + madebyollin/sdxl-vae-fp16-fix — SUBMITTED s4-sdxl-1 (awaiting status); 3) FLUX.2-klein-4B PENDING | — |
-| S4-1 VERIFY PROMPTING CLAIMS | DONE | docs/openmontage/image_gen/PROMPTING_FACTS.md; official cards fetched (Z-Image, SDXL, BFL FLUX); diffusers z_image + FluxPipeline docs CONFIRM: zimage negative_prompt ignored when guidance_scale<1; klein local FluxPipeline honours guidance_scale (>1) and negative_prompt (only when true_cfg_scale>1) | — |
-| S4-3 PROMPT-RULE EXPERIMENTS | PENDING | via tools/prompting.builder (do not edit OpenCode-owned module) | — |
-| S4-4 BLIND PACK FOR OWNER | PENDING | contact sheets R001... neutral IDs + mapping in projects/ (not committed) + scorer dummy CSV | — |
-| S4-5 MODEL_BAKEOFF_REPORT | PENDING | docs/openmontage/image_gen/MODEL_BAKEOFF_REPORT.md | — |
-| S4-6 CLOSE | PENDING | S4_STATE.md, CHANGELOG.md, LESSONS.md, stop commands | — |
+| S4-2 RUN ORDER (fp16, version pins in manifest) | IN_PROGRESS | 1) Z-Image-Turbo BLOCKED (max fix attempts reached — see below); 2) SDXL Base + madebyollin/sdxl-vae-fp16-fix — SUBMITTED s4-sdxl-1, RUNNING with released diffusers (fix attempt 2/2 succeeded); 3) FLUX.2-klein-4B PENDING | — |
+| S4-1 VERIFY PROMPTING CLAIMS | DONE | docs/openmontage/image_gen/PROMPTING_FACTS.md; official cards fetched (Z-Image, SDXL, BFL FLUX); diffusers z_image + FluxPipeline docs CONFIRM | — |
+| S4-3 PROMPT-RULE EXPERIMENTS | DONE | scripts/s4_verify_prompt_experiments.py 12/12 assertions pass via tools/prompting.builder (read only); variants saved to docs/openmontage/image_gen/S4_PROMPT_EXPERIMENT_VARIANTS.json | — |
+| S4-4 BLIND PACK FOR OWNER | PARTIAL | scorer (OpenCode-owned scripts/score_rubric.py) proven on dummy CSV: loads, validates, computes cell metrics, reports INSUFFICIENT when <24 images/cell; contact sheets + mapping BLOCKED pending generated images from S4-2 | — |
+| S4-5 MODEL_BAKEOFF_REPORT | PENDING | docs/openmontage/image_gen/MODEL_BAKEOFF_REPORT.md not started — blocked pending S4-2 image results | — |
+| S4-6 CLOSE | PARTIAL | LESSONS.md (dependency-conflict lesson + pinning rule) + CHANGELOG.md (S4 section) done; S4_STATE.md, stop commands pending close | — |
 
 ## Model run order (one model per kernel run, fp16 only)
 

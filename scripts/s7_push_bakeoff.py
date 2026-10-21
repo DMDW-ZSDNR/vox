@@ -77,14 +77,15 @@ def ladder_for(model: str, attempt: int) -> List[str]:
 
 
 def build_job(model: str, attempt: int, width: int, height: int,
-              change: str) -> Dict[str, Any]:
+              change: str, load_config: Optional[Dict[str, Any]] = None,
+              ladder_override: Optional[List[str]] = None) -> Dict[str, Any]:
     cfg = MODEL_CONFIG[model]
     ts = json.loads(TEST_SET.read_text(encoding="utf-8"))
     renders = [r for r in ts["renders"] if r["model"] == model]
     if not renders:
         raise SystemExit(f"no renders for model {model} in {TEST_SET.name}")
-    ladder = ladder_for(model, attempt)
-    return {
+    ladder = list(ladder_override) if ladder_override else ladder_for(model, attempt)
+    job: Dict[str, Any] = {
         "job_id": f"s7-{model}-{attempt}",
         "attempt": attempt,
         "model": model,
@@ -99,6 +100,18 @@ def build_job(model: str, attempt: int, width: int, height: int,
         "renders": renders,
         "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
+    if load_config:
+        job["load_config"] = load_config
+    return job
+
+
+def parse_json_option(raw: Optional[str], what: str) -> Optional[Any]:
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"BLOCKED: {what} is not valid JSON: {exc}")
 
 
 def main() -> None:
@@ -108,13 +121,28 @@ def main() -> None:
     ap.add_argument("--width", type=int, default=None)
     ap.add_argument("--height", type=int, default=None)
     ap.add_argument("--change", default="")
+    ap.add_argument("--load-config", default="",
+                    help='JSON merged over the runner LOAD_CONFIG, e.g. '
+                         '\'{"offload": true, "low_cpu_mem_usage": true}\'')
+    ap.add_argument("--ladder", default="",
+                    help="comma-separated install-ladder rungs (overrides the "
+                         "default per-attempt ladder)")
     args = ap.parse_args()
 
     ts = json.loads(TEST_SET.read_text(encoding="utf-8"))
     width = args.width or ts["resolution"][0]
     height = args.height or ts["resolution"][1]
+    load_config = parse_json_option(args.load_config, "--load-config")
+    ladder_override = ([r.strip() for r in args.ladder.split(",") if r.strip()]
+                       if args.ladder else None)
+    if ladder_override:
+        from tools.kaggle_bridge.s7_bakeoff_run import RELEASED_STACKS
+        unknown = [r for r in ladder_override if r not in RELEASED_STACKS]
+        if unknown:
+            raise SystemExit(f"BLOCKED: unknown ladder rungs: {unknown}")
 
-    job = build_job(args.model, args.attempt, width, height, args.change)
+    job = build_job(args.model, args.attempt, width, height, args.change,
+                    load_config=load_config, ladder_override=ladder_override)
     work = JOBS_DIR / job["job_id"]
     work.mkdir(parents=True, exist_ok=True)
 

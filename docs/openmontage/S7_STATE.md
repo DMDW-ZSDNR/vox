@@ -24,7 +24,7 @@ reusable and nothing completed is redone.
 | S7-2 RUNNER + PUSH | DONE | `tools/kaggle_bridge/s7_bakeoff_run.py` (install ladder, import probe, fp16, 90 min wall cap, full measurements), `scripts/s7_push_bakeoff.py`; 25 local tests pass (`tests/test_s7_runner.py`, `tests/test_s7_push_bakeoff.py`, `tests/test_s7_tally.py`) |
 | S7-3 SDXL Base + madebyollin/sdxl-vae-fp16-fix | DONE | job `s7-sdxl-1` COMPLETE, 10/10 images, bridge verify PASS (all sha256/bytes match). Load 86.233 s, steady 41.4 s/img, 1.42 usable img/min, peak VRAM 9169.58 MB, black/NaN/OOM = 0, `StableDiffusionXLPipeline`. Versions: diffusers 0.36.0, transformers 4.57.6, huggingface_hub 0.36.2, torch 2.11.0+cu128, accelerate 1.14.0, safetensors 0.8.0, numpy 2.1.3, pillow 12.3.0, CUDA 12.8, Tesla T4, Python 3.13.15 |
 | S7-4 FLUX.2-klein-4B | DONE | job `s7-klein-1` COMPLETE, 10/10 images, bridge verify PASS (all sha256/bytes match). Load 133.852 s, steady 24.691 s/img, 2.17 usable img/min, peak VRAM 7995.02 MB, black/NaN/OOM = 0, `Flux2KleinPipeline`, diffusers 0.37.0 (rung released_037_x4, first try) |
-| S7-5 Z-Image-Turbo | IN_PROGRESS | job `s7-zimage-1` SUBMITTED 11:52Z (attempt 1, ladder released_037_x4 -> released_037_x5 -> released_041_x5_ao -> git_main_x5_ao) |
+| S7-5 Z-Image-Turbo | IN_PROGRESS | attempt 1 `s7-zimage-1` BLOCKED (CUDA OOM at model load, 14.56 GiB T4, fp16, no offload) - traceback `docs/openmontage/image_gen/logs/s7-zimage-1/traceback_load.txt`; attempt 2 `s7-zimage-2` SUBMITTED 12:00Z with `enable_model_cpu_offload()` |
 | S7-6 OBJECTIVE QC | PENDING | `scripts/s7_checks.py` (Laplacian blur, text-like heuristic, dHash duplicates, resolution, saturation/contrast outliers) |
 | S7-7 BLIND PACK | PENDING | `scripts/s7_blind_pack.py` -> `projects/s7_blind/` (gitignored) |
 | S7-8 TALLY HELPER | DONE | `scripts/s7_tally.py` (test-first, 13 tests) -> wins, anatomy-ok, speed/VRAM table, AGENT vs OWNER, TIE at <=1 win |
@@ -76,6 +76,16 @@ reusable and nothing completed is redone.
   measurement record and any divergence in the regenerated images is reported.
   Working copies of every fetched image are kept in the gitignored
   `output/s7_cache/` so a sandbox restart cannot lose them again.
+- 2026-10-21 11:59Z: zimage attempt 1 -> BLOCKED. Diagnosis: CUDA OOM at
+  model load - `ZImagePipeline` in fp16 with the vendor card's
+  `low_cpu_mem_usage=False` and no offload does not fit the T4 (14.56 GiB
+  usable, 14.49 GiB already in use). Traceback:
+  `docs/openmontage/image_gen/logs/s7-zimage-1/traceback_load.txt`.
+- 2026-10-21 12:00Z: zimage attempt 2 SUBMITTED (job `s7-zimage-2`) with the
+  same diffusers 0.37.0 stack (the stack was NOT the failure cause) and
+  `enable_model_cpu_offload()` - the same offload that made klein fit on this
+  GPU. The push script gained `--load-config` and `--ladder` for exactly
+  this case (both covered by tests/test_s7_push_bakeoff.py).
 
 ## Attempt log (per model)
 
@@ -84,7 +94,8 @@ reusable and nothing completed is redone.
 | sdxl | 1 | released diffusers 0.41.0 + transformers 4.57.6 + hub<1.0 | DONE (10/10) via internal rung 3 `released_036_x4`; rungs 1-2 dead (hub conflict, torchao) |
 | sdxl | 2 | media regeneration only: same seeds, same rung `released_036_x4` (forced by the /tmp wipe, not by a model failure) | queued after zimage |
 | klein | 1 | `Flux2KleinPipeline` + `enable_model_cpu_offload` (fixes the S5 meta-tensor failure), ladder released_037_x4 -> released_037_x5 -> released_041_x5_ao -> git_main_x5_ao | DONE (10/10, verify PASS) |
-| zimage | 1 | first Z-Image attempt, diffusers 0.37.0 rung first (ships ZImagePipeline), torchao 0.15.0 pin on the 0.41 rung | RUNNING (submitted 11:52Z) |
+| zimage | 1 | first Z-Image attempt, diffusers 0.37.0 rung first (ships ZImagePipeline), torchao 0.15.0 pin on the 0.41 rung | BLOCKED - CUDA OOM at model load (fp16, no offload, 14.56 GiB T4) |
+| zimage | 2 | same stack + `enable_model_cpu_offload()` (the klein-proven fix); `--load-config`/`--ladder` added to the push script | RUNNING (submitted 12:00Z) |
 
 ## Notes
 

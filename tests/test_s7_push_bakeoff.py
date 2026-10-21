@@ -81,3 +81,24 @@ def test_klein_job_uses_the_vendor_card_class():
     assert job["pipeline_class"] == "Flux2KleinPipeline"
     assert job["model_id"] == "black-forest-labs/FLUX.2-klein-4B"
     assert all(r["negative_prompt"] is None for r in job["renders"])
+
+
+def test_load_config_override_is_embedded():
+    job = build_job("zimage", 2, 1024, 1024, "attempt 2",
+                    load_config={"offload": True, "low_cpu_mem_usage": True})
+    assert job["load_config"] == {"offload": True, "low_cpu_mem_usage": True}
+    text = embed_job(_runner_text(), job)
+    ns: dict = {"__name__": "s7_runner_not_main"}
+    exec(compile(text, "s7_runner_embedded.py", "exec"), ns)  # noqa: S102
+    assert ns["JOB_EMBEDDED"]["load_config"]["offload"] is True
+
+
+def test_ladder_override_replaces_the_attempt_ladder():
+    job = build_job("zimage", 2, 1024, 1024, "attempt 2",
+                    ladder_override=["released_037_x4", "released_037_x5"])
+    assert job["install_ladder"] == ["released_037_x4", "released_037_x5"]
+
+
+def test_no_load_config_key_when_not_requested():
+    job = build_job("sdxl", 1, 1024, 1024, "attempt 1")
+    assert "load_config" not in job

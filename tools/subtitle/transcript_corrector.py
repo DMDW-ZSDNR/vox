@@ -131,7 +131,8 @@ class TranscriptCorrector(BaseTool):
 
         threshold = float(inputs.get("review_threshold", 0.6))
         segments, changes, review = self.correct_segments(
-            transcript.get("segments") or [], lexicon["replacements"], threshold
+            transcript.get("segments") or [], lexicon["replacements"], threshold,
+            protected=set(lexicon["protected_terms"]),
         )
 
         result = {
@@ -168,9 +169,11 @@ class TranscriptCorrector(BaseTool):
 
     @staticmethod
     def correct_segments(
-        segments: list[dict], replacements: dict[str, str], threshold: float
+        segments: list[dict], replacements: dict[str, str], threshold: float,
+        protected: set[str] | None = None,
     ) -> tuple[list[dict], list[dict], list[dict]]:
         table = _phrase_table(replacements)
+        protected = protected or set()
         segments = copy.deepcopy(segments)
         changes: list[dict] = []
         review: list[dict] = []
@@ -180,14 +183,14 @@ class TranscriptCorrector(BaseTool):
             if not words:
                 # Segment without word timings: correct the text only.
                 tokens = [{"word": t} for t in az_text.normalize(seg.get("text", "")).split()]
-                tokens = TranscriptCorrector._replace_in_words(tokens, table, changes, seg)
+                tokens = TranscriptCorrector._replace_in_words(tokens, table, changes, seg, protected)
                 seg["text"] = " ".join(t["word"] for t in tokens)
                 continue
 
             for w in words:
                 w["word"] = az_text.normalize(w.get("word", ""))
             words = [w for w in words if w["word"]]
-            words = TranscriptCorrector._replace_in_words(words, table, changes, seg)
+            words = TranscriptCorrector._replace_in_words(words, table, changes, seg, protected)
 
             for w in words:
                 prob = w.get("probability")
@@ -209,7 +212,8 @@ class TranscriptCorrector(BaseTool):
 
     @staticmethod
     def _replace_in_words(
-        words: list[dict], table: list[tuple[list[str], str]], changes: list[dict], seg: dict
+        words: list[dict], table: list[tuple[list[str], str]], changes: list[dict], seg: dict,
+        protected: set[str] | None = None,
     ) -> list[dict]:
         keys = [az_text.match_key(w["word"]) for w in words]
         out: list[dict] = []
@@ -223,7 +227,10 @@ class TranscriptCorrector(BaseTool):
                 original = " ".join(w["word"] for w in span)
                 lead = az_text.strip_punct(span[0]["word"])[0]
                 trail = az_text.strip_punct(span[-1]["word"])[2]
-                fixed = az_text.apply_case_like(az_text.strip_punct(span[0]["word"])[1], right)
+                fixed = az_text.apply_case_like(
+                    az_text.strip_punct(span[0]["word"])[1], right,
+                    protected=right in (protected or ()),
+                )
                 new_text = f"{lead}{fixed}{trail}"
                 if new_text != original:
                     changes.append({

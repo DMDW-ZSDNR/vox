@@ -69,17 +69,28 @@ def strip_punct(token: str) -> tuple[str, str, str]:
 
 
 def match_key(token: str) -> str:
-    """Case- and punctuation-insensitive lookup key for a single token."""
-    return az_lower(normalize(strip_punct(token.strip())[1]))
+    """Case- and punctuation-insensitive lookup key for a single token.
+
+    Dotted and dotless i are folded together: a Latin brand typed in capitals
+    ("INSTAQRAM" -> "ınstaqram") must still match the lexicon key
+    "instaqram", and ASR confuses ı/i often enough that the distinction would
+    only cause missed corrections. The key is for lookup only; text is never
+    rewritten with it.
+    """
+    return az_lower(normalize(strip_punct(token.strip())[1])).replace("ı", "i")
 
 
-def apply_case_like(source: str, replacement: str) -> str:
+def apply_case_like(source: str, replacement: str, protected: bool = False) -> str:
     """Carry the casing pattern of ``source`` onto ``replacement``.
 
     ALL-CAPS stays all-caps and a capitalised word stays capitalised; any
     other pattern keeps the replacement exactly as written in the lexicon, so
-    proper nouns and acronyms ("SMM", "McDonald's") survive.
+    proper nouns and acronyms ("SMM", "McDonald's") survive. A ``protected``
+    replacement (a brand or name from ``protected_terms``) is returned exactly
+    as written: "INSTAQRAM" -> "Instagram", never "İNSTAGRAM".
     """
+    if protected:
+        return replacement
     letters = [c for c in source if c.isalpha()]
     if len(letters) > 1 and all(c.isupper() for c in letters):
         return az_upper(replacement)
@@ -90,3 +101,15 @@ def apply_case_like(source: str, replacement: str) -> str:
 
 def has_az_special(text: str) -> bool:
     return any(ch in AZ_SPECIAL_CHARS for ch in text)
+
+
+def upper_token(token: str, protected: set[str] | frozenset[str] = frozenset()) -> str:
+    """Upper-case one caption token.
+
+    Protected brand/name spellings use Latin casing ("Instagram" ->
+    "INSTAGRAM"); every other word uses Azerbaijani casing ("ilham" -> "İLHAM").
+    """
+    lead, core, trail = strip_punct(token)
+    if core in protected:
+        return lead + core.upper() + trail
+    return az_upper(token)

@@ -193,14 +193,17 @@ def load_lexicon(
     """Merge the shared Azerbaijani lexicon with a client's own lexicon.
 
     Client entries win over shared ones. ``protected_terms`` are folded into
-    ``replacements`` so "smm" and "Smm" both become "SMM".
+    ``replacements`` so "smm" and "Smm" both become "SMM", and listed in
+    ``protected_terms`` so their exact spelling survives casing changes.
     """
     sources = [corrections_root / "az_common.yaml"]
     if client_id:
         validate_client_id(client_id)
         sources.append(brand_root / client_id / "corrections.yaml")
 
-    merged: dict[str, Any] = {"replacements": {}, "hotwords": [], "initial_prompt": ""}
+    merged: dict[str, Any] = {
+        "replacements": {}, "protected_terms": [], "hotwords": [], "initial_prompt": "",
+    }
     prompts: list[str] = []
     for path in sources:
         if not path.is_file():
@@ -208,6 +211,8 @@ def load_lexicon(
         data = _read_yaml(path)
         for term in data.get("protected_terms") or []:
             merged["replacements"][str(term)] = str(term)
+            if str(term) not in merged["protected_terms"]:
+                merged["protected_terms"].append(str(term))
         for wrong, right in (data.get("replacements") or {}).items():
             merged["replacements"][str(wrong)] = str(right)
         for word in data.get("hotwords") or []:

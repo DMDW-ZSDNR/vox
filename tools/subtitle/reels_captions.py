@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from lib import az_text
-from lib.reels_profiles import ProfileError, resolve_style
+from lib.reels_profiles import ProfileError, load_lexicon, resolve_style
 from tools.base_tool import (
     BaseTool,
     Determinism,
@@ -153,6 +153,11 @@ class ReelsCaptions(BaseTool):
                 "items": {"type": "string"},
                 "description": "Approved keywords drawn in the highlight colour (phrase mode).",
             },
+            "protected_terms": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Extra brand/name spellings kept in Latin casing when uppercased.",
+            },
             "safe_zone": {"type": "string", "enum": list(SAFE_ZONES), "default": "organic"},
             "width": {"type": "integer", "default": 1080},
             "height": {"type": "integer", "default": 1920},
@@ -250,13 +255,18 @@ class ReelsCaptions(BaseTool):
             max_chars = max(8, int(max_chars * 0.85))
         mode = style.get("mode", "phrase")
         emphasis = {az_text.match_key(w) for w in inputs.get("emphasis_words") or []}
+        try:
+            protected = set(load_lexicon(inputs.get("client_id"))["protected_terms"])
+        except ProfileError as exc:
+            return ToolResult(success=False, error=str(exc))
+        protected.update(inputs.get("protected_terms") or [])
 
         cues = build_cues(words, max_chars_per_line=max_chars, max_lines=max_lines)
         events: list[str] = []
         for idx, cue in enumerate(cues):
             tokens = [az_text.normalize(w["word"]) for w in cue]
             if uppercase:
-                tokens = [az_text.az_upper(t) for t in tokens]
+                tokens = [az_text.upper_token(t, protected) for t in tokens]
             lines = split_lines(tokens, max_chars, max_lines)
             cue_start = float(cue[0]["start"])
             cue_end = float(cue[-1]["end"])

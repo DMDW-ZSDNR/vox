@@ -117,3 +117,23 @@ def test_two_model_pack_when_one_model_is_blocked(tmp_path):
     assert rows[0] == ["scene", "best_panel", "worst_panel",
                         "anatomy_ok_A", "anatomy_ok_B", "comment"]
     assert "zimage" in (pack / "INSTRUCTIONS.txt").read_text(encoding="utf-8")
+
+
+def test_instructions_list_only_the_real_panels(tmp_path):
+    root = tmp_path / "out"
+    for model in ("sdxl", "klein"):
+        d = root / f"s7_bakeoff_{model}"
+        (d / "images").mkdir(parents=True)
+        im = Image.new("RGB", (1024, 1024), (30, 30, 30))
+        im.save(d / "images" / "r0001.png")
+        (d / "manifest.json").write_text(json.dumps({
+            "model": model, "job_id": f"s7-{model}-1", "images": [
+                {"render_id": "r0001", "scene_id": "s01", "file": "r0001.png",
+                 "sha256": "x", "bytes": 1},
+            ],
+        }), encoding="utf-8")
+    pack = tmp_path / "pack"
+    run(root, pack, salt="s7")
+    text = (pack / "INSTRUCTIONS.txt").read_text(encoding="utf-8")
+    assert "anatomy_ok_A, anatomy_ok_B" in text
+    assert "A, B or C" not in text

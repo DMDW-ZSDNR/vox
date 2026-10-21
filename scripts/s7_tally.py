@@ -227,7 +227,10 @@ def render_report(results: List[Dict[str, Any]], mapping: Dict[str, Any],
         lines.append(f"PARTIAL: {filled}/{total_scenes} scenes filled - "
                      "no recommendation until every scene has a best_panel.")
         lines.append("")
-        lines.append(_agent_vs_owner(None, agent_pick, stats, total_scenes))
+        lines.append(
+            "AGENT vs OWNER: NOT_CHECKED - the owner's CSV is incomplete "
+            f"({filled}/{total_scenes} scenes), so there is no owner result to "
+            "compare with the agent's pick yet.")
         return "\n".join(lines) + "\n"
 
     if owner_winner is None:

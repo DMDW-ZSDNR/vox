@@ -244,3 +244,11 @@ def test_two_model_pack_tallies(tmp_path):
     report = render_report(load_results(write_csv(tmp_path, rows)), mapping)
     assert "recommended model: sdxl" in report.lower()
     assert "zimage" not in report.lower()
+
+
+def test_incomplete_csv_with_agent_pick_is_not_reported_as_a_tie(tmp_path):
+    rows = fixed_rows({s: "A" for s in SCENES[:4]})
+    report = render_report(load_results(write_csv(tmp_path, rows)),
+                           _mapping_dict(), agent_pick="klein")
+    assert "NOT_CHECKED" in report
+    assert "TIE" not in report

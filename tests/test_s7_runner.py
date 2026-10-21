@@ -76,9 +76,24 @@ def test_install_ladder_shape():
         first = mod.RELEASED_STACKS[ladder[0]]["pip_args"]
         assert not any(a.startswith("git+") for a in first), \
             f"{model}: rung 1 must be a RELEASED diffusers"
+    # git_main_x5 was replaced by git_main_x5_ao (torchao 0.15.0 pin) and the
+    # 0.37.0 stacks were added after the SDXL run proved 0.41.0 unusable with
+    # transformers 4.x (hub conflict) and torchao.
     assert set(mod.RELEASED_STACKS) >= {
-        "released_041_x4", "released_041_x5", "released_036_x4",
-        "git_main_x4", "git_main_x5"}
+        "released_041_x4", "released_041_x5", "released_041_x5_ao",
+        "released_037_x4", "released_037_x5", "released_036_x4",
+        "git_main_x4", "git_main_x5_ao"}
+
+
+def test_every_stack_pins_torchao_when_diffusers_041():
+    """diffusers 0.41.0 needs torchao.quantization.FqnToConfig."""
+    mod = _load()
+    for name, stack in mod.RELEASED_STACKS.items():
+        args = stack["pip_args"]
+        if not any("diffusers==0.41.0" in a for a in args):
+            continue
+        assert any(a.startswith("torchao==0.15.0") for a in args), \
+            f"{name}: diffusers 0.41.0 must pin torchao==0.15.0"
 
 
 def test_probe_classes_per_model():

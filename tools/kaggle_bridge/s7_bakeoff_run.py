@@ -314,12 +314,6 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls, cfg: Dict[str, Any
             job["vae_model_id"], torch_dtype=torch.float16)
         notes["vae"] = job["vae_model_id"]
     pipe = pipe_cls.from_pretrained(job["model_id"], **kwargs)
-    if cfg.get("offload"):
-        pipe.enable_model_cpu_offload()
-        notes["model_cpu_offload"] = True
-    else:
-        pipe.to("cuda")
-        notes["model_cpu_offload"] = False
     if cfg.get("force_upcast_vae"):
         # fp16 VAE decoders overflow to NaN on the 16-channel latents these
         # models use; diffusers' own guidance for the SD3/Flux lineage is
@@ -330,6 +324,24 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls, cfg: Dict[str, Any
             notes["vae_force_upcast"] = True
         else:
             notes["vae_force_upcast"] = "no vae.config on this pipeline"
+    if cfg.get("vae_fp32"):
+        # The config flag above only helps when the pipeline implements
+        # `upcast_vae()`; ZImagePipeline does not, so cast the decoder
+        # explicitly (the DiT stays fp16 - the S7 brief mandates fp16).
+        # Done BEFORE the offload hooks are installed: moving a module that
+        # already carries an offload hook raises inside diffusers.
+        vae = getattr(pipe, "vae", None)
+        if vae is not None:
+            vae.to(dtype=torch.float32)
+            notes["vae_fp32"] = True
+        else:
+            notes["vae_fp32"] = "no vae on this pipeline"
+    if cfg.get("offload"):
+        pipe.enable_model_cpu_offload()
+        notes["model_cpu_offload"] = True
+    else:
+        pipe.to("cuda")
+        notes["model_cpu_offload"] = False
     pipe.set_progress_bar_config(disable=True)
     return pipe, notes
 

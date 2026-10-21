@@ -1,7 +1,3 @@
-# QC thresholds — OpenMontage Milestone Q1
-
-# All values are INITIAL GUESSES from docs/openmontage/QA_SPEC.md §1.
-# Tune after human review; do not treat as final acceptance criteria.
 {
   "black_ratio_max": 0.05,
   "freeze_duration_max": 2.0,

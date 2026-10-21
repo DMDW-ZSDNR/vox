@@ -40,6 +40,10 @@ DEFAULT_THRESHOLDS = {
     "subtitle_drift_max": 0.5,          # seconds; subtitle vs audio drift
 }
 
+# Repo-level threshold config (SCR-05). Loaded by default; fail-closed when
+# missing or malformed so a silent fallback to code defaults is impossible.
+DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "qc_thresholds.json"
+
 REQUIRED_CREDIT_FIELDS = ("title", "director", "production")
 VALID_RIGHTS = ("explicit_license", "source_policy_us_gov", "ai_generated_illustration")
 
@@ -170,6 +174,34 @@ def _load_json(path: str | None):
         return json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
+
+
+def load_thresholds(config_path: str | Path | None = None):
+    """Load QC thresholds from the repo config, fail-closed.
+
+    Returns ``(thresholds, source, error)``. ``thresholds`` is ``None`` when
+    the config is missing, unreadable or malformed; callers must treat that
+    as BLOCKED, never as "use defaults". Unknown keys are ignored; a known
+    key with a non-numeric value is a malformed config.
+    """
+    path = Path(config_path) if config_path else DEFAULT_CONFIG_PATH
+    if not path.is_file():
+        return None, str(path), f"thresholds config not found: {path}"
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return None, str(path), f"thresholds config unreadable: {path}: {exc}"
+    if not isinstance(raw, dict) or not raw:
+        return None, str(path), f"thresholds config must be a non-empty JSON object: {path}"
+    thresholds = dict(DEFAULT_THRESHOLDS)
+    for key in DEFAULT_THRESHOLDS:
+        if key not in raw:
+            continue
+        value = raw[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None, str(path), f"threshold {key!r} must be numeric, got {value!r}"
+        thresholds[key] = float(value)
+    return thresholds, str(path), None
 
 
 def _parse_claim_ledger(path: str | None) -> dict[str, str]:
@@ -304,13 +336,29 @@ class QCTool(BaseTool):
         expected_height = inputs.get("expected_height", 1080)
         expected_fps = float(inputs.get("expected_fps", 30))
 
-        # Thresholds (INITIAL GUESSES, documented per QA_SPEC.md).
-        thresholds = dict(DEFAULT_THRESHOLDS)
-        config_path = inputs.get("config_path")
-        if config_path:
-            loaded = _load_json(config_path)
-            if isinstance(loaded, dict):
-                thresholds.update(loaded)
+        # Thresholds come from config/qc_thresholds.json by default (SCR-05).
+        # A missing or malformed config is BLOCKED, never a silent fallback.
+        thresholds, thresholds_source, config_error = load_thresholds(
+            inputs.get("config_path")
+        )
+        if config_error:
+            out = Path(output_path)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            blocked = [_check_entry("thresholds_config", "BLOCKED", config_error)]
+            out.write_text(json.dumps(blocked, indent=2), encoding="utf-8")
+            return ToolResult(
+                success=False,
+                error=f"BLOCKED: {config_error}",
+                data={
+                    "verdict": "BLOCKED",
+                    "report": str(out),
+                    "check_count": 1,
+                    "thresholds": None,
+                    "thresholds_source": thresholds_source,
+                },
+                artifacts=[str(out)],
+                duration_seconds=0.0,
+            )
 
         ffprobe_bin = _find_binary("ffprobe")
         ffmpeg_bin = _find_binary("ffmpeg")
@@ -806,6 +854,7 @@ class QCTool(BaseTool):
                         if not cid:
                             problems.append(f"sentence {i}: missing claim_id")
                             continue
+                        cid = str(cid)
                         parts = [p.strip() for p in re.split(r"[,;]", cid) if p.strip()]
                         unresolved = [p for p in parts if p not in ledger]
                         if unresolved:
@@ -813,13 +862,14 @@ class QCTool(BaseTool):
                                 f"sentence {i}: unknown claim_id(s) {', '.join(unresolved)}"
                             )
                             continue
-                        for part in parts:
-                            source_type = ledger[part]
-                        is_single = "SINGLE" in source_type.upper()
+                        # EVERY id on the line counts: a line is SINGLE_SOURCE if
+                        # any cited claim is SINGLE_SOURCE (SCR-06).
+                        single_ids = [p for p in parts if "SINGLE" in ledger[p].upper()]
                         flags = c.get("source_flags") or ""
-                        if is_single and not str(flags).strip():
+                        if single_ids and not str(flags).strip():
                             problems.append(
-                                f"sentence {i}: SINGLE_SOURCE claim {cid} without flag"
+                                f"sentence {i}: SINGLE_SOURCE claim(s) "
+                                f"{', '.join(single_ids)} without flag"
                             )
                     if problems:
                         report.append(
@@ -1010,6 +1060,7 @@ class QCTool(BaseTool):
                 "report": str(out),
                 "check_count": len(report),
                 "thresholds": thresholds,
+                "thresholds_source": thresholds_source,
             },
             artifacts=[str(out)],
             duration_seconds=0.0,

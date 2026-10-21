@@ -113,3 +113,25 @@ Record only useful, evidence-backed lessons. Do not include secrets or personal 
   None). Both pass locally before every push.
 - Result: SDXL run 3 reached RUNNING with the same runner text that passed those
   tests; the S4 zero-image failure cannot recur because each job now imports one class.
+
+- Date / task: 2026-10-21 / F1-fix chapter mode + config wiring (Kilo)
+- Observed failure and evidence: two `tests/test_run_chapters.py` tests were red at
+  HEAD. `_write_chapter_script()` writes rows as `| B<chapter>-<sentence> | ... |`,
+  but both parsers (`cmd_script_validation`, `split_script_into_chapters`) accepted
+  only `B<digits>` (`cells[0][1:].isdigit()`). The test helper reproduced the real
+  writer format, so `--chapters` would have produced zero-sentence chapter scripts.
+  Separately, `config/qc_thresholds.json` was not valid JSON (leading `#` comment
+  lines), and `qc.py` only read a config when passed explicitly, so the pipeline
+  silently used code defaults.
+- Confirmed cause / certainty: parser/format mismatch between writer and reader
+  (deterministic); config file format and loader default (deterministic, both
+  reproduced by tests before the fix).
+- Fix or proposed rule: one shared `_parse_script_rows()` accepts `B<n>` and
+  `B<n>-<m>`; QC loads `config/qc_thresholds.json` by default and fails closed on
+  missing/malformed config; config files are strict JSON (comments live in docs).
+  Rule: whenever a writer and a reader share a format, add a round-trip test with
+  the writer's exact output, not a hand-written sample.
+- Regression test: tests/test_run_chapters.py (5 pass), tests/test_edl_generic.py
+  (5 pass), tests/tools/test_qc_tool.py thresholds tests (4) + mixed-ID claim tests (4).
+- Result: 24 impacted tests pass, qc file 22 pass, CI fast suite result recorded in
+  docs/openmontage/F1FIX_STATE.md.

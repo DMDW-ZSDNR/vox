@@ -2,6 +2,38 @@
 
 Record accepted changes, benchmark evidence, reviewer and rollback method.
 
+## 2026-10-21 — Milestone F1-fix (Kilo), pipeline correctness (config/tools/scripts/tests/docs)
+
+Approved inputs: SCR-05 (QC thresholds from config), SCR-06 (every claim_id on a
+line), SCR-07 (episode-generic EDL); plus the two red chapter tests and the
+pytest-collection failure from F0. `FACTORY_100_SPEC.md` was not edited.
+
+- `tools/qa/qc.py`: new `load_thresholds()`; `DEFAULT_CONFIG_PATH` = repo
+  `config/qc_thresholds.json`; missing/unreadable/non-object/non-numeric config
+  returns `ToolResult(success=False)` with a one-entry `thresholds_config` BLOCKED
+  report (verdict BLOCKED). `thresholds_source` is reported in success data.
+  `claim_ids_resolve` now treats a line as SINGLE_SOURCE if ANY cited id is
+  SINGLE_SOURCE (was: last id only).
+- `config/qc_thresholds.json`: converted to strict JSON (comments removed; values
+  unchanged). `finish_audio` reads the same keys and is unaffected.
+- `scripts/run_episode.py`: added `_parse_script_rows/_group_beats/_beat_claim_ids/
+  _episode_narration_duration`; `cmd_edl` derives title/beat/credits cards,
+  durations, claim_ids and rationale from the episode script + measured narration
+  duration (no ARTEMIS literals, no 185.43 constant); `cmd_script_validation` and
+  `split_script_into_chapters` share the parser; `cmd_qc` passes `config_path`.
+- `tests/tools/test_qc_tool.py`: +9 tests (default/override thresholds, verdict
+  flip by config, missing/malformed fail-closed, mixed-ID SINGLE flags, unknown id
+  in the middle, all-resolved PASS).
+- `tests/test_edl_generic.py`: +5 tests (two fake episodes differ; claim_ids from
+  script; manifest duration; BLOCKED without script/duration).
+- `pytest.ini`: `norecursedirs` excludes the nested `youtube-niche-finder/`
+  checkout (its backend needs psycopg2); full-root collection now succeeds.
+- Evidence: 22/22 qc tests (exit 0), 5/5 chapter, 5/5 EDL, 24/24 impacted
+  (exit 0); before the fix 2 chapter tests failed and 9 new tests were red.
+- Rollback: `git revert` of the F1-fix commit; the config file's old comment
+  lines are the only non-code loss.
+
+
 ## 2026-10-21 — Milestone S4 (Kilo), model bakeoff (docs/tools/scripts/tests)
 
 ### S4-1 PROMPTING FACTS (DONE)

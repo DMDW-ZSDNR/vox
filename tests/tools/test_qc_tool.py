@@ -375,3 +375,190 @@ def test_report_schema(tmp_path):
         assert entry["status"] in ("PASS", "REVIEW", "BLOCKED", "FAILED", "NOT_RUN")
         assert entry["tool_version"], entry
         assert entry["timestamp"], entry
+
+
+# ---------------------------------------------------------------------------
+# SCR-05 — thresholds must come from config/qc_thresholds.json, fail-closed
+# ---------------------------------------------------------------------------
+
+def _quiet_video(tmp_path):
+    """1080p clip whose audio is loudnorm'd to ~-14 LUFS (ebur128 PASS at default)."""
+    audio = tmp_path / "audio_norm.aac"
+    _gen_normalized_audio(audio, duration=10)
+    vid = tmp_path / "good.mp4"
+    _gen_video(vid, duration=10, audio_path=audio)
+    return vid
+
+
+def test_default_thresholds_come_from_repo_config(tmp_path):
+    """With no config_path, the repo config file is the threshold source."""
+    import tools.qa.qc as qc_module
+
+    vid = _quiet_video(tmp_path)
+    res = QCTool().execute({
+        "input_path": str(vid),
+        "output_path": str(tmp_path / "qa_report.json"),
+    })
+    assert res.success, res.error
+    assert res.data["thresholds_source"].endswith("config/qc_thresholds.json")
+    assert res.data["thresholds"]["lufs_target"] == -14.0
+
+
+def test_config_path_overrides_default_thresholds(tmp_path):
+    """An explicit config_path is used instead of the repo config."""
+    vid = _quiet_video(tmp_path)
+    cfg = tmp_path / "custom.json"
+    cfg.write_text(json.dumps({"lufs_target": -13.0}), encoding="utf-8")
+    res = QCTool().execute({
+        "input_path": str(vid),
+        "output_path": str(tmp_path / "qa_report.json"),
+        "config_path": str(cfg),
+    })
+    assert res.success, res.error
+    assert res.data["thresholds"]["lufs_target"] == -13.0
+
+
+def test_changing_config_changes_verdict(tmp_path):
+    """A stricter lufs_target in the config flips ebur128 and the verdict."""
+    vid = _quiet_video(tmp_path)
+
+    strict = tmp_path / "strict.json"
+    strict.write_text(
+        json.dumps({"lufs_target": -30.0, "lufs_tolerance": 2.0}),
+        encoding="utf-8",
+    )
+    out_strict = tmp_path / "strict_report.json"
+    res_strict = QCTool().execute({
+        "input_path": str(vid),
+        "output_path": str(out_strict),
+        "config_path": str(strict),
+    })
+    assert res_strict.success, res_strict.error
+    strict_checks = {e["check_id"]: e for e in json.loads(out_strict.read_text())}
+    assert strict_checks["ebur128"]["status"] == "FAILED", strict_checks["ebur128"]
+    assert res_strict.data["verdict"] == "FAILED"
+
+    out_default = tmp_path / "default_report.json"
+    res_default = QCTool().execute({
+        "input_path": str(vid),
+        "output_path": str(out_default),
+    })
+    assert res_default.success, res_default.error
+    default_checks = {e["check_id"]: e for e in json.loads(out_default.read_text())}
+    assert default_checks["ebur128"]["status"] == "PASS", default_checks["ebur128"]
+    assert res_default.data["verdict"] != "FAILED"
+
+
+def test_missing_thresholds_config_fails_closed(tmp_path, monkeypatch):
+    """Missing config => BLOCKED, never PASS, even for a good clip."""
+    import tools.qa.qc as qc_module
+
+    monkeypatch.setattr(qc_module, "DEFAULT_CONFIG_PATH",
+                        tmp_path / "does_not_exist.json")
+    vid = _quiet_video(tmp_path)
+    out = tmp_path / "qa_report.json"
+    res = QCTool().execute({"input_path": str(vid), "output_path": str(out)})
+
+    assert res.success is False
+    assert res.data["verdict"] == "BLOCKED", res.data
+    report = json.loads(out.read_text())
+    assert [e["check_id"] for e in report] == ["thresholds_config"]
+    assert report[0]["status"] == "BLOCKED"
+    assert "not found" in report[0]["evidence"]
+
+
+def test_malformed_thresholds_config_fails_closed(tmp_path, monkeypatch):
+    """Malformed JSON / non-numeric threshold => BLOCKED, never PASS."""
+    import tools.qa.qc as qc_module
+
+    bad = tmp_path / "bad.json"
+    bad.write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(qc_module, "DEFAULT_CONFIG_PATH", bad)
+    vid = _quiet_video(tmp_path)
+    out = tmp_path / "qa_report.json"
+    res = QCTool().execute({"input_path": str(vid), "output_path": str(out)})
+    assert res.success is False
+    assert res.data["verdict"] == "BLOCKED"
+    assert json.loads(out.read_text())[0]["status"] == "BLOCKED"
+
+    non_numeric = tmp_path / "non_numeric.json"
+    non_numeric.write_text(json.dumps({"lufs_target": "loud"}), encoding="utf-8")
+    monkeypatch.setattr(qc_module, "DEFAULT_CONFIG_PATH", non_numeric)
+    res = QCTool().execute({"input_path": str(vid),
+                            "output_path": str(tmp_path / "qa2.json")})
+    assert res.success is False
+    assert res.data["verdict"] == "BLOCKED"
+
+
+# ---------------------------------------------------------------------------
+# SCR-06 — claim_ids_resolve must inspect EVERY id on a line
+# ---------------------------------------------------------------------------
+
+def _claim_inputs(tmp_path, claims, ledger_rows):
+    vid = tmp_path / "v.mp4"
+    _gen_video(vid, duration=5)
+    claims_path = tmp_path / "claims.json"
+    claims_path.write_text(json.dumps(claims), encoding="utf-8")
+    ledger = tmp_path / "ledger.md"
+    lines = [
+        "| claim_id | claim | sources | source_type | verification_status | evidence_notes |",
+        "|---|---|---|---|---|---|",
+    ]
+    for cid, source_type in ledger_rows:
+        lines.append(f"| {cid} | claim | src | {source_type} | AGENT_VERIFIED_TEXT | note |")
+    ledger.write_text("\n".join(lines), encoding="utf-8")
+    return {
+        "input_path": str(vid),
+        "claim_ids_path": str(claims_path),
+        "claim_ledger_path": str(ledger),
+    }
+
+
+def _resolve_status(inputs, tmp_path):
+    out = tmp_path / "qa_report.json"
+    inputs = dict(inputs, output_path=str(out))
+    res = QCTool().execute(inputs)
+    assert res.success, res.error
+    by_id = {e["check_id"]: e for e in json.loads(out.read_text())}
+    return by_id["claim_ids_resolve"], res
+
+
+def test_single_source_second_id_is_still_flagged(tmp_path):
+    """SINGLE id first, TWO id last: the line must still FAIL (RED before fix)."""
+    claims = [{"text": "s", "claim_id": "SINGLE-01, TWO-01", "source_flags": ""}]
+    inputs = _claim_inputs(tmp_path, claims,
+                           [("SINGLE-01", "SINGLE"), ("TWO-01", "TWO")])
+    entry, res = _resolve_status(inputs, tmp_path)
+    assert entry["status"] == "FAILED", entry
+    assert "SINGLE_SOURCE" in entry["evidence"]
+    assert res.data["verdict"] == "FAILED"
+
+
+def test_single_source_first_id_is_flagged(tmp_path):
+    """TWO first, SINGLE last: FAIL (guard against the reverse regression)."""
+    claims = [{"text": "s", "claim_id": "TWO-01, SINGLE-01", "source_flags": ""}]
+    inputs = _claim_inputs(tmp_path, claims,
+                           [("SINGLE-01", "SINGLE"), ("TWO-01", "TWO")])
+    entry, _ = _resolve_status(inputs, tmp_path)
+    assert entry["status"] == "FAILED", entry
+
+
+def test_unknown_id_in_the_middle_fails(tmp_path):
+    """A ghost id in the middle of a mixed row must FAIL resolution."""
+    claims = [{"text": "s", "claim_id": "TWO-01, GHOST-99, SINGLE-01",
+               "source_flags": "SINGLE_SOURCE flagged"}]
+    inputs = _claim_inputs(tmp_path, claims,
+                           [("SINGLE-01", "SINGLE"), ("TWO-01", "TWO")])
+    entry, _ = _resolve_status(inputs, tmp_path)
+    assert entry["status"] == "FAILED", entry
+    assert "GHOST-99" in entry["evidence"]
+
+
+def test_all_ids_resolved_and_single_flagged_passes(tmp_path):
+    """Every id resolves and the SINGLE one is flagged => PASS."""
+    claims = [{"text": "s", "claim_id": "SINGLE-01, TWO-01",
+               "source_flags": "SINGLE_SOURCE flagged"}]
+    inputs = _claim_inputs(tmp_path, claims,
+                           [("SINGLE-01", "SINGLE"), ("TWO-01", "TWO")])
+    entry, _ = _resolve_status(inputs, tmp_path)
+    assert entry["status"] == "PASS", entry

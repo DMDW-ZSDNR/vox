@@ -162,16 +162,10 @@ def cmd_script_validation(topic_id, state):
     script = topic_script(topic_id)
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
-    sentences = []
-    for line in script.read_text(encoding="utf-8").splitlines():
-        if not line.strip().startswith("| B"):
-            continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 3 and cells[0][0] == "B" and cells[0][1:].isdigit():
-            sentences.append(cells[1])
-    missing = [i for i, s in enumerate(sentences) if not s]
-    if missing:
-        return {"status": "BLOCKED", "error": f"empty sentences at {missing}"}
+    sentences = [row["sentence"] for row in _parse_script_rows(script)]
+    if not sentences:
+        return {"status": "BLOCKED",
+                "error": f"script {script} has no parseable beat/sentence rows"}
     return {"status": "OK", "outputs": {"script": str(script), "sentences": len(sentences)}}
 
 
@@ -276,84 +270,207 @@ def cmd_subtitles(topic_id, state):
     return {"status": "OK", "outputs": {"words": str(words_out), "subtitles": str(srt_out)}}
 
 
+def _parse_script_rows(script_path):
+    """Parse a script markdown table into rows in script order.
+
+    Accepts beat labels of the form ``B<digits>`` or ``B<digits>-<digits>``
+    (e.g. ``B1`` and ``B1-2``). Returns ``[{beat, sentence, claim_ids}]``;
+    the beat label is normalised to its base (``B1-2`` -> ``B1``).
+    """
+    import re
+
+    rows = []
+    for line in Path(script_path).read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        if not cells:
+            continue
+        match = re.match(r"^B(\d+)(?:-\d+)?$", cells[0])
+        if not match:
+            continue
+        sentence = cells[1] if len(cells) > 1 else ""
+        if not sentence:
+            continue
+        claim_ids = cells[2] if len(cells) > 2 else ""
+        rows.append({
+            "beat": f"B{match.group(1)}",
+            "sentence": sentence,
+            "claim_ids": claim_ids,
+        })
+    return rows
+
+
+def _group_beats(rows):
+    """Group script rows into ordered beats, preserving first-seen order."""
+    beats = []
+    index = {}
+    for row in rows:
+        beat = row["beat"]
+        if beat not in index:
+            index[beat] = {"beat": beat, "rows": []}
+            beats.append(index[beat])
+        index[beat]["rows"].append(row)
+    return beats
+
+
+def _beat_claim_ids(beat):
+    """Union of the claim_ids cited by a beat's sentences, in first-seen order."""
+    import re
+
+    ids = []
+    for row in beat["rows"]:
+        for part in re.split(r"[,;]", row["claim_ids"]):
+            part = part.strip()
+            if part and part not in ids:
+                ids.append(part)
+    return ids
+
+
+def _episode_narration_duration(topic_id, state):
+    """Measured narration duration, or None. No invented fallback values.
+
+    Sources, in order: explicit ``narration_duration_s``, an explicit
+    ``narration_manifest_path``, this episode's narration wav. The shared
+    artifacts manifest is deliberately NOT used implicitly: it belongs to
+    whichever episode wrote it last.
+    """
+    explicit = state.get("narration_duration_s")
+    if explicit is not None:
+        return float(explicit)
+    manifest = state.get("narration_manifest_path")
+    if manifest and Path(manifest).is_file():
+        try:
+            data = json.loads(Path(manifest).read_text(encoding="utf-8"))
+            dur = data.get("expected_duration")
+            if dur:
+                return float(dur)
+        except (json.JSONDecodeError, OSError, TypeError, ValueError):
+            pass
+    wav = Path(state.get("narration_wav") or _narration_paths(topic_id, state)[1])
+    if wav.is_file():
+        return _ffprobe_duration(wav)
+    return None
+
+
 def cmd_edl(topic_id, state):
+    """Build an episode-generic EDL from the script table + narration duration.
+
+    No topic name, claim ID, asset ID or duration is hardcoded (SCR-07).
+    Cuts are original graphics cards (title, one per beat, credits); every
+    card is declared ``static_by_design``. Footage insertion stays a later
+    asset-inventory concern, not a pipeline constant.
+    """
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
-    out = slice_dir(topic_id) / f"edit_decisions{tag}.json"
+    out = Path(state.get("edl_path") or slice_dir(topic_id) / f"edit_decisions{tag}.json")
     if out.exists():
-        return {"status": "OK", "outputs": {"edit_decisions": str(out)}}
-    total = 185.43
-    EDL = {
-        "version": 1, "topic_id": topic_id, "total_duration_s": total,
-        "resolution": "1920x1080", "fps": 30, "codec": "h264", "audio_codec": "aac",
-        "cuts": [
-            {"cut_id": 1, "start": 0.0, "end": 8.0, "asset_id": "card_title", "role": "graphics_card",
-             "clip": "Title", "layout": "static_card",
-             "rationale": "Opening title card with claim_ids ARTEMIS-01/05/06; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 2, "start": 8.0, "end": 22.0, "asset_id": "card_b1", "role": "graphics_card",
-             "clip": "B1", "layout": "static_card",
-             "rationale": "Beat 1 Preparation graphics card with claim_ids ARTEMIS-01/02/04; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 3, "start": 22.0, "end": 38.0, "asset_id": "artemis_launch", "role": "archive_insert",
-             "clip": "Launch B-roll", "layout": "1080p_scaled",
-             "source_segment": "40.0-56.0s",
-             "rationale": "Bright ascent portion of the Artemis I launch (source 1080p, no framing).",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 4, "start": 38.0, "end": 54.0, "asset_id": "card_b2", "role": "graphics_card",
-             "clip": "B2", "layout": "static_card",
-             "rationale": "Beat 2 Launch graphics card with claim_ids ARTEMIS-05/06; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 5, "start": 54.0, "end": 70.0, "asset_id": "artemis_launch", "role": "archive_insert",
-             "clip": "Launch B-roll", "layout": "1080p_scaled",
-             "source_segment": "56.0-72.0s",
-             "rationale": "Continued launch B-roll; 1080p source, no framing.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 6, "start": 70.0, "end": 84.0, "asset_id": "card_b3", "role": "graphics_card",
-             "clip": "B3", "layout": "static_card",
-             "rationale": "Beat 3 Transit graphics card with claim_ids ARTEMIS-05/06/07; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 7, "start": 84.0, "end": 102.0, "asset_id": "card_b4", "role": "graphics_card",
-             "clip": "B4", "layout": "static_card",
-             "rationale": "Beat 4 Moon flybys graphics card with claim_ids ARTEMIS-07/08; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 8, "start": 102.0, "end": 118.0, "asset_id": "artemis_launch", "role": "archive_insert",
-             "clip": "Launch B-roll", "layout": "1080p_scaled",
-             "source_segment": "72.0-88.0s",
-             "rationale": "Continued launch B-roll; 1080p source, no framing.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 9, "start": 118.0, "end": 134.0, "asset_id": "artemis_launch", "role": "archive_insert",
-             "clip": "Launch B-roll", "layout": "1080p_scaled",
-             "source_segment": "88.0-104.0s",
-             "rationale": "Continued launch B-roll; 1080p source, no framing.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 10, "start": 134.0, "end": 156.0, "asset_id": "card_b5", "role": "graphics_card",
-             "clip": "B5", "layout": "static_card",
-             "rationale": "Beat 5 Return graphics card with claim_ids ARTEMIS-09/10; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 11, "start": 156.0, "end": 178.0, "asset_id": "card_b6", "role": "graphics_card",
-             "clip": "B6", "layout": "static_card",
-             "rationale": "Beat 6 Legacy graphics card with claim_ids ARTEMIS-11/12; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-            {"cut_id": 12, "start": 178.0, "end": total, "asset_id": "card_credits", "role": "graphics_card",
-             "clip": "Credits", "layout": "static_card",
-             "rationale": "Closing credits card; static by design.",
-             "rights_basis": "source_policy_us_gov"},
-        ],
-        "static_segments": [
-            {"start": 0.0, "end": 8.0, "reason": "title card", "static_by_design": True},
-            {"start": 8.0, "end": 22.0, "reason": "B1 card", "static_by_design": True},
-            {"start": 38.0, "end": 54.0, "reason": "B2 card", "static_by_design": True},
-            {"start": 70.0, "end": 84.0, "reason": "B3 card", "static_by_design": True},
-            {"start": 84.0, "end": 102.0, "reason": "B4 card", "static_by_design": True},
-            {"start": 134.0, "end": 156.0, "reason": "B5 card", "static_by_design": True},
-            {"start": 156.0, "end": 178.0, "reason": "B6 card", "static_by_design": True},
-            {"start": 178.0, "end": total, "reason": "credits card", "static_by_design": True},
-        ],
+        return {"status": "OK", "outputs": {"edit_decisions": str(out), "resumed": True}}
+
+    script = state.get("chapter_script") or state.get("script_path") or topic_script(topic_id)
+    if not script:
+        return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
+    rows = _parse_script_rows(script)
+    if not rows:
+        return {"status": "BLOCKED",
+                "error": f"script {script} has no parseable beat/sentence rows"}
+    total = _episode_narration_duration(topic_id, state)
+    if not total or total <= 0:
+        return {"status": "BLOCKED",
+                "error": "no narration duration (run narration first or pass narration_duration_s)"}
+
+    beats = _group_beats(rows)
+    total = round(float(total), 3)
+    title_dur = round(min(8.0, total * 0.05), 3)
+    credits_plan = round(min(6.0, total * 0.06), 3)
+    body = round(total - title_dur - credits_plan, 3)
+    if body <= 0:
+        return {"status": "BLOCKED",
+                "error": f"narration too short for title+credits cards ({total}s)"}
+
+    weights = [max(1, sum(len(r["sentence"]) for r in b["rows"])) for b in beats]
+    total_weight = sum(weights)
+    raw = [body * w / total_weight for w in weights]
+    beat_durs = [round(x, 3) for x in raw]
+    beat_durs[-1] = round(body - sum(beat_durs[:-1]), 3)
+
+    cuts = []
+    static_segments = []
+
+    def add_card(asset_id, start, duration, clip, rationale, claim_ids=None, beat=None):
+        end = round(start + duration, 3)
+        cut = {
+            "cut_id": len(cuts) + 1,
+            "start": round(start, 3),
+            "end": end,
+            "asset_id": asset_id,
+            "role": "graphics_card",
+            "clip": clip,
+            "layout": "static_card",
+            "static_by_design": True,
+            "rights_basis": "explicit_license",
+            "rationale": rationale,
+        }
+        if beat:
+            cut["beat"] = beat
+        if claim_ids:
+            cut["claim_ids"] = ", ".join(claim_ids)
+        cuts.append(cut)
+        static_segments.append({
+            "start": cut["start"], "end": end,
+            "reason": f"{clip} card", "static_by_design": True,
+        })
+        return end
+
+    cursor = add_card(
+        "card_title", 0.0, title_dur, "Title",
+        "Opening title card (original graphic, no factual claim); static by design.",
+    )
+    for i, beat in enumerate(beats, 1):
+        claim_ids = _beat_claim_ids(beat)
+        n = len(beat["rows"])
+        claims_note = ", ".join(claim_ids) if claim_ids else "none"
+        cursor = add_card(
+            f"card_b{i}", cursor, beat_durs[i - 1], beat["beat"],
+            f"Beat {beat['beat']} card ({n} sentence(s), claim_ids: {claims_note}); "
+            f"static by design.",
+            claim_ids=claim_ids, beat=beat["beat"],
+        )
+    credits_dur = round(total - cursor, 3)
+    if credits_dur <= 0:
+        # Absorb rounding into the last beat card instead of a zero-length card.
+        diff = credits_dur
+        cuts[-1]["end"] = round(cuts[-1]["end"] + diff, 3)
+        static_segments[-1]["end"] = cuts[-1]["end"]
+    else:
+        add_card("card_credits", cursor, credits_dur, "Credits",
+                 "Closing credits card; static by design.")
+    cuts[-1]["end"] = total
+    static_segments[-1]["end"] = total
+
+    edl = {
+        "version": 1,
+        "topic_id": topic_id,
+        "total_duration_s": total,
+        "resolution": state.get("resolution", "1920x1080"),
+        "fps": state.get("fps", 30),
+        "codec": "h264",
+        "audio_codec": "aac",
+        "source": "script+narration (episode-generic)",
+        "cuts": cuts,
+        "static_segments": static_segments,
     }
-    slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(EDL, indent=2), encoding="utf-8")
-    return {"status": "OK", "outputs": {"edit_decisions": str(out), "cuts": len(EDL["cuts"])}}
+    if chap is not None:
+        edl["chapter_index"] = chap
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(edl, indent=2), encoding="utf-8")
+    return {"status": "OK", "outputs": {
+        "edit_decisions": str(out),
+        "cuts": len(cuts),
+        "beats": len(beats),
+        "total_duration_s": total,
+    }}
 
 
 def _ffmpeg(args, timeout=3600):
@@ -536,6 +653,7 @@ def cmd_qc(topic_id, state):
         "claim_ledger_path": str(ledger),
         "rights_records_path": str(assets / "rights_records.json"),
         "edit_decisions_path": str(slice_dir(topic_id) / f"edit_decisions{tag}.json"),
+        "config_path": str(ROOT / "config" / "qc_thresholds.json"),
     }
     for k in ("narration_manifest", "subtitle_path", "credits_path", "claim_ids_path",
               "rights_records_path", "edit_decisions_path"):
@@ -669,14 +787,7 @@ def _estimate_sentence_duration(sentence):
 
 def split_script_into_chapters(script_path, max_duration_s=MAX_CHAPTER_DURATION):
     """Split a script markdown into chapters, each <= max_duration_s narration."""
-    sentences = []
-    script_path = Path(script_path)
-    for line in script_path.read_text(encoding="utf-8").splitlines():
-        if not line.strip().startswith("| B"):
-            continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 3 and cells[0][0] == "B" and cells[0][1:].isdigit():
-            sentences.append(cells[1])
+    sentences = [row["sentence"] for row in _parse_script_rows(script_path)]
 
     chapters = []
     current = []

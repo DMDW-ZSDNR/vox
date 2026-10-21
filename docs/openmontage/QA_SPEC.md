@@ -2,6 +2,11 @@
 
 **Status:** spec only. No application code, no installs, no tests. Implementation is a LATER milestone (tests first). Thresholds marked INITIAL GUESSES — tune after human review.
 
+**Threshold source (SCR-05):** `tools/qa/qc.py` loads `config/qc_thresholds.json`
+by default (the pipeline passes it explicitly). A missing, unreadable or
+malformed config is **BLOCKED**, never a silent fallback to the code defaults;
+the code defaults below are the documented INITIAL GUESSES only.
+
 ## 1. Hard checks
 
 Each check is deterministic and fail-closed: a missing tool output or unresolvable reference -> BLOCKED, never PASS.

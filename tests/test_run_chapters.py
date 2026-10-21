@@ -31,7 +31,7 @@ def _chapter_script(tmp_path, sentences, chapter_idx):
 
 def test_split_script_into_chapters_respects_max_duration(tmp_path, monkeypatch):
     """Chapters are split so narration duration never exceeds max_chapter_duration_s."""
-    # 20 sentences, durations sum to ~185s; with max 60s expect 4 chapters
+    # 20 sentences x 20 s = 400 s; max 60 s/chapter -> 7 chapters (3+3+3+3+3+3+2)
     script = _chapter_script(tmp_path, [f"sentence {i}." for i in range(1, 21)], 0)
     monkeypatch.setattr(run_episode, "_estimate_sentence_duration", lambda s: 20.0)
 

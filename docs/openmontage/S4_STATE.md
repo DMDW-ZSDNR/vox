@@ -9,10 +9,8 @@ for hours.
 
 ## Phase status
 
-| Phase | Status | Evidence | Commit hash |
-|-------|--------|----------|-------------|
+| S4-2 RUN ORDER (fp16, version pins in manifest) | IN_PROGRESS | 1) Z-Image-Turbo BLOCKED (max fix attempts reached — see below); 2) SDXL Base + madebyollin/sdxl-vae-fp16-fix — SUBMITTED s4-sdxl-1 (awaiting status); 3) FLUX.2-klein-4B PENDING | — |
 | S4-1 VERIFY PROMPTING CLAIMS | DONE | docs/openmontage/image_gen/PROMPTING_FACTS.md; official cards fetched (Z-Image, SDXL, BFL FLUX); diffusers z_image + FluxPipeline docs CONFIRM: zimage negative_prompt ignored when guidance_scale<1; klein local FluxPipeline honours guidance_scale (>1) and negative_prompt (only when true_cfg_scale>1) | — |
-| S4-2 RUN ORDER (fp16, version pins in manifest) | IN_PROGRESS | 1) Z-Image-Turbo RUNNING on Kaggle (s1-z-image-turbo-1, do NOT resubmit); 2) SDXL Base + madebyollin/sdxl-vae-fp16-fix — runner written, job NOT yet submitted; 3) FLUX.2-klein-4B PENDING | — |
 | S4-3 PROMPT-RULE EXPERIMENTS | PENDING | via tools/prompting.builder (do not edit OpenCode-owned module) | — |
 | S4-4 BLIND PACK FOR OWNER | PENDING | contact sheets R001... neutral IDs + mapping in projects/ (not committed) + scorer dummy CSV | — |
 | S4-5 MODEL_BAKEOFF_REPORT | PENDING | docs/openmontage/image_gen/MODEL_BAKEOFF_REPORT.md | — |
@@ -20,9 +18,16 @@ for hours.
 
 ## Model run order (one model per kernel run, fp16 only)
 
-1. Z-Image-Turbo — RUNNING (s1-z-image-turbo-1); do NOT resubmit; poll once between phases
-2. SDXL Base + madebyollin/sdxl-vae-fp16-fix — PENDING
-3. FLUX.2-klein-4B — PENDING
+1. Z-Image-Turbo — BLOCKED (max fix attempts reached). Last error:
+   `RuntimeError: Failed to import diffusers.pipelines.z_image.pipeline_z_image`
+   caused by `diffusers.loaders.single_file` import failure (transformers 5.x +
+   git-main diffusers incompatibility). Traceback: /kaggle/src/script.py line 261
+   (kernel log, fetched to /tmp/kilo/s1_output/s1-z-image-turbo-1). Stack used:
+   huggingface-hub 1.x + transformers 5.x + diffusers git main (+ --force-reinstall).
+   Jobs attempted: 5+. Per S4 stop rule, moving on without further Z-Image attempts.
+2. SDXL Base + madebyollin/sdxl-vae-fp16-fix — SUBMITTED s4-sdxl-1 (job folder
+   /tmp/kilo/s4_jobs/s4-sdxl-1, 72 images, pushed this session; awaiting first status check).
+3. FLUX.2-klein-4B — PENDING (waiting on SDXL result / one status call between phases).
 
 ## Per-model run matrix (owner change: 2 seeds per scene → 24 images per cell)
 

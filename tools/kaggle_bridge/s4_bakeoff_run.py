@@ -33,6 +33,10 @@ OUT_DIR_NAME = os.environ.get("S4_OUT_DIR", "s4_bakeoff")
 OUT = Path("/kaggle/working") / OUT_DIR_NAME
 IMAGES_DIR = OUT / "images"
 
+# Filled in by the push script at push time so the runner is self-contained
+# (Kaggle copies only run.py -> /kaggle/src/script.py, not the job config).
+JOB_EMBEDDED = None
+
 
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

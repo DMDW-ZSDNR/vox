@@ -57,7 +57,12 @@ def test_build_manifest_structure():
         }
     ]
     manifest = mod.build_manifest(job, images, load_seconds=120.0,
-                                  gpu_minutes=25.5, peak_vram_mb=10240.0)
+                                  gpu_minutes=25.5, peak_vram_mb=10240.0,
+                                  versions={"diffusers": "0.43.0.dev0",
+                                            "diffusers_commit": "abc1234",
+                                            "transformers": "5.1.0",
+                                            "huggingface_hub": "1.16.0",
+                                            "torch": "2.6.0"})
     assert manifest["job_id"] == "s1-z-image-turbo-1"
     assert manifest["model"] == "Tongyi-MAI/Z-Image-Turbo"
     assert manifest["model_revision"] == "main"
@@ -94,7 +99,12 @@ def test_build_manifest_records_seeds_and_params():
          "seconds": 1.0}
         for s in seeds
     ]
-    manifest = mod.build_manifest(job, images, 0.0, 0.0, None)
+    manifest = mod.build_manifest(job, images, 0.0, 0.0, None,
+                                  versions={"diffusers": "0.43.0.dev0",
+                                            "diffusers_commit": "abc1234",
+                                            "transformers": "5.1.0",
+                                            "huggingface_hub": "1.16.0",
+                                            "torch": "2.6.0"})
     got = [ent["seed"] for ent in manifest["images"]]
     assert got == seeds
     assert manifest["steps"] == 9

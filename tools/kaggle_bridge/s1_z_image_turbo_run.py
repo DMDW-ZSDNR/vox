@@ -57,19 +57,47 @@ def _fail(msg: str, code: int = 1) -> None:
     sys.exit(code)
 
 
+def _installed_versions() -> Dict[str, str]:
+    """Exact versions of the pinned stack (recorded in the manifest)."""
+    import importlib.metadata as md
+
+    out: Dict[str, str] = {}
+    for pkg in ("diffusers", "transformers", "huggingface_hub", "torch"):
+        try:
+            out[pkg] = md.version(pkg)
+        except Exception:
+            out[pkg] = None
+    # Best-effort commit hash for the diffusers git install.
+    try:
+        res = subprocess.run(
+            ["git", "ls-remote", "https://github.com/huggingface/diffusers.git",
+             "HEAD"],
+            capture_output=True, text=True, timeout=60,
+        )
+        line = (res.stdout or "").strip().splitlines()[0] if res.stdout else ""
+        if line:
+            out["diffusers_commit"] = line.split()[0]
+    except Exception:
+        pass
+    return out
+
+
 def install_diffusers_from_source(timeout: int = 1200) -> None:
     """ZImagePipeline is not in released diffusers; install from source.
 
-    Installs a mutually-compatible pinned set so the kernel's pre-installed
+    Installs a mutually-compatible pinned stack so the kernel's pre-installed
     (often stale) huggingface-hub/transformers do not conflict:
-    huggingface-hub 1.x (>=1.32 for diffusers main, <2 for transformers 4.x)
-    + transformers 4.x + diffusers from git main (has ZImagePipeline).
+    huggingface-hub 1.x (>=1.32 for diffusers main) + transformers 5.x
+    (needs hub in [1.5, 2.0), satisfied by hub 1.x) + diffusers from git main
+    (has ZImagePipeline). --force-reinstall clears stale pre-installed copies.
+    fp16 only; no bitsandbytes; no CPU fallback.
     """
     try:
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "--quiet",
+             "--force-reinstall",
              "huggingface-hub>=1.32.0,<2.0.0",
-             "transformers>=4.41.0,<5.0.0",
+             "transformers>=5.0.0,<6.0.0",
              "git+https://github.com/huggingface/diffusers"],
             check=True, timeout=timeout,
         )
@@ -79,7 +107,7 @@ def install_diffusers_from_source(timeout: int = 1200) -> None:
 
 def build_manifest(job: Dict[str, Any], images: List[Dict[str, Any]],
                    load_seconds: float, gpu_minutes: float,
-                   peak_vram_mb: Any) -> Dict[str, Any]:
+                   peak_vram_mb: Any, versions: Dict[str, str]) -> Dict[str, Any]:
     return {
         "job_id": job.get("job_id"),
         "model": job.get("model", "Tongyi-MAI/Z-Image-Turbo"),
@@ -99,6 +127,11 @@ def build_manifest(job: Dict[str, Any], images: List[Dict[str, Any]],
         "peak_vram_mb": peak_vram_mb,
         "device": "cuda",
         "created_utc": now_utc(),
+        "diffusers": versions.get("diffusers"),
+        "diffusers_commit": versions.get("diffusers_commit"),
+        "transformers": versions.get("transformers"),
+        "huggingface_hub": versions.get("huggingface_hub"),
+        "torch": versions.get("torch"),
         "images": images,
     }
 
@@ -132,6 +165,10 @@ def main() -> None:
 
     import torch  # noqa: E402 - installed above
     from diffusers import ZImagePipeline  # noqa: E402
+
+    # Record exact pinned stack versions (owner requirement: diffusers commit
+    # hash, transformers, huggingface_hub) for the manifest.
+    versions = _installed_versions()
 
     # NO CPU fallback: require CUDA.
     if not torch.cuda.is_available():
@@ -210,7 +247,8 @@ def main() -> None:
     if generated < len(prompts):
         _fail(f"images generated ({generated}) < prompts ({len(prompts)})")
 
-    manifest = build_manifest(job, images, load_seconds, gpu_minutes, peak_vram_mb)
+    manifest = build_manifest(job, images, load_seconds, gpu_minutes,
+                              peak_vram_mb, versions)
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     (OUT / "status.txt").write_text("COMPLETE\n", encoding="utf-8")
     print(f"s1 z-image-turbo done: {generated} images, {gpu_minutes:.2f} GPU min, "

@@ -8,7 +8,7 @@ phases. Never commit media. KAGGLE_API_TOKEN: env check yes/no only (never print
 
 | Phase | Status | Evidence | Commit hash |
 |-------|--------|----------|-------------|
-| S1-1 IMAGE MODEL (Z-Image-Turbo) | IN_PROGRESS | job `s1-z-image-turbo-1` pushed to `forts845/openmontage-runner`; awaiting output fetch + manifest verify | — |
+| S1-1 IMAGE MODEL (Z-Image-Turbo) | SUBMITTED | job `s1-z-image-turbo-1` pushed to `forts845/openmontage-runner` (GPU + internet), awaiting poll + manifest verify | e07c238+ |
 | S1-1 FLUX.2-klein-4B | PENDING | license clear per LICENSE_EVIDENCE.md; ~13 GB VRAM — memory-fit TBD on T4 | — |
 | S1-2 BLIND COMPARISON | PENDING | needs S1-1 images | — |
 | S1-3 STYLE BIBLE | PENDING | docs/openmontage/niches/speculative_evolution/STYLE_BIBLE.md + niche YAML | — |
@@ -20,11 +20,20 @@ phases. Never commit media. KAGGLE_API_TOKEN: env check yes/no only (never print
 
 | Model | Job id | Kernel slug | Prompts | Seeds | Seconds/image | Peak VRAM | GPU minutes | Revision | Manifest verified |
 |-------|--------|-------------|---------|-------|---------------|-----------|-------------|----------|-------------------|
-| Z-Image-Turbo | s1-z-image-turbo-1 | forts845/openmontage-runner | 12 (fixed) | fixed | TBD | TBD | TBD | TBD | NO |
+| Z-Image-Turbo | s1-z-image-turbo-1 | forts845/openmontage-runner | 12 (fixed) | 4000-4011 | TBD | TBD | TBD | main | NO |
+
+## S1-1 submission detail
+
+- Submitted: 2026-10-21 (this session)
+- Job folder: /tmp/kilo/s1_jobs/s1-z-image-turbo-1 (not committed)
+- Runner: tools/kaggle_bridge/s1_z_image_turbo_run.py (committed)
+- 12 fixed prompts: 4 single-creature silhouettes, 3 habitat scenes, 2 anatomy-detail crops, 2 food-web background plates, 1 planet-surface wide; fixed seeds 4000-4011; 1024x1024; steps=9; guidance=0.0; dtype=float16
+- Kaggle kernel: forts845/openmontage-runner, enable_gpu=true, enable_internet=true (diffusers from source + HF weights), timeout 3600s
+- g2-image-bakeoff NOT reused (G-rules: no further re-push)
 
 ## Notes
 
 - LICENSE_EVIDENCE.md: Z-Image-Turbo (apache-2.0, commercial OK), FLUX.2-klein-4B (apache-2.0, commercial OK) — neither BLOCKED on license grounds (verified 2026-10-20 from official HF cards).
 - G2 concluded FAILED (bitsandbytes missing, CPU fallback, dict-not-callable, FLUX OOM). S1-1: fp16 only, NO bitsandbytes, NO CPU fallback, non-zero exit if images < prompts, full tracebacks saved to output.
 - Disk: 2.8 GB free on /workspaces (> 800 MB stop threshold).
-- Kaggle kernels owned by forts845/FORTS_FACTORY; g2-image-bakeoff NOT reused (G-rules: no further re-push).
+- Tests: tests/tools/test_s1_z_image_turbo_run.py 3 pass.

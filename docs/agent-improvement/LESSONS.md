@@ -156,3 +156,42 @@ Record only useful, evidence-backed lessons. Do not include secrets or personal 
   test_black_model_is_dropped_and_sheet_falls_back_to_two_panels).
 - Result: Z-Image-Turbo marked BLOCKED for S5 after 2 attempts; blind pack built
   from SDXL + klein only; the one-line bf16 retest is written down for the owner.
+
+- Date / task: 2026-10-21 / S7 3-model bake-off on Kaggle (Kilo)
+- Observed failure and evidence: (1) diffusers 0.41.0 could not be installed with
+  transformers 4.57.6 (`ResolutionImpossible`: 0.41.0 needs huggingface-hub>=1.32,
+  transformers 4.x pins hub<1.0) and with transformers 5.20.2 the import failed
+  (`cannot import name 'FqnToConfig' from 'torchao.quantization'`); diffusers 0.36.0
+  and 0.37.0 installed and worked. (2) Z-Image-Turbo OOM'd at load in fp16 with
+  `low_cpu_mem_usage=False` on the 14.56 GiB T4; with `enable_model_cpu_offload()` it
+  ran but every frame was pure black - the kernel log showed
+  `diffusers/image_processor.py:142: RuntimeWarning: invalid value encountered in cast`.
+  `vae.config.force_upcast=True` changed nothing (ZImagePipeline never calls
+  `upcast_vae()`) and casting the VAE to fp32 changed nothing either, which places the
+  NaN before the VAE - inside the fp16 DiT/text-encoder path. (3) The Kaggle runner
+  keeps only the output of its LATEST kernel version: `kaggle kernels output
+  owner/kernel/<version>` returns the latest output for every version, so a later push
+  silently destroys the previous run's images. (4) The sandbox was restarted mid-milestone
+  and `/tmp` was wiped, deleting fetched PNGs that could not be re-downloaded.
+- Confirmed cause / certainty: (1) a released-stack compatibility matrix, not a model
+  problem; (2) fp16 numerical overflow in Z-Image-Turbo, whose vendor card specifies
+  bfloat16 - the S7 brief mandates fp16, so this is an owner decision, not an agent fix;
+  (3)+(4) infrastructure, both avoidable in the harness.
+- Fix or proposed rule: (a) pin a *released* diffusers first (0.37.0 ships both
+  Flux2KleinPipeline and ZImagePipeline) and never let a 0.41.0 stack be rung 1;
+  (b) for a 6B model on a 16 GB card, enable CPU offload AND treat an all-black output
+  as a NUMERICS failure - try the vendor's dtype before declaring the model dead; (c)
+  fetch + verify + copy every run's output to a durable path (gitignored
+  `output/s7_cache/`) immediately after the run, and never push the next model before
+  the current one's output is fetched; (d) keep the ladder's working rung when the
+  failure was NOT caused by the stack, and record the real change (the runner gained
+  `--load-config` and `--ladder` for this).
+- Regression test: tests/test_s7_runner.py (ladder shape, torchao pin on every live
+  0.41.0 rung, force_upcast option), tests/test_s7_push_bakeoff.py (load-config and
+  ladder overrides are embedded), tests/test_s7_stage_pack_root.py (every cached image
+  is re-verified against the kernel manifest sha256), tests/test_s7_blind_pack.py +
+  tests/test_s7_tally.py (a blocked model must not become an empty panel).
+- Result: SDXL DONE (41.4 s/img, 9169.58 MB, 10/10 verify PASS, and a re-run
+  reproduced run 1 bit-for-bit on all 10 sha256), klein DONE (24.691 s/img,
+  7995.02 MB, 10/10 verify PASS), Z-Image-Turbo BLOCKED after the 4-attempt cap with
+  0 usable images. Agent advisory ranking: klein > SDXL; the owner's blind CSV decides.

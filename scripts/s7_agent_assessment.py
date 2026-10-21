@@ -132,6 +132,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--pick", help="the model the agent would pick")
     ap.add_argument("--confidence", choices=["low", "medium", "high"])
     ap.add_argument("--speed", default="", help="JSON {model: sec_per_image}")
+    ap.add_argument("--note", default="",
+                    help="extra context recorded in the output (e.g. a model "
+                         "that was blocked and therefore not scorable)")
     ap.add_argument("--emit-template", metavar="CSV",
                     help="write an empty review sheet and exit")
     ap.add_argument("--test-set", default=str(
@@ -172,6 +175,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "owner_decides": "The owner's blind CSV (projects/s7_blind/results.csv) "
                          "decides the winner; scripts/s7_tally.py compares it with "
                          "this advisory pick.",
+        "note": args.note,
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

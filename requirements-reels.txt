@@ -8,7 +8,7 @@
 -r requirements-dev.txt
 faster-whisper==1.2.1
 ctranslate2==4.8.3
-av==19.0.2
+av==16.1.0  # faster-whisper 1.2.1 passes metadata_errors, removed in av 17+
 huggingface-hub==2.2.0
 mediapipe==1.1.1
 # 4.x keeps the Haar cascades used as the face_tracker fallback (5.0 dropped them)

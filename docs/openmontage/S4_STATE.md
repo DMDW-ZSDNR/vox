@@ -26,8 +26,8 @@ for hours.
    huggingface-hub 1.x + transformers 5.x + diffusers git main (+ --force-reinstall).
    Jobs attempted: 5+. Per S4 stop rule, moving on without further Z-Image attempts.
 2. SDXL Base + madebyollin/sdxl-vae-fp16-fix — SUBMITTED s4-sdxl-1 (job folder
-   /tmp/kilo/s4_jobs/s4-sdxl-1, 72 images, pushed this session + 1 fix attempt
-   (torchao pin); awaiting status check).
+   /tmp/kilo/s4_jobs/s4-sdxl-1, 72 images, RUNNING with released diffusers fix
+   (fix attempt 2/2 succeeded); awaiting completion.
 3. FLUX.2-klein-4B — PENDING (waiting on SDXL result / one status call between phases).
 
 ## Per-model run matrix (owner change: 2 seeds per scene → 24 images per cell)

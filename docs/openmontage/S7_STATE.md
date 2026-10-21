@@ -22,16 +22,17 @@ reusable and nothing completed is redone.
 |---|---|---|
 | S7-1 FIXED TEST SET | DONE | 10 scenes (s02, s07 dropped as the 2 easiest), 1 seed/scene shared by all 3 models, 1024x1024, variants sdxl=A / zimage=B / klein=C, 30 renders: `docs/openmontage/image_gen/S7_TEST_SET.json` + `S7_TEST_SET_MAPPING.json` (built by `scripts/s7_build_testset.py` via tools/prompting.builder, read-only) |
 | S7-2 RUNNER + PUSH | DONE | `tools/kaggle_bridge/s7_bakeoff_run.py` (install ladder, import probe, fp16, 90 min wall cap, full measurements), `scripts/s7_push_bakeoff.py`; 25 local tests pass (`tests/test_s7_runner.py`, `tests/test_s7_push_bakeoff.py`, `tests/test_s7_tally.py`) |
-| S7-3 SDXL Base + madebyollin/sdxl-vae-fp16-fix | DONE | job `s7-sdxl-1` COMPLETE, 10/10 images, bridge verify PASS (all sha256/bytes match). Load 86.233 s, steady 41.4 s/img, 1.42 usable img/min, peak VRAM 9169.58 MB, black/NaN/OOM = 0, `StableDiffusionXLPipeline`. Versions: diffusers 0.36.0, transformers 4.57.6, huggingface_hub 0.36.2, torch 2.11.0+cu128, accelerate 1.14.0, safetensors 0.8.0, numpy 2.1.3, pillow 12.3.0, CUDA 12.8, Tesla T4, Python 3.13.15 |
+| S7-3 SDXL Base + madebyollin/sdxl-vae-fp16-fix | DONE | job `s7-sdxl-1` COMPLETE, 10/10 images, bridge verify PASS (all sha256/bytes match). Load 86.233 s, steady 41.4 s/img, 1.42 usable img/min, peak VRAM 9169.58 MB, black/NaN/OOM = 0, `StableDiffusionXLPipeline`. Versions: diffusers 0.36.0, transformers 4.57.6, huggingface_hub 0.36.2, torch 2.11.0+cu128, accelerate 1.14.0, safetensors 0.8.0, numpy 2.1.3, pillow 12.3.0, CUDA 12.8, Tesla T4, Python 3.13.15. Media re-run `s7-sdxl-2` reproduced run 1 **bit-for-bit** (10/10 sha256 identical) |
 | S7-4 FLUX.2-klein-4B | DONE | job `s7-klein-1` COMPLETE, 10/10 images, bridge verify PASS (all sha256/bytes match). Load 133.852 s, steady 24.691 s/img, 2.17 usable img/min, peak VRAM 7995.02 MB, black/NaN/OOM = 0, `Flux2KleinPipeline`, diffusers 0.37.0 (rung released_037_x4, first try) |
 | S7-5 Z-Image-Turbo | BLOCKED | 4 attempts used (cap reached), 0 usable images. a1: CUDA OOM at load; a2: offload -> 10 BLACK frames (fp16 VAE decode NaN); a3: `vae.config.force_upcast` ignored by the pipeline -> still black; a4: VAE cast to fp32 -> still black (NaN is produced before the VAE). Evidence: `docs/openmontage/image_gen/logs/s7-zimage-{1,2,3,4}/` |
 | S7-3b SDXL media regeneration | IN_PROGRESS | `s7-sdxl-2` SUBMITTED 12:49Z, identical stack/seeds/config to run 1 |
-| S7-6 OBJECTIVE QC | PENDING | `scripts/s7_checks.py` (Laplacian blur, text-like heuristic, dHash duplicates, resolution, saturation/contrast outliers) |
-| S7-7 BLIND PACK | PENDING | `scripts/s7_blind_pack.py` -> `projects/s7_blind/` (gitignored) |
+| S7-6 OBJECTIVE QC | DONE | `docs/openmontage/image_gen/S7_CHECKS.json` (30 images: sdxl + klein compared together, zimage in its own pass) |
+| S7-7 BLIND PACK | DONE | `projects/s7_blind/` (gitignored): 10 sheets, 2 panels A/B (zimage is BLOCKED, so it is not in the pack), `mapping.json`, `results.csv` template, `INSTRUCTIONS.txt` |
 | S7-8 TALLY HELPER | DONE | `scripts/s7_tally.py` (test-first, 13 tests) -> wins, anatomy-ok, speed/VRAM table, AGENT vs OWNER, TIE at <=1 win |
 | S7-8b AGENT SCORE AGGREGATOR | DONE | `scripts/s7_agent_assessment.py` (rubric CSV -> severe artifacts / usable share / repair burden / ranking + `agent_pick`) |
-| S7-9 AGENT SELF-ASSESSMENT | PENDING | 30 images viewed with the image Read capability, rubric 0-2 per category, advisory only |
-| S7-10 REPORT | PENDING | `docs/openmontage/image_gen/BAKEOFF_S7.md` + LESSONS.md + commit |
+| S7-9 AGENT SELF-ASSESSMENT | DONE | 20 usable frames viewed (SDXL 10 + klein 10; zimage has no usable frame), rubric 0-2 per dimension -> `S7_AGENT_REVIEW.csv` + `S7_AGENT_ASSESSMENT.json`. Pick: **klein**, confidence medium. Advisory only |
+| S7-10 REPORT | DONE | `docs/openmontage/image_gen/BAKEOFF_S7.md` (sections 1-8) + `docs/agent-improvement/LESSONS.md` + commits |
+| S7-11 OWNER BLIND SCORING | WAITING-OWNER | the owner fills `projects/s7_blind/results.csv`, then `python scripts/s7_tally.py` prints the decision. **No winner is declared before that** |
 
 ## Run log
 
@@ -119,13 +120,26 @@ reusable and nothing completed is redone.
 | model | attempt | what changed | result |
 |---|---|---|---|
 | sdxl | 1 | released diffusers 0.41.0 + transformers 4.57.6 + hub<1.0 | DONE (10/10) via internal rung 3 `released_036_x4`; rungs 1-2 dead (hub conflict, torchao) |
-| sdxl | 2 | media regeneration only: same seeds, same rung `released_036_x4` (forced by the /tmp wipe, not by a model failure) | queued after zimage |
+| sdxl | 2 | media regeneration only: same seeds, same rung `released_036_x4` (forced by the /tmp wipe, not by a model failure) | DONE - 10/10, verify PASS, 10/10 sha256 identical to run 1 |
 | klein | 1 | `Flux2KleinPipeline` + `enable_model_cpu_offload` (fixes the S5 meta-tensor failure), ladder released_037_x4 -> released_037_x5 -> released_041_x5_ao -> git_main_x5_ao | DONE (10/10, verify PASS) |
 | zimage | 1 | first Z-Image attempt, diffusers 0.37.0 rung first (ships ZImagePipeline), torchao 0.15.0 pin on the 0.41 rung | BLOCKED - CUDA OOM at model load (fp16, no offload, 14.56 GiB T4) |
 | zimage | 2 | same stack + `enable_model_cpu_offload()` (the klein-proven fix); `--load-config`/`--ladder` added to the push script | RAN to COMPLETE but 10/10 BLACK frames (fp16 VAE decode -> NaN) - FAILED |
 | zimage | 3 | same stack + offload + `pipe.vae.config.force_upcast = True` (fp32 VAE decode) | COMPLETE, still 10 BLACK frames (the pipeline ignores the flag) |
 | zimage | 4 | same stack + offload + VAE explicitly cast to fp32 (before the offload hooks) | COMPLETE, still 10 BLACK frames -> **BLOCKED (4 attempts, cap reached)** |
 | sdxl | 2 | media regeneration, identical stack/seeds/config to run 1 | RUNNING (submitted 12:49Z) |
+
+## Exact next action
+
+1. The owner opens `projects/s7_blind/` on a phone, scores the 10 sheets and
+   fills `projects/s7_blind/results.csv` (`best_panel`, `worst_panel`,
+   `anatomy_ok_A/B`, `comment`).
+2. `python scripts/s7_tally.py` prints the owner's decision, a `TIE` when the
+   top two are within one win, and `AGENT vs OWNER: agree/disagree` against
+   the advisory pick (klein).
+3. The result is written into `BAKEOFF_S7.md` section 8 and the milestone is
+   closed.
+4. Optional owner decision on Z-Image-Turbo: allow bfloat16 (one more kernel
+   run) or a 24 GB GPU, or leave it blocked (see `BAKEOFF_S7.md` section 6).
 
 ## Notes
 

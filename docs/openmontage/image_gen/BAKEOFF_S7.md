@@ -49,6 +49,43 @@ negative) · klein = variant C (prose, anatomy first, no negative).
 
 <!-- FILLED: one row per attempt; what changed and the exact result -->
 
+### SDXL Base 1.0 + `madebyollin/sdxl-vae-fp16-fix` — DONE (attempt 1)
+
+| Rung | Stack installed | Result |
+|---|---|---|
+| 1 `released_041_x4` | diffusers 0.41.0 + transformers 4.57.6 + hub<1.0 | **DEAD** — pip `ResolutionImpossible`: diffusers 0.41.0 requires `huggingface-hub>=1.32,<2.0`, transformers 4.57.6 pins `hub<1.0` |
+| 2 `released_041_x5` | diffusers 0.41.0 + transformers 5.20.2 + hub 1.x | **DEAD** — install OK, import failed: `cannot import name 'FqnToConfig' from 'torchao.quantization'` (kernel's torchao no longer exports it) |
+| 3 `released_036_x4` | diffusers 0.36.0 + transformers 4.57.6 + hub<1.0 | **OK** — 10/10 images, verify PASS |
+
+Attempt 1 of the model succeeded (on internal rung 3), so **1 attempt** was used.
+The ladder was re-ordered afterwards: the two dead rungs are no longer tried
+first for the other models.
+
+### FLUX.2-klein-4B — DONE (attempt 1)
+
+| Rung | Result |
+|---|---|
+| 1 `released_037_x4` (diffusers 0.37.0 + transformers 4.57.6 + hub<1.0) | **OK** — 10/10 images, verify PASS, pipeline `Flux2KleinPipeline` + `enable_model_cpu_offload()`, guidance 1.0 |
+
+The S5 blocker is gone: S5 used the FLUX.2-**dev** class `Flux2Pipeline`, whose
+Qwen3 text encoder left the pipeline on the meta device
+(`NotImplementedError: Cannot copy out of meta tensor; no data!` at
+`pipe.to("cuda")`). The vendor class `Flux2KleinPipeline` loads and runs.
+**1 attempt** used.
+
+### Z-Image-Turbo — see the table below
+
+### SDXL media regeneration — attempt 2
+
+The sandbox was restarted mid-milestone and `/tmp` was wiped, which deleted the
+SDXL PNGs; the Kaggle runner kernel keeps only the output of its **latest**
+version (the `owner/kernel/version` CLI argument returns the latest output for
+every version — checked for versions 1..5), and the klein run had already
+overwritten the SDXL output. SDXL was therefore re-run (attempt 2) with the
+same 10 seeds purely to regenerate the media. Attempt 2 starts at rung
+`released_037_x4` (diffusers 0.37.0), the rung that worked for klein; run 1's
+manifest (sha256, timings) remains the performance record.
+
 ---
 
 ## 3. Speed / VRAM table

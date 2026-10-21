@@ -57,7 +57,7 @@ def _fail(msg: str, code: int = 1) -> None:
     sys.exit(code)
 
 
-def installed_versions() -> Dict[str, str]:
+def installed_versions(use_git_diffusers: bool) -> Dict[str, str]:
     """Exact pinned stack versions (recorded in the manifest)."""
     out: Dict[str, str] = {}
     for pkg in ("diffusers", "transformers", "huggingface_hub", "torch"):
@@ -65,29 +65,40 @@ def installed_versions() -> Dict[str, str]:
             out[pkg] = md.version(pkg)
         except Exception:
             out[pkg] = None
-    try:
-        res = subprocess.run(
-            ["git", "ls-remote", "https://github.com/huggingface/diffusers.git", "HEAD"],
-            capture_output=True, text=True, timeout=60,
-        )
-        line = (res.stdout or "").strip().splitlines()[0] if res.stdout else ""
-        if line:
-            out["diffusers_commit"] = line.split()[0]
-    except Exception:
+    if use_git_diffusers:
+        try:
+            res = subprocess.run(
+                ["git", "ls-remote", "https://github.com/huggingface/diffusers.git", "HEAD"],
+                capture_output=True, text=True, timeout=60,
+            )
+            line = (res.stdout or "").strip().splitlines()[0] if res.stdout else ""
+            if line:
+                out["diffusers_commit"] = line.split()[0]
+        except Exception:
+            out["diffusers_commit"] = None
+    else:
         out["diffusers_commit"] = None
     return out
 
 
-def install_stack(timeout: int = 1200) -> None:
-    """Install a mutually-compatible pinned stack (hub 1.x + transformers 5.x +
-    diffusers from git main). --force-reinstall clears stale kernel copies."""
+def install_stack(use_git_diffusers: bool, timeout: int = 1200) -> None:
+    """Install a mutually-compatible pinned stack.
+
+    - Z-Image (ZImagePipeline): diffusers from git main (not in releases).
+    - SDXL / klein (released pipelines): released diffusers, which does not pull
+      the torchao FqnToConfig that conflicts with the kernel's pre-installed
+      torchao. --force-reinstall clears stale kernel copies.
+    fp16 only; no bitsandbytes; no CPU fallback.
+    """
+    pkgs = ["huggingface-hub>=1.32.0,<2.0.0", "transformers>=5.0.0,<6.0.0"]
+    if use_git_diffusers:
+        pkgs.append("git+https://github.com/huggingface/diffusers")
+    else:
+        pkgs.append("diffusers>=0.34.0,<0.36.0")
     try:
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "--quiet", "--force-reinstall",
-             "huggingface-hub>=1.32.0,<2.0.0",
-             "transformers>=5.0.0,<6.0.0",
-             "torchao>=0.11,<0.14",
-             "git+https://github.com/huggingface/diffusers"],
+             *pkgs],
             check=True, timeout=timeout,
         )
     except Exception as exc:  # noqa: BLE001 - fail closed
@@ -146,7 +157,8 @@ def main() -> None:
     if not render_jobs:
         _fail("no render jobs in JOB_EMBEDDED")
 
-    install_stack()
+    use_git_diffusers = pipeline_class == "ZImagePipeline"
+    install_stack(use_git_diffusers=use_git_diffusers)
 
     import torch  # noqa: E402 - installed above
     from diffusers import (  # noqa: E402 - installed above
@@ -257,7 +269,7 @@ def main() -> None:
     if generated < len(render_jobs):
         _fail(f"images generated ({generated}) < prompts ({len(render_jobs)})")
 
-    versions = installed_versions()
+    versions = installed_versions(use_git_diffusers=use_git_diffusers)
     manifest = build_manifest(job, images, load_seconds, gpu_minutes,
                               peak_vram_mb, versions)
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

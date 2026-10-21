@@ -24,6 +24,15 @@ KERNEL_SLUG = "forts845/openmontage-runner"
 WORK = Path("/tmp/kilo/s1_jobs") / JOB_ID
 RUN_PY = REPO / "tools" / "kaggle_bridge" / "s1_z_image_turbo_run.py"
 
+# Kaggle copies only run.py -> /kaggle/src/script.py (not job.json), so embed
+# the job JSON into the runner as JOB_EMBEDDED for a self-contained kernel.
+def _embed_job(run_text: str, job: dict) -> str:
+    marker = "JOB_EMBEDDED = None"
+    injection = f"JOB_EMBEDDED = {json.dumps(job)}\n"
+    if marker not in run_text:
+        raise RuntimeError("JOB_EMBEDDED marker missing in runner")
+    return run_text.replace(marker, injection, 1)
+
 PROMPTS = [
     {"prompt": "single-creature silhouette: a solitary six-limbed alien grazer with a long neck, flat vector illustration, deep teal and bioluminescent lime on basalt charcoal background, silhouette only, no text, no watermark, no letters, no numerals, not photorealistic", "seed": 4000},
     {"prompt": "single-creature silhouette: a floating jellyfish-like air creature with trailing tendrils, flat vector illustration, bioluminescent lime on deep teal, silhouette only, no text, no watermark, no letters, no numerals, not photorealistic", "seed": 4001},
@@ -60,7 +69,7 @@ bj = bridge.execute({
     "job_id": JOB_ID,
     "kernel_slug": KERNEL_SLUG,
     "job": JOB,
-    "run_py": RUN_PY.read_text(encoding="utf-8"),
+    "run_py": _embed_job(RUN_PY.read_text(encoding="utf-8"), JOB),
     "enable_gpu": True,
     "enable_internet": True,
     "kaggle_cmd": "kaggle",

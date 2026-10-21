@@ -33,6 +33,10 @@ OUT_DIR_NAME = "s1_z_image_turbo"
 OUT = Path("/kaggle/working") / OUT_DIR_NAME
 IMAGES_DIR = OUT / "images"
 
+# Filled in by the push script at push time so the runner is self-contained
+# (Kaggle copies only run.py -> /kaggle/src/script.py, not job.json).
+JOB_EMBEDDED = None
+
 
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -54,7 +58,12 @@ def _fail(msg: str, code: int = 1) -> None:
 
 
 def install_diffusers_from_source(timeout: int = 1200) -> None:
-    """ZImagePipeline is not in released diffusers; install from source."""
+    """ZImagePipeline is not in released diffusers; install from source.
+
+    The Kaggle kernel pre-installs huggingface-hub 2.2.0. Installing diffusers
+    from source pulls transformers 5.x which requires hub<2.0, so we pin
+    transformers<5 (compatible with hub 2.x) afterwards.
+    """
     try:
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "--quiet",
@@ -63,6 +72,14 @@ def install_diffusers_from_source(timeout: int = 1200) -> None:
         )
     except Exception as exc:  # noqa: BLE001 - fail closed
         _fail(f"diffusers from source install failed: {exc}")
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--quiet",
+             "--force-reinstall", "transformers>=4.41,<5"],
+            check=True, timeout=timeout,
+        )
+    except Exception as exc:  # noqa: BLE001 - fail closed
+        _fail(f"transformers<5 pin failed: {exc}")
 
 
 def build_manifest(job: Dict[str, Any], images: List[Dict[str, Any]],
@@ -95,8 +112,15 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-    with open(JOB_PATH) as f:
-        job = json.load(f)
+    try:
+        with open(JOB_PATH) as f:
+            job = json.load(f)
+    except FileNotFoundError:
+        # Kaggle copies only run.py -> /kaggle/src/script.py (not job.json), so the
+        # push script embeds the job JSON into this module as JOB_EMBEDDED.
+        job = JOB_EMBEDDED
+        if job is None:
+            _fail("job.json missing and JOB_EMBEDDED not set; runner cannot run")
 
     prompts: List[Dict[str, Any]] = job.get("prompts", [])
     model: str = job.get("model", "Tongyi-MAI/Z-Image-Turbo")

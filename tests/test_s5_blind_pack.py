@@ -113,3 +113,45 @@ def test_model_names_stay_out_of_sheet_filenames(tmp_path):
     names = " ".join(p.name for p in out_dir.glob("*.png"))
     for model in ("sdxl", "zimage", "klein"):
         assert model not in names.lower()
+
+
+def test_black_model_is_dropped_and_sheet_falls_back_to_two_panels(tmp_path):
+    """Z-Image returned 13/13 pure black frames in S5; those panels must go."""
+    root = tmp_path / "out"
+    for model in ("sdxl", "zimage", "klein"):
+        d = root / f"s5_bakeoff_{model}" / "images"
+        d.mkdir(parents=True)
+        p = _img(d / "x.png", 90)
+        black = model == "zimage"
+        (root / f"s5_bakeoff_{model}" / "manifest.json").write_text(json.dumps({
+            "model": model,
+            "images": [{"render_id": "r1", "file": p.name, "scene_id": "s01",
+                        "variant": "A", "black": black}],
+        }), encoding="utf-8")
+    out_dir = tmp_path / "blind"
+    mapping = run(root, out_dir, salt="t")
+    assert mapping["scenes"]["s01"] and set(mapping["scenes"]["s01"]) == {"A", "B"}
+    assert "zimage" not in mapping["scenes"]["s01"].values()
+    with Image.open(out_dir / "sheet_s01.png") as im:
+        assert im.size[0] < 3 * 512, "two-panel sheet must be narrower"
+
+
+def test_neutral_sheets_are_built_from_variant_n(tmp_path):
+    root = tmp_path / "out"
+    for model in ("sdxl", "zimage", "klein"):
+        d = root / f"s5_bakeoff_{model}" / "images"
+        d.mkdir(parents=True)
+        p = _img(d / "main.png", 80)
+        n = _img(d / "neutral.png", 140)
+        (root / f"s5_bakeoff_{model}" / "manifest.json").write_text(json.dumps({
+            "model": model,
+            "images": [
+                {"render_id": "r1", "file": p.name, "scene_id": "s01", "variant": "A"},
+                {"render_id": "r2", "file": n.name, "scene_id": "s01", "variant": "N"},
+            ],
+        }), encoding="utf-8")
+    out_dir = tmp_path / "blind"
+    mapping = run(root, out_dir, salt="t")
+    assert (out_dir / "sheet_s01_neutral.png").is_file()
+    assert mapping["neutral_sheets"][0]["scene"] == "s01"
+    assert sorted(mapping["neutral_scenes"]["s01"].values()) == ["klein", "sdxl", "zimage"]

@@ -97,8 +97,10 @@ def check_image(path: Path) -> Dict[str, Any]:
     gray = _gray(path)
     with Image.open(path) as im:
         size = im.size
+    black = bool(gray.max() - gray.min() < 8 and gray.max() < 8)
     score = text_like_score(gray)
     return {
+        "black_flag": black,
         "file": path.name,
         "width": size[0],
         "height": size[1],
@@ -156,24 +158,29 @@ def run(root: Path, out_path: Path) -> Dict[str, Any]:
             "checks": checked,
         }
 
-    # within-scene blur outliers
+    # within-scene blur outliers. Black frames are excluded from the scene
+    # median: a black panel has ~0 variance and would otherwise make every real
+    # image look "sharp" by comparison.
     by_scene: Dict[str, List[Dict[str, Any]]] = {}
     for r in rows:
         by_scene.setdefault(r.get("scene_id") or "?", []).append(r)
     for scene, items in by_scene.items():
-        vals = [i["laplacian_var"] for i in items]
+        vals = [i["laplacian_var"] for i in items if not i.get("black_flag")]
         median = float(np.median(vals)) if vals else 0.0
         for i in items:
-            i["blur_flag_absolute"] = i["laplacian_var"] < BLUR_ABS_FLOOR
+            i["blur_flag_absolute"] = (not i.get("black_flag")
+                                       and i["laplacian_var"] < BLUR_ABS_FLOOR)
             i["blur_flag_relative"] = bool(
-                median > 0 and i["laplacian_var"] < BLUR_REL_RATIO * median)
+                not i.get("black_flag") and median > 0
+                and i["laplacian_var"] < BLUR_REL_RATIO * median)
             i["scene_median_laplacian"] = round(median, 3)
 
     # duplicates
     duplicates: List[Dict[str, Any]] = []
-    for i in range(len(rows)):
-        for j in range(i + 1, len(rows)):
-            a, b = rows[i], rows[j]
+    candidate_rows = [r for r in rows if not r.get("black_flag")]
+    for i in range(len(candidate_rows)):
+        for j in range(i + 1, len(candidate_rows)):
+            a, b = candidate_rows[i], candidate_rows[j]
             d = hamming(a["dhash"], b["dhash"])
             same_scene = a.get("scene_id") == b.get("scene_id")
             if d <= (DUP_SAME_SCENE if same_scene else DUP_ANY):
@@ -210,6 +217,7 @@ def run(root: Path, out_path: Path) -> Dict[str, Any]:
               f"blur_abs={sum(1 for r in imgs if r['blur_flag_absolute'])}, "
               f"blur_rel={sum(1 for r in imgs if r['blur_flag_relative'])}, "
               f"text_like={sum(1 for r in imgs if r['text_like_flag'])}, "
+              f"black={sum(1 for r in imgs if r['black_flag'])}, "
               f"dupes={sum(1 for d2 in duplicates if m in d2['a'].split(':')[0] or m in d2['b'].split(':')[0])}")
     print(f"wrote {out_path}")
     return report

@@ -179,3 +179,14 @@ def test_metrics_table_includes_speed_and_vram(tmp_path):
     }
     report = render_report(load_results(write_csv(tmp_path, rows)), mapping)
     assert "0.9" in report and "12800" in report
+
+
+def test_two_panel_mapping_is_accepted(tmp_path):
+    """A blocked model (e.g. black frames) leaves 2 panels; the tally still works."""
+    two = {scene: {k: v for k, v in panels.items() if v != "klein"}
+           for scene, panels in PANELS.items()}
+    mapping = load_mapping({"scenes": two})
+    assert mapping["panels_by_scene"]["s01"] == {"A": "sdxl", "B": "zimage"}
+    rows = fixed_rows({s: sorted(mapping["panels_by_scene"][s])[0] for s in SCENES})
+    report = render_report(load_results(write_csv(tmp_path, rows)), mapping)
+    assert "sdxl" in report and "recommended" in report.lower()

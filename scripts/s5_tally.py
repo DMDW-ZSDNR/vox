@@ -58,8 +58,13 @@ def load_mapping(path: Path | str | Dict[str, Any] = DEFAULT_MAPPING) -> Dict[st
     scenes = doc.get("scenes") or {}
     for scene, panels in scenes.items():
         models = set(panels.values())
-        if len(models) != 3:
-            raise ValueError(f"mapping for {scene} must give 3 distinct models, got {panels}")
+        if not 2 <= len(models) <= 3:
+            raise ValueError(
+                f"mapping for {scene} must give 2 or 3 distinct models, got {panels}")
+        if set(panels) - set(PANELS):
+            raise ValueError(f"mapping for {scene} has an unknown panel: {panels}")
+        if len(set(panels.values())) != len(panels):
+            raise ValueError(f"mapping for {scene} repeats a model: {panels}")
     return {
         "panels_by_scene": scenes,
         "model_metrics": doc.get("model_metrics") or {},
@@ -116,14 +121,22 @@ def tally(results: List[Dict[str, Any]],
         if scene not in panels:
             raise ValueError(f"scene {scene} is not in the blind mapping")
         if row["best"]:
+            if row["best"] not in panels[scene]:
+                raise ValueError(
+                    f"scene {scene}: panel {row['best']!r} is not in the pack "
+                    f"(panels: {sorted(panels[scene])})")
             model = panels[scene][row["best"]]
             stats[model]["wins"] += 1
             stats[model]["scenes_won"].append(scene)
         if row["worst"]:
+            if row["worst"] not in panels[scene]:
+                raise ValueError(
+                    f"scene {scene}: panel {row['worst']!r} is not in the pack "
+                    f"(panels: {sorted(panels[scene])})")
             model = panels[scene][row["worst"]]
             stats[model]["losses"] += 1
         for panel, verdict in row["anatomy"].items():
-            if verdict is None:
+            if verdict is None or panel not in panels[scene]:
                 continue
             model = panels[scene][panel]
             stats[model]["anatomy_judged"] += 1
@@ -153,9 +166,11 @@ def render_report(results: List[Dict[str, Any]],
     lines.append("")
     lines.append("| model | wins | losses | anatomy ok |")
     lines.append("|---|---|---|---|")
+    in_pack = {m for scene in panels.values() for m in scene.values()}
     for m in MODEL_ORDER:
         s = stats[m]
-        lines.append(f"| {m} | {s['wins']} | {s['losses']} | "
+        name = m if m in in_pack else f"{m} (not in pack)"
+        lines.append(f"| {name} | {s['wins']} | {s['losses']} | "
                      f"{s['anatomy_ok']}/{s['anatomy_out_of']} |")
     lines.append("")
 

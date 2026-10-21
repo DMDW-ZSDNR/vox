@@ -59,15 +59,22 @@ def panel_order(scene: str, salt: str = "s5") -> List[str]:
 
 def build_sheet(images: Dict[str, Path], order: Dict[str, str],
                 out_path: Path) -> tuple[int, int]:
-    """Compose one comparison sheet; returns (width, height)."""
-    width = MARGIN + 3 * PANEL + 2 * GAP + MARGIN
+    """Compose one comparison sheet (2 or 3 panels); returns (width, height).
+
+    A model that produced only black frames is left out by collect(), so a sheet
+    can legitimately have 2 panels instead of 3.
+    """
+    n = len(order)
+    if n not in (2, 3):
+        raise ValueError(f"need 2 or 3 panels, got {n}")
+    width = MARGIN + n * PANEL + (n - 1) * GAP + MARGIN
     if width > MAX_WIDTH:
         raise ValueError(f"sheet width {width} exceeds {MAX_WIDTH}")
     height = MARGIN + LABEL_H + PANEL + MARGIN
     sheet = Image.new("RGB", (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(sheet)
     font = _font(40)
-    for i, label in enumerate("ABC"):
+    for i, label in enumerate("ABC"[:n]):
         model = order[label]
         x = MARGIN + i * (PANEL + GAP)
         with Image.open(images[model]) as im:
@@ -81,9 +88,11 @@ def build_sheet(images: Dict[str, Path], order: Dict[str, str],
     return sheet.size
 
 
-def collect(root: Path) -> tuple[Dict[str, Dict[str, Path]], Dict[str, Any]]:
-    """(scene -> {model: image}, model metrics) from the kernel manifests."""
+def collect(root: Path) -> tuple[Dict[str, Dict[str, Path]], Dict[str, Any],
+                                Dict[str, Dict[str, Path]]]:
+    """(scene -> {model: image}, model metrics, neutral scene -> {model: image})."""
     by_scene: Dict[str, Dict[str, Path]] = {}
+    neutral: Dict[str, Dict[str, Path]] = {}
     metrics: Dict[str, Any] = {}
     manifests = sorted(root.glob("s5_bakeoff_*/manifest.json"))
     if not manifests:
@@ -106,12 +115,16 @@ def collect(root: Path) -> tuple[Dict[str, Dict[str, Path]], Dict[str, Any]]:
         for entry in man.get("images", []):
             if not entry.get("file"):
                 continue
-            if entry.get("variant") == "N":
-                continue  # neutral fairness-check images are packed separately
+            if entry.get("black"):
+                continue  # pure black frame: not judgeable, drop the whole model
             path = img_dir / entry["file"]
-            if path.is_file():
+            if not path.is_file():
+                continue
+            if entry.get("variant") == "N":
+                neutral.setdefault(entry["scene_id"], {})[model] = path
+            else:
                 by_scene.setdefault(entry["scene_id"], {})[model] = path
-    return by_scene, metrics
+    return by_scene, metrics, neutral
 
 
 def write_csv_template(out_dir: Path, scenes: List[str]) -> Path:
@@ -128,9 +141,12 @@ def instructions(scenes: List[str]) -> str:
         "S5 blind pack — how to review (5-10 minutes)\n"
         "=============================================\n\n"
         "1. Open sheet_s01.png ... sheet_s12.png on your phone (10 sheets).\n"
-        "   Each sheet shows the SAME scene from the 3 models, panels A / B / C,\n"
-        "   in a different random order on every sheet. Model names are not\n"
-        "   shown anywhere on the sheets.\n\n"
+        "   Each sheet shows the SAME scene from the usable models, panels A / B\n"
+        "   (or A / B / C), in a different random order on every sheet. Model\n"
+        "   names are not shown anywhere on the sheets. A sheet with only two\n"
+        "   panels means the third model failed and is out of this bake-off (see\n"
+        "   docs/openmontage/image_gen/BAKEOFF_S5.md) — leave the missing\n"
+        "   anatomy column blank.\n\n"
         "2. On each sheet decide:\n"
         "   - best_panel: the panel you would actually use\n"
         "   - worst_panel: the panel you would throw away\n"
@@ -161,10 +177,11 @@ def instructions(scenes: List[str]) -> str:
 
 
 def run(root: Path, out_dir: Path, salt: str = "s5") -> Dict[str, Any]:
-    by_scene, metrics = collect(root)
+    by_scene, metrics, neutral = collect(root)
     scenes = sorted(by_scene)
-    complete = [s for s in scenes if len(by_scene[s]) == 3]
-    partial = [s for s in scenes if len(by_scene[s]) < 3]
+    usable = max((len(v) for v in by_scene.values()), default=0)
+    complete = [s for s in scenes if len(by_scene[s]) == usable]
+    partial = [s for s in scenes if len(by_scene[s]) < usable]
 
     out_dir.mkdir(parents=True, exist_ok=True)
     mapping: Dict[str, Any] = {
@@ -177,12 +194,32 @@ def run(root: Path, out_dir: Path, salt: str = "s5") -> Dict[str, Any]:
         "partial_scenes": partial,
     }
     for scene in complete:
-        order = {label: model for label, model in zip("ABC", panel_order(scene, salt))}
+        models = sorted(by_scene[scene])  # deterministic base order, then shuffled
+        ordered = panel_order(scene, salt)
+        ordered = [m for m in ordered if m in models] + \
+                  [m for m in models if m not in ordered]
+        order = {label: model for label, model in zip("ABC", ordered)}
         sheet_path = out_dir / f"sheet_{scene}.png"
         size = build_sheet(by_scene[scene], order, sheet_path)
         mapping["scenes"][scene] = order
         mapping["sheets"].append({"scene": scene, "file": sheet_path.name,
                                   "width": size[0], "height": size[1]})
+
+    # fairness check: same prompt text for every model, separate sheets
+    neutral_sheets = []
+    for scene in sorted(neutral):
+        models = sorted(neutral[scene])
+        if len(models) < 2:
+            continue
+        ordered = [m for m in panel_order(scene, salt + "n") if m in models]
+        ordered += [m for m in models if m not in ordered]
+        order = {label: m for label, m in zip("ABC", ordered)}
+        sheet_path = out_dir / f"sheet_{scene}_neutral.png"
+        size = build_sheet(neutral[scene], order, sheet_path)
+        mapping.setdefault("neutral_scenes", {})[scene] = order
+        neutral_sheets.append({"scene": scene, "file": sheet_path.name,
+                               "width": size[0], "height": size[1]})
+    mapping["neutral_sheets"] = neutral_sheets
 
     write_csv_template(out_dir, complete)
     (out_dir / "mapping.json").write_text(json.dumps(mapping, indent=2) + "\n",

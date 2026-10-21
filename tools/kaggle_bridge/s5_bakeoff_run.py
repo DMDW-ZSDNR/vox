@@ -35,6 +35,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 OUT_DIR_NAME = os.environ.get("S5_OUT_DIR", "s5_bakeoff")
 OUT = Path("/kaggle/working") / OUT_DIR_NAME
 IMAGES_DIR = OUT / "images"
@@ -49,16 +51,16 @@ PROBE_CLASSES = {
 }
 
 # Two install attempts maximum per model (S5 stop rule).
+# Attempt 1 is the release that ships BOTH Flux2KleinPipeline and ZImagePipeline
+# (diffusers 0.37.0 + transformers 4.x + hub <1.0, per the parallel S7 manifest).
+# 0.36 has the klein class name but its chat-template path raises
+# `TypeError: can only concatenate str (not "list") to str` on every prompt.
+# Attempt 2 is the newest release with transformers 5.x as a fallback.
 ATTEMPTS_COMMON = [
-    {"diffusers": ">=0.36,<0.37", "transformers": ">=4.57,<5"},
+    {"diffusers": ">=0.37,<0.38", "transformers": ">=4.57,<5", "hub": ">=0.34,<1.0"},
     {"diffusers": ">=0.41", "transformers": ">=4.57,<6"},
 ]
-# Z-Image ships in a newer release than SDXL/klein need, so it goes straight to
-# the newest release on attempt 1 and only falls back to the older release.
-ATTEMPTS_ZIMAGE = [
-    {"diffusers": ">=0.41", "transformers": ">=4.57,<6"},
-    {"diffusers": ">=0.41", "transformers": ">=4.57,<5"},
-]
+ATTEMPTS_ZIMAGE = ATTEMPTS_COMMON  # same ladder: 0.37.0 ships ZImagePipeline
 
 
 def now_utc() -> str:
@@ -133,7 +135,7 @@ def install_and_probe(classes: List[str],
     log: Dict[str, Any] = {"attempts": []}
     for i, pin in enumerate(attempts or ATTEMPTS_COMMON, start=1):
         pkgs = [f"diffusers{pin['diffusers']}", f"transformers{pin['transformers']}",
-                "huggingface-hub>=0.34,<2", "accelerate>=1.0"]
+                f"huggingface-hub{pin.get('hub', '>=0.34,<2')}", "accelerate>=1.0"]
         ok, err = _pip(pkgs)
         probe_err = _import_probe(classes) if ok else f"pip failed: {err}"
         log["attempts"].append({"attempt": i, "pins": pin, "pip_ok": ok,
@@ -223,9 +225,11 @@ def main() -> None:
             kwargs["vae"] = AutoencoderKL.from_pretrained(
                 job["vae_model_id"], torch_dtype=torch.float16)
         pipe = pipe_cls.from_pretrained(job["model_id"], torch_dtype=torch.float16, **kwargs)
-        if model == "klein":
+        if model in {"klein", "zimage"}:
             # weights stream to the GPU per module: compute stays on CUDA, no CPU
-            # inference. Avoids `Cannot copy out of meta tensor` on pipe.to().
+            # inference. klein: avoids `Cannot copy out of meta tensor` on
+            # pipe.to(); zimage: the 6B fp16 weights do not fit a 16 GB T4
+            # (OOM at load with pipe.to("cuda")).
             pipe.enable_model_cpu_offload()
             offload_enabled = True
         else:

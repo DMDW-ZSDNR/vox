@@ -135,3 +135,24 @@ Record only useful, evidence-backed lessons. Do not include secrets or personal 
   (5 pass), tests/tools/test_qc_tool.py thresholds tests (4) + mixed-ID claim tests (4).
 - Result: 24 impacted tests pass, qc file 22 pass, CI fast suite result recorded in
   docs/openmontage/F1FIX_STATE.md.
+
+- Date / task: 2026-10-21 / S5 Z-Image-Turbo on a 16 GB T4 (Kilo)
+- Observed failure and evidence: (1) fp16 + `pipe.to("cuda")` OOMs at load
+  (`torch.OutOfMemoryError ... 14.19 GiB allocated`) because the 6B weights do not
+  fit; (2) after `enable_model_cpu_offload()` + `low_cpu_mem_usage=False` the
+  pipeline returned 13/13 **pure black** frames (min=max=0) with no exception and
+  a 50.7 s/img steady state. The vendor card specifies bfloat16.
+- Confirmed cause / certainty: certain about the symptom and the precision
+  mismatch (fp16 vs vendor bfloat16); the exact mechanism (VAE decode in fp16
+  under offload vs. guidance 0) is NOT isolated — one bf16 run would tell.
+- Fix or proposed rule: treat "pipeline runs, returns black" as a first-class
+  failure. Always compute a black-frame count per image (max pixel < 8) and put it
+  in the manifest *and* the objective-check report; never infer success from
+  "no exception" or from file size. When a model's card says bf16 and the run
+  mandates fp16, expect this and budget the one bf16 test up front.
+- Regression test: scripts/s5_checks.py black_flag + tests/test_s5_checks.py::
+  test_black_frame_flagged_and_excluded_from_median; the blind pack drops
+  black-flagged panels (tests/test_s5_blind_pack.py::
+  test_black_model_is_dropped_and_sheet_falls_back_to_two_panels).
+- Result: Z-Image-Turbo marked BLOCKED for S5 after 2 attempts; blind pack built
+  from SDXL + klein only; the one-line bf16 retest is written down for the owner.

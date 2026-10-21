@@ -85,6 +85,11 @@ def test_probe_classes_per_model():
     assert mod.PROBE_CLASSES["sdxl"] == ["StableDiffusionXLPipeline"]
 
 
+def test_offload_covers_klein_and_zimage():
+    assert 'model in {"klein", "zimage"}' in SRC, \
+        "both klein and zimage need CPU offload (meta tensor / 16 GB T4 OOM)"
+
+
 def test_klein_uses_vendor_class_and_offload():
     assert '"Flux2KleinPipeline"' in SRC, "klein needs the FLUX.2 klein class"
     assert "enable_model_cpu_offload()" in SRC

@@ -89,3 +89,25 @@ def test_run_reports_duplicates_and_keeps_models_blind(tmp_path):
     assert set(report["per_model"]) == {"sdxl", "zimage"}
     assert report["duplicates"], "identical images must be flagged"
     assert all(r["resolution_ok"] for r in report["images"])
+
+
+def test_black_frame_flagged_and_excluded_from_median(tmp_path):
+    root = tmp_path / "out"
+    rng = np.random.default_rng(3)
+    detail = (rng.integers(0, 2, (1024, 1024)) * 255).astype(np.uint8)
+    black_frame = np.zeros((1024, 1024), dtype=np.uint8)
+    for model, arr, black in (("sdxl", detail, False), ("zimage", black_frame, True)):
+        d = root / f"s5_bakeoff_{model}"
+        (d / "images").mkdir(parents=True)
+        Image.fromarray(arr).save(d / "images" / "x.png")
+        (d / "manifest.json").write_text(json.dumps({
+            "model": model,
+            "images": [{"render_id": "r1", "file": "x.png", "scene_id": "s01",
+                        "variant": "A"}],
+        }), encoding="utf-8")
+    report = run(root, tmp_path / "checks.json")
+    z = next(r for r in report["images"] if r["model"] == "zimage")
+    s = next(r for r in report["images"] if r["model"] == "sdxl")
+    assert z["black_flag"] is True
+    assert s["blur_flag_relative"] is False, "black frames must not set the median"
+    assert not report["duplicates"]

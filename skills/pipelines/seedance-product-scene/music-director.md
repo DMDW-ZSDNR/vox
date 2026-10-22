@@ -14,7 +14,8 @@ Present title, artist, duration, and license for all three candidates. Do not
 download before selection and never auto-select the first result.
 
 After the user chooses, call `operation="download"` with only that candidate's
-Pixabay URL and write it under `assets/music/<style>/selected.mp3`.
+Pixabay URL, `candidate_index`, title, artist, and duration. Write it under
+`assets/music/<style>/selected.mp3`.
 
 ## Review
 

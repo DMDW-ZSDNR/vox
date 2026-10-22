@@ -88,3 +88,21 @@ def test_manifest_proposal_requires_style_and_cost_approval():
     assert "成本" in review_focus
     assert "音乐" in review_focus
     assert "文案" in review_focus
+
+
+def test_music_compose_and_delivery_chain_is_explicit():
+    manifest = load_pipeline("seedance-product-scene")
+    stages = {stage["name"]: stage for stage in manifest["stages"]}
+
+    assert stages["music"]["required_artifacts_in"] == [
+        "asset_manifest",
+        "product_copy",
+    ]
+    assert stages["music"]["produces"] == ["product_delivery"]
+    assert stages["compose"]["required_tools"] == [
+        "audio_mixer",
+        "video_compose",
+    ]
+    assert stages["compose"]["produces"] == ["render_report", "final_review"]
+    assert "product_delivery" in stages["publish"]["required_artifacts_in"]
+    assert "publish_log" in stages["publish"]["produces"]

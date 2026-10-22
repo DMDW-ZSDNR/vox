@@ -1,8 +1,11 @@
-# AO groupe - design system preview
+# AO groupe Flutter storefront prototype
 
-A standalone Flutter 3 / Material 3 preview of the AO groupe design system.
-The showcase is the app's entry screen; it is not a splash, onboarding, or
-production home screen.
+An independent Flutter 3 / Material 3 storefront prototype for electrical,
+lighting, and solar products. Arabic is the default locale and uses RTL layout;
+French and English are also available. The app includes onboarding, a
+categorized catalog, product details, favorites, a cart and demo checkout,
+order history, quote-request drafts, planning calculators, and local admin
+preview.
 
 ## Run
 
@@ -13,9 +16,9 @@ flutter pub get
 flutter run -d chrome
 ```
 
-Arabic is the default locale and uses right-to-left layout. Use the language
-selector to preview French and English, and the theme selector to switch
-between light, dark, and system appearance.
+The first launch shows onboarding. Later launches open the storefront. Open
+**Account > Settings** to change the language, appearance, or revisit the design
+system showcase.
 
 ## Verify and build for web
 
@@ -26,10 +29,24 @@ flutter test
 flutter build web --release
 ```
 
-The static web build is written to `build/web/`. Deploy that directory to a
-static host with single-page-app fallback routing enabled. A GitHub Actions
-workflow runs formatting, analysis, widget tests, and the release web build
-when this app changes.
+The static web build is written to `build/web/`. Deploy it to a static host
+with single-page-app fallback routing enabled. The GitHub Actions workflow runs
+formatting, analysis, widget and unit tests, and the release web build when
+this app changes.
 
-This preview has no backend, external packages, or credentials. Its sample
-product and price are illustrative; they are not live inventory or pricing.
+## Prototype limitations
+
+This is an offline prototype, not a production commerce service. Catalog,
+brands, prices, discounts, stock, delivery estimates, and branch labels are
+illustrative. Cart, favorites, orders, and inventory adjustments are in-memory
+demo state; checkout does not submit an order. CCP and Edahabia payment are
+disabled, and there is no authentication, backend, real branch contact data,
+or secure administrative access. Do not use the displayed electrical or solar
+calculations as installation guidance; a qualified professional must verify
+all designs.
+
+Production release requires verified business catalog and branch data,
+backend and authentication setup, secure order/inventory APIs, a payment
+provider, privacy and security review, and platform release configuration.
+This repository currently includes a web target only; native Android/iOS
+release setup has not been added.

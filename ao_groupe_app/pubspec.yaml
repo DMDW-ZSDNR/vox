@@ -1,5 +1,5 @@
 name: ao_groupe_app
-description: AO groupe design system preview.
+description: AO groupe offline storefront prototype.
 publish_to: "none"
 version: 0.1.0
 
@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  shared_preferences: ^2.3.5
 
 dev_dependencies:
   flutter_test:

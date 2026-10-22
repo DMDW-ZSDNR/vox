@@ -205,3 +205,57 @@ Test-scope limitation: `tests/` holds 2476 collected tests; only the 1072 factor
 ## 6. Smallest next step (not performed)
 
 F1 (image engine decision) is the only milestone that can advance without new code: finish `s7-klein-1`/Z-Image, build the blind pack, and have the owner score it. In parallel, the two red chapter tests and the `cmd_edl` hardcode are the cheapest code fixes that move L6, but they are outside a read-only milestone.
+
+---
+
+# Appendix A — G0 refresh, 2026-10-22 (MEGA run, read-only audit)
+
+**Auditor:** Kilo, inline — *not independent*. **Branch:** `kilo/mega-100` (forked from `cdbbb11`).
+**Method:** re-read the repository at HEAD and re-run the baseline commands. The F0 findings above are
+kept as history; this appendix records only what changed or was re-observed.
+
+## A1. Baseline commands actually run
+
+| Command | Observed result |
+|---|---|
+| `git rev-parse --short HEAD` | `cdbbb11` |
+| `df -h /workspaces` | 2.3 GB free (above the 800 MB floor) |
+| `python -m pytest tests --collect-only -q` | **2515 tests collected**, exit 0, 107.45 s (F0: 2476; F0's root-level `pytest --collect-only` failed on the nested `youtube-niche-finder/`, so `tests` is the collection root here) |
+| `python scripts/ci_fast_suite.py` | **exit 0**, 10/10 files passed, disk 2247 MB → 2239 MB |
+| `python -m pytest tests/test_run_episode.py tests/test_run_chapters.py tests/test_edl_generic.py -q` | **19 passed**, exit 0, 13.30 s |
+| `grep -rln "viability_gate\|measure_niche" tools scripts lib` | no matches (L1 gate/measurement still absent) |
+| `grep -rln "zero_cost_gate\|ZeroCostGate" tools scripts lib` | no matches (L10 gate still unwired) |
+| `grep -rln "from tools.packaging\|import packaging" tools scripts` | no matches (L8 still unwired) |
+| `KAGGLE_API_TOKEN` presence check | set = **yes** (value never read or printed) |
+
+## A2. Layer verdicts at this HEAD (strict, evidence-based)
+
+| Layer | Verdict | Evidence at `cdbbb11` |
+|---|---|---|
+| L1 Niche/topic | **FAIL** | 4 niche YAMLs exist; no `viability_gate()` function, no `measure_niche` implementation in `tools/ scripts/ lib/`. |
+| L2 Evidence/scripting | **FAIL** | `claim_ids_resolve` now evaluates **every** cited id (SCR-06 fixed at `qc.py:865-873`); ledgers/scripts exist. Still no footage-aware storyboard. |
+| L3 Visual sources/rights | **FAIL** | NASA/IA/LoC/NARA/Wikimedia + museum adapters exist; DVIDS absent; classifier has no NC/ND or emblem-as-main-picture regression. |
+| L4 AI illustration | **FAIL** | Kaggle bridge + prompt builder + illustration QC exist; S7 reports SDXL + klein usable, Z-Image BLOCKED; owner blind scores empty; no episode-scale batch. |
+| L5 Voice/audio | **FAIL** | Kokoro works in `output/kokoro_venv` (observed import + 4.28 s synthesis); no 10-minute unattended run; owner voice sign-off absent. |
+| L6 Editing/render | **PASS (code) / NOT_CHECKED (real chapter render)** | `cmd_edl` is now episode-generic (SCR-07 fixed; `tests/test_edl_generic.py` passes); chapter parser accepts `B1-1`; 19 episode/chapter/EDL tests pass at HEAD. No real multi-chapter render was observed. |
+| L7 Quality gates | **FAIL** | Config thresholds now loaded by default (SCR-05 fixed). Speculative-label gate and motion-variety lint are still not called by `qc.py`; no schema test for the emitted `qa_report` shape. |
+| L8 Packaging | **FAIL** | `tools/packaging` imported nowhere; `cmd_package_draft` still only copies files. |
+| L9 Review/verification | **NOT_CHECKED** | No independent reviewer output; `projects/s7_blind/results.csv` exists but **all score cells are empty**. |
+| L10 Operations/learning | **FAIL** | CI fast suite green; analytics loop never ran; zero-cost gate unreferenced by pipeline code. |
+
+**Aggregate at HEAD:** 1 PASS (L6 code-level), 7 FAIL, 2 NOT_CHECKED. The two red chapter
+tests reported in F0 are **fixed** and the Artemis hardcode in `cmd_edl` is **gone** — those F0
+findings are closed.
+
+## A3. Owner decisions
+
+`SPEC_CHANGE_REQUESTS.md` contains no owner "approved" marker at this HEAD, so **no SCR is applied**
+in this run; they remain PROPOSED. `projects/s7_blind/results.csv` is present and unfilled, so the
+image-model choice is OWNER_GATED with the S7 advisory ranking (`klein`) as the safest default.
+
+## A4. Smallest next step
+
+G1: wire the speculative-label gate and the motion-variety lint into `qc.py`, fix the
+`added_value`/`ai_illustration_label` duration field bug (they read `cut["duration"]`, which the
+generic EDL never writes), add the rights-flag gate and a `qa_report` schema test, then implement
+`scripts/run_evals.py`.

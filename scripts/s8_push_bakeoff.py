@@ -86,12 +86,20 @@ def ladder_for(model: str, attempt: int) -> List[str]:
 
 def build_job(model: str, attempt: int, width: int, height: int,
               change: str, load_config: Optional[Dict[str, Any]] = None,
-              ladder_override: Optional[List[str]] = None) -> Dict[str, Any]:
+              ladder_override: Optional[List[str]] = None,
+              steps: Optional[int] = None,
+              guidance_scale: Optional[float] = None) -> Dict[str, Any]:
     ts = json.loads(TEST_SET.read_text(encoding="utf-8"))
     spec = ts["model_spec"][model]
-    renders = [r for r in ts["renders"] if r["model"] == model]
+    renders = [dict(r) for r in ts["renders"] if r["model"] == model]
     if not renders:
         raise SystemExit(f"no renders for model {model} in {TEST_SET.name}")
+    if steps:
+        for r in renders:
+            r["steps"] = int(steps)
+    if guidance_scale is not None:
+        for r in renders:
+            r["guidance_scale"] = float(guidance_scale)
     ladder = list(ladder_override) if ladder_override else ladder_for(model, attempt)
     job: Dict[str, Any] = {
         "job_id": f"s8-{model}-{attempt}",
@@ -134,6 +142,10 @@ def main() -> int:
     ap.add_argument("--change", default="")
     ap.add_argument("--load-config", default="")
     ap.add_argument("--ladder", default="")
+    ap.add_argument("--steps", type=int, default=None,
+                    help="override the step count of every render (card range)")
+    ap.add_argument("--guidance-scale", type=float, default=None,
+                    help="override the guidance scale of every render")
     args = ap.parse_args()
 
     ts = json.loads(TEST_SET.read_text(encoding="utf-8"))
@@ -150,7 +162,8 @@ def main() -> int:
                              f"(S8 allows released stacks only: {S8_LADDER})")
 
     job = build_job(args.model, args.attempt, width, height, args.change,
-                    load_config=load_config, ladder_override=ladder_override)
+                    load_config=load_config, ladder_override=ladder_override,
+                    steps=args.steps, guidance_scale=args.guidance_scale)
     work = JOBS_DIR / job["job_id"]
     work.mkdir(parents=True, exist_ok=True)
 

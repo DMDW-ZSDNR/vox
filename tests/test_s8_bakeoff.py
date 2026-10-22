@@ -149,3 +149,18 @@ def test_s8_additions_capture_the_engine_main_before_defining_their_own():
     assert src.index("_ENGINE_MAIN = _ENGINE.main") < src.index("def main() -> int:")
     assert "return _ENGINE.main()" not in src
     assert "return _ENGINE_MAIN()" in src
+
+
+def test_s8_additions_support_an_fp32_text_encoder():
+    """SANA-Sprint in fp16 produced NaN embeddings -> black frames."""
+    src = (REPO / "tools/kaggle_bridge/s8_bakeoff_run.py").read_text(
+        encoding="utf-8")
+    assert "text_encoder_fp32" in src
+    assert 'te.to(dtype=torch.float32)' in src
+
+
+def test_steps_and_guidance_overrides_reach_the_renders():
+    job = push.build_job("sana-sprint-1.6b", 4, 1024, 1024, "4-step retry",
+                          steps=4, guidance_scale=4.5)
+    assert all(r["steps"] == 4 for r in job["renders"])
+    assert all(r["guidance_scale"] == 4.5 for r in job["renders"])

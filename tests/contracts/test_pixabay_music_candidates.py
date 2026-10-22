@@ -160,3 +160,21 @@ def test_legacy_search_and_download_uses_first_result(monkeypatch, tmp_path):
     assert result.success is True
     assert captured["track"]["title"] == "Quiet Product Reveal"
     assert result.data["output"] == str(output)
+
+
+def test_download_cache_key_depends_on_selected_url():
+    tool = PixabayMusic()
+    common = {
+        "query": "elegant product commercial",
+        "operation": "download",
+        "output_path": "/tmp/selected.mp3",
+    }
+
+    first = tool.cache_key(
+        {**common, "download_url": "https://cdn.pixabay.com/audio/one.mp3"}
+    )
+    second = tool.cache_key(
+        {**common, "download_url": "https://cdn.pixabay.com/audio/two.mp3"}
+    )
+
+    assert first != second

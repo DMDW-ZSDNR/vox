@@ -35,6 +35,7 @@
           "selected_image",
           "video",
           "music",
+          "music_candidates",
           "copy",
           "output"
         ],
@@ -88,6 +89,44 @@
               "approved": { "type": "boolean" }
             },
             "additionalProperties": false
+          },
+          "music_candidates": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "required": [
+                "index",
+                "title",
+                "artist",
+                "duration_seconds",
+                "license",
+                "download_url"
+              ],
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "title": { "type": "string", "minLength": 1 },
+                "artist": { "type": "string", "minLength": 1 },
+                "duration_seconds": {
+                  "type": ["number", "null"],
+                  "minimum": 0
+                },
+                "license": { "type": "string", "minLength": 1 },
+                "download_url": {
+                  "type": "string",
+                  "pattern": "^https://([^/]+\\.)?pixabay\\.com/"
+                },
+                "pixabay_id": {
+                  "type": ["integer", "null"]
+                }
+              },
+              "additionalProperties": false
+            }
           },
           "copy": {
             "type": "object",

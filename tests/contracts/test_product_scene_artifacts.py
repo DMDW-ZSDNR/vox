@@ -102,6 +102,32 @@ def _product_delivery():
                     "license": "Pixabay Content License",
                     "approved": True,
                 },
+                "music_candidates": [
+                    {
+                        "index": 1,
+                        "title": "Quiet Product Reveal",
+                        "artist": "Example Artist",
+                        "duration_seconds": 34,
+                        "license": "Pixabay Content License",
+                        "download_url": "https://cdn.pixabay.com/audio/one.mp3",
+                    },
+                    {
+                        "index": 2,
+                        "title": "Soft Luxury Motion",
+                        "artist": "Example Artist",
+                        "duration_seconds": 45,
+                        "license": "Pixabay Content License",
+                        "download_url": "https://cdn.pixabay.com/audio/two.mp3",
+                    },
+                    {
+                        "index": 3,
+                        "title": "Elegant Brand Bed",
+                        "artist": "Example Artist",
+                        "duration_seconds": 52,
+                        "license": "Pixabay Content License",
+                        "download_url": "https://cdn.pixabay.com/audio/three.mp3",
+                    },
+                ],
                 "copy": {
                     "path": "artifacts/product_copy.json",
                     "style": "luxury",
@@ -164,6 +190,14 @@ def test_product_delivery_rejects_unlicensed_music():
 def test_product_delivery_rejects_video_without_selected_image():
     artifact = _product_delivery()
     artifact["packages"][0].pop("selected_image")
+
+    with pytest.raises(ValidationError):
+        validate_artifact("product_delivery", artifact)
+
+
+def test_product_delivery_requires_three_music_candidates():
+    artifact = _product_delivery()
+    artifact["packages"][0].pop("music_candidates")
 
     with pytest.raises(ValidationError):
         validate_artifact("product_delivery", artifact)

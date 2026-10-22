@@ -211,6 +211,7 @@ class SeedreamArkImage(BaseTool):
 
         started = time.time()
         api_key: str | None = None
+        outputs: list[str] = []
         try:
             config = load_seedance_config()
             api_key = config.api_key
@@ -220,6 +221,7 @@ class SeedreamArkImage(BaseTool):
             model = str(inputs.get("model") or config.image_model)
             base_url = config.api_base.rstrip("/")
             output_dir = Path(inputs["output_dir"])
+            output_dir.mkdir(parents=True, exist_ok=True)
             prompt = str(inputs["prompt"])
             payload_base = {
                 "model": model,
@@ -230,8 +232,7 @@ class SeedreamArkImage(BaseTool):
                 "watermark": bool(inputs.get("watermark", False)),
             }
 
-            image_blobs: list[bytes] = []
-            for _ in range(count):
+            for index in range(1, count + 1):
                 response = requests.post(
                     f"{base_url}/images/generations",
                     headers={
@@ -244,6 +245,8 @@ class SeedreamArkImage(BaseTool):
                 if response.status_code >= 400:
                     return ToolResult(
                         success=False,
+                        data={"partial_outputs": outputs} if outputs else {},
+                        artifacts=outputs,
                         error=self._http_error(response.status_code),
                         duration_seconds=round(time.time() - started, 2),
                     )
@@ -263,11 +266,6 @@ class SeedreamArkImage(BaseTool):
                 else:
                     blob = self._decode_image(item)
                 self._validate_png(blob)
-                image_blobs.append(blob)
-
-            output_dir.mkdir(parents=True, exist_ok=True)
-            outputs = []
-            for index, blob in enumerate(image_blobs, start=1):
                 output_path = output_dir / f"scene_{scene_preset}_{index}.png"
                 output_path.write_bytes(blob)
                 outputs.append(str(output_path))
@@ -279,6 +277,8 @@ class SeedreamArkImage(BaseTool):
                 message = message.replace(api_key, "[redacted]")
             return ToolResult(
                 success=False,
+                data={"partial_outputs": outputs} if outputs else {},
+                artifacts=outputs,
                 error=message,
                 duration_seconds=round(time.time() - started, 2),
             )
@@ -288,6 +288,8 @@ class SeedreamArkImage(BaseTool):
                 message = message.replace(api_key, "[redacted]")
             return ToolResult(
                 success=False,
+                data={"partial_outputs": outputs} if outputs else {},
+                artifacts=outputs,
                 error=f"火山方舟图片生成失败：{message}",
                 duration_seconds=round(time.time() - started, 2),
             )

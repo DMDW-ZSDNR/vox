@@ -255,10 +255,12 @@ def test_product_scene_workflow_runs_offline(monkeypatch, tmp_path):
             "query": "elegant luxury product commercial",
             "operation": "search",
             "max_results": 3,
+            "output_path": str(project / "assets/music/luxury/candidates"),
         }
     )
     assert music_search.success, music_search.error
     assert len(music_search.data["candidates"]) == 3
+    assert not (project / "assets/music/luxury/candidates").exists()
     selected_music = music_search.data["candidates"][1]
     monkeypatch.setattr(
         "tools.audio.pixabay_music.urllib.request.urlopen",
@@ -343,6 +345,7 @@ def test_product_scene_workflow_runs_offline(monkeypatch, tmp_path):
                     "license": selected_music["license"],
                     "approved": True,
                 },
+                "music_candidates": music_search.data["candidates"],
                 "copy": {
                     "path": copy_path.relative_to(project).as_posix(),
                     "style": selected_style,

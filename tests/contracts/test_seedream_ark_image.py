@@ -239,6 +239,31 @@ def test_missing_source_image_is_rejected_before_network(monkeypatch, tmp_path):
     assert "产品图" in result.error
 
 
+def test_partial_batch_preserves_images_already_generated(monkeypatch, tmp_path):
+    monkeypatch.setenv("SEEDANCE_CONFIG_PATH", str(_write_config(tmp_path)))
+    product = tmp_path / "product.png"
+    product.write_bytes(_png_bytes())
+    encoded = base64.b64encode(_png_bytes("green")).decode()
+    calls = 0
+
+    def fake_post(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return _FakeResponse({"data": [{"b64_json": encoded}]})
+        return _FakeResponse({"error": "failed"}, status_code=500)
+
+    monkeypatch.setattr("requests.post", fake_post)
+    result = SeedreamArkImage().execute(_inputs(tmp_path, product))
+
+    assert result.success is False
+    assert result.data["partial_outputs"] == [
+        str(tmp_path / "images" / "scene_luxury_1.png")
+    ]
+    assert result.artifacts == result.data["partial_outputs"]
+    assert (tmp_path / "images" / "scene_luxury_1.png").is_file()
+
+
 def test_unknown_image_pricing_requires_quote():
     with pytest.raises(PriceQuoteRequired):
         SeedreamArkImage().estimate_cost({"count": 3})

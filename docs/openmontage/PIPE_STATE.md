@@ -23,7 +23,7 @@ table.
 | P0 | DONE | admin preflight: branch `kilo/mega-100` pushed non-force (`a502d69..1da2524`, exit 0); `RUN_RULES.md` + `PIPE_STATE.md` created; stray untracked files listed, not added | `0276b8d` |
 | P1 | DONE | image model locked as CONFIG: `config/image_engine.json` (klein, OWNER_GATED, SDXL-Lightning FAST_FALLBACK) + model-adapter interface (`tools/illustration/model_registry.py`) + CLI (`scripts/image_engine.py`); 40 new tests pass; CI fast suite 12/12 exit 0 | (this commit) |
 | P2 | DONE | style kit for 4 niches (`style.json` + finalized `STYLE_BIBLE.md` each) + consistency kit (canonical front/side/3-4 sheets, seed + card-supported reference policy) + LoRA feasibility note; 30 new tests; 4-image smoke job on Kaggle | (this commit) |
-| P3 | PENDING | — | — |
+| P3 | DONE | episode-scale image pipeline: image brief (46 visual beats from the script, tagged KNOWN/INFERENCE/SPECULATION), budget (7 img/min), batches 40-100, resume by sha256, retry-only-failed, owner-approved cache, hard fail, seed log, manifest; 19 new tests; ONE live 24-image job submitted | (this commit) |
 | P4 | PENDING | — | — |
 | P5 | PENDING | — | — |
 | P6 | PENDING | — | — |
@@ -149,3 +149,40 @@ Statuses used here: `PENDING` (queued, not started), `IN_PROGRESS`, `DONE`,
   budget - no training happens on a T4).
 - **Next action:** fetch + verify + QC the smoke job output, then the owner judges the
   four images (front/side/3-4 consistency).
+
+### 2026-10-22 — P3: episode-scale image pipeline (hardened) + one live 24-image job
+
+- **Image brief step:** `tools/illustration/image_brief.py` derives one prompt per
+  visual beat from `script.md` + `claim_ledger.md` + the niche specs + `style.json`
+  + the locked model, using **tools/prompting (read only)**. Pilot result: **46 visual
+  beats, 0 skipped**, tags KNOWN 23 / INFERENCE 7 / SPECULATION 16; every creature prompt
+  carries its anatomy counts. Subject resolution is a documented rule set (name ->
+  collective -> pronoun -> chapter -> keyword scoring -> chapter continuation); a beat
+  with an unknown claim id or a required unknown beat id **fails closed**.
+- **Episode run:** `tools/illustration/episode_run.py` + `scripts/run_episode_images.py`
+  (brief/plan/submit/status/fetch/finalize/approve) + `tools/illustration/kaggle_episode_bridge.py`.
+  Budget `round(narration_min x images_per_minute)` with the band 6-8 (default 7); the
+  pilot narration is 4.996 min -> 35 images. Batches of 40-100 (balanced), **one Kaggle
+  kernel per batch**. Resume by sha256 (a corrupted cache file is re-queued, never
+  trusted), retry only the failed prompts, owner-approved cache
+  (`assets/illustrations/approved.json`) so approved images are never regenerated,
+  **hard fail** when images < prompts, per-image seed log (append-only, unique seeds),
+  manifest with model + verified versions + params.
+- **Tests (red then green):** `tests/illustration/test_episode_run.py` (19) - fake bridge:
+  partial failure -> only the failed prompt is retried, resume -> nothing is
+  regenerated, hash mismatch -> re-queued, unknown beat -> fail closed, budget, batches,
+  one kernel per batch, seed log, manifest, hard fail. `tests/illustration` + s7/s8 +
+  run_illustrations -> 177 passed / 1 skipped, exit 0; `python scripts/ci_fast_suite.py`
+  -> 19/19, exit 0 (312 s, 4100 MB free after).
+- **Live job:** `ill-se_pilot-b1-klein` - ONE kernel, 24 images (11 creature + 6 food-web
+  + 7 habitat beats), klein, 1344x768, 4 steps, guidance 1.0, fp16, seeds 3000-3046,
+  ~12 min of T4 time. Status at the time of writing: QUEUED (the fetch/verify/QC and the
+  measured seconds/image + usable share are still pending the GPU queue).
+- **Not done / NOT_CHECKED:** the live job's output is not fetched yet (no measured
+  seconds/image or usable share from this run); nothing in the pipeline judges the
+  images (no beauty claim is made).
+- **Owner decision:** approve the fetched images (`run_episode_images.py approve
+  --render-id ...`) so reruns never regenerate them; the unused brief beats stay
+  outside the 24-image job by choice, not by truncation of the script.
+- **Next action:** fetch the live job (verify + QC), record the real seconds/image and
+  the usable share, and let the owner approve or reject the images.

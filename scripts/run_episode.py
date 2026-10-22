@@ -110,8 +110,10 @@ def _artifacts_dir(topic_id, state):
     return d
 
 
-def topic_script(topic_id):
+def topic_script(topic_id, state=None):
+    """Script for an episode: the episode dir wins over the legacy slice dir."""
     candidates = [
+        episode_root(topic_id, state) / "script.md",
         ROOT / f"docs/openmontage/slice/{topic_id.upper()}_FULL_SCRIPT_v0.md",
         slice_dir(topic_id) / "script.md",
     ]
@@ -121,8 +123,9 @@ def topic_script(topic_id):
     return None
 
 
-def topic_ledger(topic_id):
+def topic_ledger(topic_id, state=None):
     candidates = [
+        episode_root(topic_id, state) / "claim_ledger.md",
         ROOT / f"docs/openmontage/evidence/{topic_id.upper()}_CLAIM_LEDGER.md",
         ROOT / f"docs/openmontage/slice/{topic_id.upper()}_CLAIM_LEDGER.md",
         slice_dir(topic_id) / "claim_ledger.md",
@@ -167,7 +170,8 @@ def _render_paths(topic_id, state):
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
     edl = state.get("edl_path") or episode_root(topic_id, state) / f"edit_decisions{tag}.json"
-    manifest = state.get("render_manifest_path") or slice_dir(topic_id) / "render_manifest.json"
+    manifest = state.get("render_manifest_path") or episode_root(
+        topic_id, state) / "render_manifest.json"
     wav = state.get("narration_wav") or _narration_paths(topic_id, state)[1]
     out = state.get("render_output_path") or _render_out(topic_id, state)
     return Path(edl), Path(manifest), Path(wav), Path(out)
@@ -177,7 +181,7 @@ def _render_paths(topic_id, state):
 # Stage implementations
 # ---------------------------------------------------------------------------
 def cmd_claim_ledger_check(topic_id, state):
-    ledger = topic_ledger(topic_id)
+    ledger = topic_ledger(topic_id, state)
     if not ledger:
         return {"status": "BLOCKED", "error": f"no claim ledger for topic {topic_id}"}
     text = ledger.read_text(encoding="utf-8")
@@ -190,7 +194,7 @@ def cmd_claim_ledger_check(topic_id, state):
 
 
 def cmd_script_validation(topic_id, state):
-    script = topic_script(topic_id)
+    script = topic_script(topic_id, state)
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     sentences = [row["sentence"] for row in _parse_script_rows(script)]
@@ -229,7 +233,12 @@ def narration_helper(state=None):
     """
     forced = (state or {}).get("narration_helper")
     if forced:
-        return NARRATION_HELPERS.get(forced)
+        helper = NARRATION_HELPERS.get(forced)
+        # A forced helper is still checked: an absent path must fail closed
+        # (BLOCKED), never raise from subprocess.
+        if helper and Path(helper).is_file() and NARRATION_PYTHON.is_file():
+            return helper
+        return None
     if KOKORO_ONNX_MODEL.is_file() and NARRATION_HELPERS["onnx"].is_file():
         return NARRATION_HELPERS["onnx"]
     if NARRATION_PYTHON.is_file() and NARRATION_HELPERS["torch"].is_file():
@@ -244,7 +253,7 @@ def cmd_narration(topic_id, state):
         return {"status": "OK", "outputs": {"narration_wav": str(wav)}}
     # Chapter mode: synthesize only this chapter's sentences (chapter_script),
     # otherwise the full topic script.
-    script = state.get("chapter_script") or topic_script(topic_id)
+    script = state.get("chapter_script") or topic_script(topic_id, state)
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     if not raw.exists():
@@ -282,14 +291,14 @@ def cmd_narration(topic_id, state):
         "sample_rate": 44100,
         "voice": "af_heart",
         "engine": "kokoro_onnx_82m_cpu",
-        "sentences": len(sentences),
+        "sentences": len([r for r in _parse_script_rows(script)
+                          if str(r.get("sentence", "")).strip()]),
     }
-    shared_assets().mkdir(parents=True, exist_ok=True)
+    _artifacts_dir(topic_id, state)
     chap = _chap_idx(state)
     mtag = f"_chapter{chap}" if chap is not None else ""
-    (shared_assets() / f"narration_manifest{mtag}.json").write_text(
-        json.dumps(manifest, indent=2), encoding="utf-8"
-    )
+    manifest_path = _artifacts_dir(topic_id, state) / f"narration_manifest{mtag}.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return {"status": "OK", "outputs": {"narration_wav": str(wav), **result.data,
                                         "narration_duration_s": dur}}
 
@@ -309,7 +318,7 @@ def cmd_subtitles(topic_id, state):
     helper = ROOT / "scripts" / "z3_subtitles.py"
     if not helper.exists():
         return {"status": "BLOCKED", "error": "subtitle helper missing"}
-    script_path = state.get("chapter_script") or topic_script(topic_id)
+    script_path = state.get("chapter_script") or topic_script(topic_id, state)
     if not script_path:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     sentences = []
@@ -448,7 +457,7 @@ def cmd_edl(topic_id, state):
     if out.exists():
         return {"status": "OK", "outputs": {"edit_decisions": str(out), "resumed": True}}
 
-    script = state.get("chapter_script") or state.get("script_path") or topic_script(topic_id)
+    script = state.get("chapter_script") or state.get("script_path") or topic_script(topic_id, state)
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     rows = _parse_script_rows(script)
@@ -795,7 +804,7 @@ def _qc_assets(topic_id, state):
 def cmd_qc(topic_id, state):
     video = episode_root(topic_id, state) / "renders" / f"final_{topic_id}_draft.mp4"
     assets = _qc_assets(topic_id, state)
-    ledger = topic_ledger(topic_id) or state.get("claim_ledger_path")
+    ledger = topic_ledger(topic_id, state) or state.get("claim_ledger_path")
     if not video.exists():
         return {"status": "BLOCKED", "error": "no rendered video for QC"}
     if not ledger:
@@ -988,7 +997,7 @@ def cmd_release_gate(topic_id, state):
         return {"status": "BLOCKED", "error": f"QC report missing for release gate: {qa_report}"}
 
     claim_ids = state.get("claim_ids_path") or artifacts / "claim_ids.json"
-    ledger = state.get("claim_ledger_path") or topic_ledger(topic_id)
+    ledger = state.get("claim_ledger_path") or topic_ledger(topic_id, state)
     signoffs = state.get("owner_signoffs") or {}
 
     verdict = publication_blockers(

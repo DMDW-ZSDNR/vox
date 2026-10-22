@@ -150,10 +150,28 @@ def cmd_submit(args: argparse.Namespace) -> int:
         print("BLOCKED: nothing to generate (plan is empty; everything cached)")
         return 2
     attempt = args.attempt
-    job = build_job(prev.get("episode_id", "ep"), prev["model"], prev["renders"],
+    renders = list(prev["renders"])
+    limit = int(getattr(args, "limit", 0) or 0)
+    if limit:
+        if limit > len(renders):
+            print(f"BLOCKED: --limit {limit} exceeds the planned "
+                  f"{len(renders)} renders")
+            return 2
+        renders = renders[:limit]
+    ladder = (_ladder_for(prev["model"], attempt)
+              if not getattr(args, "keep_ladder", False)
+              else list(prev.get("install_ladder") or
+                        DEFAULT_INSTALL_LADDER[prev["model"]]))
+    job = build_job(prev.get("episode_id", "ep"), prev["model"], renders,
                     width=prev.get("width", 1344), height=prev.get("height", 768),
-                    ladder=_ladder_for(prev["model"], attempt), attempt=attempt,
+                    ladder=ladder, attempt=attempt,
                     max_wall_seconds=prev.get("max_wall_seconds", 5400))
+    if limit:
+        job["changed_from_previous"] += (
+            f"; smoke: first {limit}/{len(prev['renders'])} renders only")
+    override_id = getattr(args, "job_id", "") or ""
+    if override_id:
+        job["job_id"] = override_id
     job["plan"] = prev.get("plan", {})
 
     work = _episode_root(prev.get("episode_id", "ep")) / "jobs" / job["job_id"]
@@ -289,6 +307,12 @@ def main() -> int:
     p = sub.add_parser("submit", help="push ONE Kaggle job (no polling)")
     p.add_argument("--job-json", required=True)
     p.add_argument("--attempt", type=int, default=1)
+    p.add_argument("--limit", type=int, default=0,
+                   help="submit only the first N planned renders (smoke retry)")
+    p.add_argument("--job-id", default="",
+                   help="override the derived job id (keeps failed folder intact)")
+    p.add_argument("--keep-ladder", action="store_true",
+                   help="start at the proven install rung instead of skipping it")
     p.add_argument("--no-push", action="store_true")
     p.set_defaults(func=cmd_submit)
 

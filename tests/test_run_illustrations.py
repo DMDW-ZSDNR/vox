@@ -153,6 +153,43 @@ def test_submit_attempt_two_skips_tried_ladder_rung(tmp_path, fake_bridge):
     shutil.rmtree(ROOT / "projects" / "t_ep", ignore_errors=True)
 
 
+def test_submit_limit_and_job_id_override_keep_ladder(tmp_path, fake_bridge):
+    """A smoke retry must shrink the batch, keep the proven install rung and
+    get a fresh job id (so the failed attempt's folder is not overwritten)."""
+    job_json = tmp_path / "job.json"
+    assert _run(["plan", "--episode", "t_ep", "--per-spec", "2",
+                 "--job-json", str(job_json),
+                 "--cache", str(tmp_path / "c")]) == 0
+    full = json.loads(job_json.read_text())
+    assert len(full["renders"]) > 3
+    assert _run(["submit", "--job-json", str(job_json), "--no-push",
+                 "--attempt", "2", "--limit", "3",
+                 "--job-id", "ill-t_ep-klein-2-smoke",
+                 "--keep-ladder"]) == 0
+    work = ROOT / "projects" / "t_ep" / "jobs" / "ill-t_ep-klein-2-smoke"
+    sub = json.loads((work / "job.json").read_text())
+    assert sub["job_id"] == "ill-t_ep-klein-2-smoke"
+    assert len(sub["renders"]) == 3
+    assert [r["render_id"] for r in sub["renders"]] == \
+        [r["render_id"] for r in full["renders"][:3]]
+    assert sub["install_ladder"] == full["install_ladder"]
+    assert "smoke" in sub["changed_from_previous"]
+    assert "ill-t_ep-klein-2-smoke" in (work / "run.py").read_text()
+    shutil.rmtree(ROOT / "projects" / "t_ep", ignore_errors=True)
+
+
+def test_submit_limit_rejects_more_than_planned(tmp_path, fake_bridge):
+    job_json = tmp_path / "job.json"
+    assert _run(["plan", "--episode", "t_ep", "--per-spec", "1",
+                 "--job-json", str(job_json),
+                 "--cache", str(tmp_path / "c")]) == 0
+    n = len(json.loads(job_json.read_text())["renders"])
+    assert _run(["submit", "--job-json", str(job_json), "--no-push",
+                 "--limit", str(n + 5)]) != 0
+    assert not (ROOT / "projects" / "t_ep" / "jobs" / "ill-t_ep-klein-1").exists()
+    shutil.rmtree(ROOT / "projects" / "t_ep", ignore_errors=True)
+
+
 # ------------------------------------------------------------------- fetch
 def test_fetch_verifies_labels_and_reports_qc(tmp_path, fake_bridge):
     job_json = tmp_path / "job.json"

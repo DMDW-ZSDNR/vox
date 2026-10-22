@@ -83,3 +83,35 @@ def test_cmd_narration_fails_closed_without_helper(episode, monkeypatch):
     res = run_episode.cmd_narration("se_pilot", state)
     assert res["status"] == "BLOCKED"
     assert "helper" in res["error"]
+
+
+def test_manifest_engine_matches_the_helper_that_ran(episode, monkeypatch):
+    """The manifest must not claim the ONNX engine when the torch helper ran."""
+    state = {"episode_dir": str(episode), "narration_helper": "torch"}
+    helper = episode / "helper.py"
+    helper.write_text("# fake helper\n", encoding="utf-8")
+    monkeypatch.setitem(run_episode.NARRATION_HELPERS, "torch", helper)
+    monkeypatch.setattr(run_episode, "NARRATION_PYTHON", Path("/usr/bin/env"))
+
+    def fake_run(cmd, capture_output=True, text=True, timeout=None):
+        _write_wav(Path(cmd[-1]), 1.0)
+
+        class R:
+            returncode = 0
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr(run_episode.subprocess, "run", fake_run)
+
+    class FakeFinish:
+        def execute(self, params):
+            src, dst = Path(params["input_path"]), Path(params["output_path"])
+            dst.write_bytes(src.read_bytes())
+            return ToolResult(success=True, data={"duration_s": 1.0})
+
+    monkeypatch.setattr("tools.audio.finish_audio.FinishAudioTool", FakeFinish)
+    assert run_episode.cmd_narration("se_pilot", state)["status"] == "OK"
+    manifest = json.loads(
+        (episode / "artifacts" / "narration_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["engine"] == "kokoro_82m_torch_cpu"

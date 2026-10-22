@@ -290,7 +290,9 @@ def cmd_narration(topic_id, state):
         "tolerance": 1.0,
         "sample_rate": 44100,
         "voice": "af_heart",
-        "engine": "kokoro_onnx_82m_cpu",
+        "engine": ("kokoro_onnx_82m_cpu"
+                   if Path(helper).name.startswith("z3_kokoro")
+                   else "kokoro_82m_torch_cpu"),
         "sentences": len([r for r in _parse_script_rows(script)
                           if str(r.get("sentence", "")).strip()]),
     }

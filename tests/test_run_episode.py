@@ -70,7 +70,8 @@ def test_unknown_claim_id_blocked(tmp_path, monkeypatch):
     fakes["claim_ledger_check"] = _make_fake(
         "claim_ledger_check", status="BLOCKED", error="unknown claim_id: ARTEMIS-99", call_log=calls)
     monkeypatch.setattr(run_episode, "STAGE_REGISTRY", fakes)
-    res = run_episode.run_pipeline("artemis", state_path=tmp_path / "s.json", stages=fakes)
+    res = run_episode.run_pipeline("artemis", state_path=tmp_path / "s.json", stages=fakes,
+                                   initial_state=_fake_states(["zero_cost_gate"]))
     assert res["verdict"] == "BLOCKED", res
     assert res["stage"] == "claim_ledger_check"
     assert calls == ["claim_ledger_check"], calls

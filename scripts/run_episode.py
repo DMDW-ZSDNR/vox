@@ -34,16 +34,34 @@ MIN_FREE_BYTES = 800 * 1024 * 1024  # global stop threshold (zero-cost mode)
 MAX_CHAPTER_DURATION = 360  # 6 minutes per chapter (Z4)
 
 STAGES = [
+    "zero_cost_gate",
     "claim_ledger_check",
     "script_validation",
     "footage_manifest_rights",
     "narration",
     "subtitles",
     "edl",
+    "speculative_gate",
     "render",
     "finish_audio",
     "qc",
+    "release_gate",
     "package_draft",
+]
+
+# Every model/network route the factory may take, with a named route and a
+# KNOWN cost. Strict zero-cost mode blocks anything unnamed or unpriced
+# (lib/zero_cost_gate.py); this list is the declaration the gate checks.
+DEFAULT_ZERO_COST_ROUTES = [
+    {"tool": "video_compose", "operation": "render", "provider": "ffmpeg",
+     "runtime": "local", "route": "ffmpeg:h264+aac", "cost_usd": 0.0,
+     "status": "available"},
+    {"tool": "kokoro_tts", "operation": "synthesize", "provider": "kokoro",
+     "runtime": "local", "route": "local:kokoro-82m-onnx", "cost_usd": 0.0,
+     "status": "available"},
+    {"tool": "kaggle_bridge", "operation": "image_batch", "provider": "kaggle",
+     "runtime": "api", "route": "kaggle:forts845/openmontage-runner",
+     "cost_usd": 0.0, "status": "available"},
 ]
 
 
@@ -79,6 +97,19 @@ def slice_dir(topic_id):
     return ROOT / "docs/openmontage/slice" / topic_id
 
 
+def episode_root(topic_id, state=None):
+    """Episode working directory: `state["episode_dir"]` override or the
+    legacy slice dir. Lets a pilot live in projects/<episode>/."""
+    override = (state or {}).get("episode_dir")
+    return Path(override) if override else slice_dir(topic_id)
+
+
+def _artifacts_dir(topic_id, state):
+    d = episode_root(topic_id, state) / "artifacts"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def topic_script(topic_id):
     candidates = [
         ROOT / f"docs/openmontage/slice/{topic_id.upper()}_FULL_SCRIPT_v0.md",
@@ -112,14 +143,14 @@ def _chap_idx(state):
 
 def _narration_paths(topic_id, state):
     """Per-chapter narration wavs so chapters don't clobber each other."""
-    base = slice_dir(topic_id)
+    base = episode_root(topic_id, state)
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
     return base / f"narration_raw{tag}.wav", base / f"narration_finished{tag}.wav"
 
 
 def _render_out(topic_id, state):
-    base = slice_dir(topic_id) / "renders"
+    base = episode_root(topic_id, state) / "renders"
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
     return base / f"final_{topic_id}_draft{tag}.mp4"
@@ -135,7 +166,7 @@ def _render_paths(topic_id, state):
     """
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
-    edl = state.get("edl_path") or slice_dir(topic_id) / f"edit_decisions{tag}.json"
+    edl = state.get("edl_path") or episode_root(topic_id, state) / f"edit_decisions{tag}.json"
     manifest = state.get("render_manifest_path") or slice_dir(topic_id) / "render_manifest.json"
     wav = state.get("narration_wav") or _narration_paths(topic_id, state)[1]
     out = state.get("render_output_path") or _render_out(topic_id, state)
@@ -182,7 +213,7 @@ def cmd_footage_manifest_rights(topic_id, state):
 
 
 def cmd_narration(topic_id, state):
-    slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
+    episode_root(topic_id, state).mkdir(parents=True, exist_ok=True)
     raw, wav = _narration_paths(topic_id, state)
     if wav.exists():
         return {"status": "OK", "outputs": {"narration_wav": str(wav)}}
@@ -240,11 +271,12 @@ def cmd_subtitles(topic_id, state):
     _raw, wav = _narration_paths(topic_id, state)
     if not wav.exists():
         return {"status": "BLOCKED", "error": "no finished narration for subtitles"}
-    slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
+    base = episode_root(topic_id, state)
+    base.mkdir(parents=True, exist_ok=True)
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
-    words_out = slice_dir(topic_id) / f"word-timestamps{tag}.json"
-    srt_out = slice_dir(topic_id) / f"subtitles{tag}.srt"
+    words_out = base / f"word-timestamps{tag}.json"
+    srt_out = base / f"subtitles{tag}.srt"
     if words_out.exists() and srt_out.exists():
         return {"status": "OK", "outputs": {"words": str(words_out), "subtitles": str(srt_out)}}
     helper = ROOT / "scripts" / "z3_subtitles.py"
@@ -364,7 +396,7 @@ def cmd_edl(topic_id, state):
     """
     chap = _chap_idx(state)
     tag = f"_chapter{chap}" if chap is not None else ""
-    out = Path(state.get("edl_path") or slice_dir(topic_id) / f"edit_decisions{tag}.json")
+    out = Path(state.get("edl_path") or episode_root(topic_id, state) / f"edit_decisions{tag}.json")
     if out.exists():
         return {"status": "OK", "outputs": {"edit_decisions": str(out), "resumed": True}}
 
@@ -609,7 +641,7 @@ def cmd_render(topic_id, state):
 
 
 def cmd_finish_audio(topic_id, state):
-    wav = slice_dir(topic_id) / "narration_finished.wav"
+    wav = _narration_paths(topic_id, state)[1]
     if not wav.exists():
         return {"status": "BLOCKED", "error": "no narration to finish"}
     # Idempotent: finish_audio output is 44100 Hz; raw kokoro output is 24000 Hz.
@@ -633,10 +665,18 @@ def cmd_finish_audio(topic_id, state):
     return {"status": "OK", "outputs": {"finished_wav": str(finished)}}
 
 
+def _qc_assets(topic_id, state):
+    """Where QC inputs/outputs live: episode artifacts for a pilot, else the
+    legacy shared slice artifacts."""
+    if (state or {}).get("episode_dir"):
+        return _artifacts_dir(topic_id, state)
+    return shared_assets()
+
+
 def cmd_qc(topic_id, state):
-    video = slice_dir(topic_id) / "renders" / f"final_{topic_id}_draft.mp4"
-    assets = shared_assets()
-    ledger = topic_ledger(topic_id)
+    video = episode_root(topic_id, state) / "renders" / f"final_{topic_id}_draft.mp4"
+    assets = _qc_assets(topic_id, state)
+    ledger = topic_ledger(topic_id) or state.get("claim_ledger_path")
     if not video.exists():
         return {"status": "BLOCKED", "error": "no rendered video for QC"}
     if not ledger:
@@ -645,17 +685,18 @@ def cmd_qc(topic_id, state):
     tag = f"_chapter{chap}" if chap is not None else ""
     inputs = {
         "input_path": str(video),
-        "output_path": str(assets / f"qa_report{tag}.json"),
+        "output_path": str(state.get("qa_report_path") or assets / f"qa_report{tag}.json"),
         "narration_manifest": str(shared_assets() / f"narration_manifest{tag}.json"),
-        "subtitle_path": str(slice_dir(topic_id) / f"subtitles{tag}.srt"),
+        "subtitle_path": str(episode_root(topic_id, state) / f"subtitles{tag}.srt"),
         "credits_path": str(assets / "credits.txt"),
         "claim_ids_path": str(assets / "claim_ids.json"),
         "claim_ledger_path": str(ledger),
         "rights_records_path": str(assets / "rights_records.json"),
-        "edit_decisions_path": str(slice_dir(topic_id) / f"edit_decisions{tag}.json"),
+        "edit_decisions_path": str(state.get("edl_path")
+                                  or episode_root(topic_id, state) / f"edit_decisions{tag}.json"),
         "config_path": str(ROOT / "config" / "qc_thresholds.json"),
     }
-    for k in ("narration_manifest", "subtitle_path", "credits_path", "claim_ids_path",
+    for k in ("input_path", "narration_manifest", "subtitle_path", "credits_path", "claim_ids_path",
               "rights_records_path", "edit_decisions_path"):
         if not Path(inputs[k]).exists():
             return {"status": "BLOCKED", "error": f"missing QC input: {k}"}
@@ -668,7 +709,7 @@ def cmd_qc(topic_id, state):
 
 
 def cmd_package_draft(topic_id, state):
-    pkg = slice_dir(topic_id) / "package"
+    pkg = episode_root(topic_id, state) / "package"
     pkg.mkdir(parents=True, exist_ok=True)
     assets = shared_assets()
     for name in ("narration_manifest.json", "subtitles.srt", "credits.txt", "edit_decisions.json",
@@ -676,17 +717,162 @@ def cmd_package_draft(topic_id, state):
         src = assets / name
         if src.exists():
             shutil.copy2(src, pkg / name)
-    video = slice_dir(topic_id) / "renders" / f"final_{topic_id}_draft.mp4"
+    video = episode_root(topic_id, state) / "renders" / f"final_{topic_id}_draft.mp4"
+    verdict_path = _artifacts_dir(topic_id, state) / "release_verdict.json"
+    verdict = None
+    if verdict_path.is_file():
+        try:
+            verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            verdict = None
     manifest = {
-        "topic_id": topic_id, "status": "DRAFT_NOT_PUBLISHABLE",
+        "topic_id": topic_id,
+        "status": "DRAFT_NOT_PUBLISHABLE" if not (verdict or {}).get("publishable") else "DRAFT",
         "package": str(pkg),
         "video": str(video) if video.exists() else None,
+        "release_verdict": str(verdict_path) if verdict_path.is_file() else None,
+        "blockers": len((verdict or {}).get("reasons", [])),
     }
     (pkg / "package_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return {"status": "OK", "outputs": {"package": str(pkg), "manifest": str(pkg / "package_manifest.json")}}
 
 
+# ---------------------------------------------------------------------------
+# Gates (G1/G2): zero-cost, speculative-evolution, release
+# ---------------------------------------------------------------------------
+def cmd_zero_cost_gate(topic_id, state):
+    """Fail-closed zero-cost check on every declared route.
+
+    An unnamed route or an unpriced route is BLOCKED, never "free"
+    (lib/zero_cost_gate.py). State may override `zero_cost_routes` for tests
+    or for an owner-approved paid route.
+    """
+    from lib.zero_cost_gate import STRICT_ZERO_COST, ToolFacts, evaluate_call
+
+    routes = state.get("zero_cost_routes") or DEFAULT_ZERO_COST_ROUTES
+    decisions = []
+    blocked = []
+    for r in routes:
+        facts = ToolFacts(
+            tool=str(r.get("tool", "unknown")),
+            operation=str(r.get("operation", "execute")),
+            provider=r.get("provider"),
+            runtime=str(r.get("runtime", "api")),
+            route=r.get("route"),
+            cost_usd=r.get("cost_usd"),
+            status=str(r.get("status", "available")),
+        )
+        d = evaluate_call(facts, mode=STRICT_ZERO_COST,
+                          user_approved=bool(r.get("user_approved")))
+        decisions.append(d.as_dict())
+        if d.blocked:
+            blocked.append(f"{facts.tool}: {d.reason}")
+
+    report = _artifacts_dir(topic_id, state) / "zero_cost_gate.json"
+    report.write_text(json.dumps({
+        "mode": STRICT_ZERO_COST, "decisions": decisions,
+        "blocked": len(blocked), "created_utc": iso_now(),
+    }, indent=2), encoding="utf-8")
+    outs = {"report": str(report), "blocked": len(blocked),
+            "routes": len(decisions)}
+    if blocked:
+        return {"status": "BLOCKED", "error": "; ".join(blocked)[:500],
+                "outputs": outs}
+    return {"status": "OK", "outputs": outs}
+
+
+def cmd_speculative_gate(topic_id, state):
+    """Speculative-evolution label + motion-variety gate on the EDL.
+
+    Non-speculative niches skip it explicitly (recorded, not assumed).
+    Missing EDL = BLOCKED (fail-closed).
+    """
+    if state.get("speculative") is False:
+        return {"status": "OK", "outputs": {"skipped": True,
+                                            "reason": "niche is not speculative"}}
+    from tools.illustration.s1_speculative_gate import (
+        check_motion_variety, check_speculative_label)
+
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    edl = Path(state.get("edl_path")
+               or episode_root(topic_id, state) / f"edit_decisions{tag}.json")
+    if not edl.is_file():
+        return {"status": "BLOCKED", "error": f"no EDL for speculative gate: {edl}"}
+    try:
+        data = json.loads(edl.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return {"status": "BLOCKED", "error": f"unreadable EDL: {exc}"}
+    cuts = data.get("cuts") or data.get("timeline") or []
+    if not isinstance(cuts, list) or not cuts:
+        return {"status": "BLOCKED", "error": "EDL has no cuts"}
+
+    duration = float(data.get("duration")
+                     or sum(float(c.get("duration", 0) or 0) for c in cuts) or 0.0)
+    if duration <= 0:
+        return {"status": "BLOCKED", "error": "EDL duration is zero"}
+
+    label = check_speculative_label(cuts, duration)
+    segments = [{**c, **(c.get("motion") or {})} for c in cuts]
+    motion = check_motion_variety(segments)
+
+    report = _artifacts_dir(topic_id, state) / f"speculative_gate{tag}.json"
+    report.write_text(json.dumps({"label": label, "motion": motion,
+                                  "edl": str(edl), "created_utc": iso_now()},
+                                 indent=2), encoding="utf-8")
+    outs = {"report": str(report), "ai_total": label["ai_total"],
+            "ai_labeled": label["ai_labeled"], "motion_problems": len(motion["problems"])}
+    problems = [p["reason"] for p in label["problems"]] +                [p["reason"] for p in motion["problems"]]
+    if problems:
+        return {"status": "BLOCKED", "error": "; ".join(problems)[:500],
+                "outputs": outs}
+    return {"status": "OK", "outputs": outs}
+
+
+def cmd_release_gate(topic_id, state):
+    """Compute publication blockers; an agent never publishes.
+
+    Returns OK with `publishable: false` when the draft is sound but owner
+    sign-offs / honest labels are still missing — that is the expected state.
+    A missing QC report is BLOCKED (fail-closed).
+    """
+    from tools.qa.release_gate import publication_blockers
+
+    chap = _chap_idx(state)
+    tag = f"_chapter{chap}" if chap is not None else ""
+    artifacts = _artifacts_dir(topic_id, state)
+    qa_report = Path(state.get("qa_report_path") or artifacts / f"qa_report{tag}.json")
+    if not qa_report.is_file() and not state.get("episode_dir"):
+        legacy = shared_assets() / f"qa_report{tag}.json"
+        if legacy.is_file():
+            qa_report = legacy
+    if not qa_report.is_file():
+        return {"status": "BLOCKED", "error": f"QC report missing for release gate: {qa_report}"}
+
+    claim_ids = state.get("claim_ids_path") or artifacts / "claim_ids.json"
+    ledger = state.get("claim_ledger_path") or topic_ledger(topic_id)
+    signoffs = state.get("owner_signoffs") or {}
+
+    verdict = publication_blockers(
+        qa_report_path=qa_report,
+        claim_ids_path=claim_ids if Path(claim_ids).is_file() else None,
+        claim_ledger_path=ledger if ledger and Path(ledger).is_file() else None,
+        owner_signoffs=signoffs,
+    )
+    verdict.update({"topic_id": topic_id, "qa_report": str(qa_report),
+                    "owner_signoffs": signoffs, "created_utc": iso_now()})
+    out = artifacts / "release_verdict.json"
+    out.write_text(json.dumps(verdict, indent=2), encoding="utf-8")
+    return {"status": "OK", "outputs": {
+        "verdict": str(out), "publishable": verdict["publishable"],
+        "blockers": len(verdict["reasons"]),
+        "single_source_count": verdict["single_source_count"]}}
+
+
 STAGE_REGISTRY = {
+    "zero_cost_gate": cmd_zero_cost_gate,
+    "speculative_gate": cmd_speculative_gate,
+    "release_gate": cmd_release_gate,
     "claim_ledger_check": cmd_claim_ledger_check,
     "script_validation": cmd_script_validation,
     "footage_manifest_rights": cmd_footage_manifest_rights,
@@ -745,7 +931,7 @@ def run_pipeline(topic_id, state_path=None, state_root=None, stages=None, initia
             state["stages"][stage] = cp
             continue
 
-        slice_dir(topic_id).mkdir(parents=True, exist_ok=True)
+        episode_root(topic_id, state).mkdir(parents=True, exist_ok=True)
         t0 = time.time()
         disk_before = disk_free_bytes(state_path.parent)
         try:

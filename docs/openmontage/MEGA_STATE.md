@@ -17,8 +17,8 @@ paths this agent owns, then `git pull --rebase` + non-force push.
 |---|---|---|---|
 | G0 PREFLIGHT | DONE | ci_fast_suite 10/10 exit 0 (2247->2239 MB); 19 episode/EDL tests pass; 2515 tests collected exit 0; audit appendix A in FACTORY_GAP_AUDIT.md | (this commit) |
 | G1 QC + CONTRACTS | DONE | qc.py: added_value start/end fix + narration/graphics/still gates, motion_variety, speculative_label, strict rights flags/provenance; qc_report schema test; release_gate (SINGLE_SOURCE blocks publish); run_evals.py 6/6 PASS; fast suite 12/12 exit 0 | (this commit) |
-| G2 EPISODE PIPELINE | PENDING | — | — |
-| G3 IMAGE ENGINE | PENDING | — | — |
+| G2 EPISODE PIPELINE | DONE | run_episode.py now 13 stages: zero_cost_gate (fail-closed on unnamed/unpriced routes), speculative_gate (label + motion lint on EDL), release_gate (publication blockers; draft stays NOT_PUBLISHABLE), episode_dir state override; tests/test_run_episode_gates.py 14 passed, legacy run_episode 14 passed, lavfi integration (real ffmpeg clip -> real QC) 1 passed | (this commit) |
+| G3 IMAGE ENGINE | DONE (engine) | tools/illustration/episode_batch.py (niche-spec adapter, per-model plan, budget cap 120, cache reuse, fail-closed fetch verify, label+QC manifest) + scripts/run_illustrations.py (plan/submit/status/fetch, no polling); 28 tests passed; Kaggle job `ill-se_pilot-klein-1` submitted (84 renders, klein, 1344x768, ladder released_037_x4) -> status RUNNING at submit time; images NOT YET fetched (G8 owner of output) | (this commit) |
 | G4 VISUAL SOURCES | PENDING | — | — |
 | G5 AUDIO + VOICE | PENDING | — | — |
 | G6 EDITING + RENDER | PENDING | — | — |

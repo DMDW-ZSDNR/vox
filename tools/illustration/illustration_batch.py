@@ -48,8 +48,18 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def apply_illustration_label(src: str | Path, dst: str | Path) -> Path:
-    """Burn a semi-transparent 'Illustration' chip bottom-right of src -> dst."""
+def apply_illustration_label(src: str | Path, dst: str | Path,
+                            text: str = CHIP_TEXT) -> Path:
+    """Burn a semi-transparent label chip bottom-right of src -> dst.
+
+    `text` defaults to "Illustration"; speculative-evolution stills pass
+    "Speculative illustration" so the AI disclosure travels with the pixels.
+    """
+    text = str(text or "").strip()
+    if not text:
+        raise ValueError("label text must not be empty")
+    if len(text) > 40:
+        raise ValueError("label text is too long for the chip")
     src, dst = Path(src), Path(dst)
     with Image.open(src).convert("RGB") as img:
         overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -62,12 +72,12 @@ def apply_illustration_label(src: str | Path, dst: str | Path) -> Path:
             font = ImageFont.load_default()
         tmp = Image.new("RGBA", (1, 1))
         td = ImageDraw.Draw(tmp)
-        bbox = td.textbbox((0, 0), CHIP_TEXT, font=font)
+        bbox = td.textbbox((0, 0), text, font=font)
         tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
         box = [img.width - tw - pad * 2, img.height - th - pad * 2,
                img.width - pad, img.height - pad]
         d.rounded_rectangle(box, radius=8, fill=(0, 0, 0, 150))
-        d.text((box[0] + pad, box[1] + pad), CHIP_TEXT, font=font, fill=(255, 255, 255, 230))
+        d.text((box[0] + pad, box[1] + pad), text, font=font, fill=(255, 255, 255, 230))
         out = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
         out.save(dst, optimize=True)
     return dst

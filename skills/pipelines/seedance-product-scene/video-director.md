@@ -10,6 +10,11 @@ Before each paid call state: `seedance_ark`, provider `ark`, model
 `doubao-seedance-2-5-260628`, one clip per style, 8 seconds, 9:16, 720p, and
 whether pricing is confirmed.
 
+Seedance 2.5 requires the current ARK console 报价 in CNY per million
+completion tokens. Ask the user to confirm that quote before the first paid
+video. If no quote is available, 停止. Offer 3 choices: obtain the console
+quote, request an approved model/provider change, or stop. Never invent a price.
+
 ## Generation
 
 For each selected style call `seedance_ark` once:
@@ -20,6 +25,7 @@ For each selected style call `seedance_ark` once:
   "reference_image_path": "<approved image>",
   "prompt": "<three-shot prompt>",
   "model_variant": "2.5",
+  "custom_price_cny_per_million_tokens": "<user-confirmed ARK quote>",
   "duration": 8,
   "aspect_ratio": "9:16",
   "resolution": "720p",

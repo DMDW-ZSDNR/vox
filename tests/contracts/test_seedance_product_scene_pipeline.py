@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from lib.pipeline_loader import get_stage_order, load_pipeline
 
 
@@ -106,3 +108,13 @@ def test_music_compose_and_delivery_chain_is_explicit():
     assert stages["compose"]["produces"] == ["render_report", "final_review"]
     assert "product_delivery" in stages["publish"]["required_artifacts_in"]
     assert "publish_log" in stages["publish"]["produces"]
+
+
+def test_video_skill_requires_user_confirmed_seedance_25_price():
+    body = Path(
+        "skills/pipelines/seedance-product-scene/video-director.md"
+    ).read_text(encoding="utf-8")
+
+    assert "custom_price_cny_per_million_tokens" in body
+    assert "报价" in body
+    assert "停止" in body

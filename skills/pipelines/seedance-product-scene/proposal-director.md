@@ -15,6 +15,9 @@ Explain the fixed production shape:
 - no burned text, subtitle, CTA, or logo.
 
 Show known costs and mark unknown Seedance image pricing as “需要报价”.
+For Seedance 2.5 video, record the user-confirmed ARK quote in CNY per million
+completion tokens in the proposal and decision log. If no quote exists, stop
+before paid video generation.
 Ask the user to approve preview spend before any paid request.
 
 ## Runtime Contract

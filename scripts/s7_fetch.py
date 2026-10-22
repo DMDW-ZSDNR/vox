@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -134,7 +135,7 @@ def main() -> int:
                     help="output folder prefix inside the kernel output "
                          "(s7 -> s7_bakeoff_<model>, s8 -> s8_bakeoff_<model>)")
     args = ap.parse_args()
-    if not args.model.replace("-", "").replace("_", "").isalnum():
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", args.model) or ".." in args.model:
         raise SystemExit(f"BLOCKED: unsafe model name: {args.model!r}")
     s = fetch(args.model, args.job_id, args.prefix)
     print(json.dumps({k: v for k, v in s.items() if k != "install_log"}, indent=2))

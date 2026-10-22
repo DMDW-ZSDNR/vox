@@ -167,3 +167,27 @@ def test_five_panel_pack_with_second_best(tmp_path):
     sheet = Image.open(pack / "sheet_s01.png")
     assert sheet.width <= 1600
     assert "second_best" in (pack / "INSTRUCTIONS.txt").read_text(encoding="utf-8")
+
+
+def test_four_panel_sheet_draws_every_model(tmp_path):
+    """A dropped panel would blind the owner to a model."""
+    root = tmp_path / "out"
+    models = ["sdxl", "klein", "dreamshaper-xl", "sdxl-lightning"]
+    for model in models:
+        d = root / f"s7_bakeoff_{model}"
+        (d / "images").mkdir(parents=True)
+        im = Image.new("RGB", (1024, 1024), (30, 30, 30))
+        im.save(d / "images" / "r0001.png")
+        (d / "manifest.json").write_text(json.dumps({
+            "model": model, "job_id": f"s8-{model}-1", "images": [
+                {"render_id": "r0001", "scene_id": "s01", "file": "r0001.png",
+                 "sha256": "x", "bytes": 1},
+            ],
+        }), encoding="utf-8")
+    pack = tmp_path / "pack"
+    mapping = run(root, pack, salt="s8")
+    sheet = Image.open(pack / "sheet_s01.png")
+    assert sheet.width <= 1600
+    # four panels -> the sheet must be wider than a three-panel sheet
+    assert sheet.width > 1200
+    assert set(mapping["scenes"]["s01"]) == {"A", "B", "C", "D"}

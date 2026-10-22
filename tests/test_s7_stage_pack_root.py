@@ -78,3 +78,27 @@ def test_missing_manifest_blocks(tmp_path):
         capture_output=True, text=True)
     assert r.returncode != 0
     assert "BLOCKED" in (r.stdout + r.stderr)
+
+
+def test_s8_job_manifests_are_found(tmp_path):
+    """S8 job ids are s8-<model>-<n>; the lookup must see both prefixes."""
+    cache = tmp_path / "cache"
+    logs = tmp_path / "logs"
+    out = tmp_path / "out"
+    (cache / "sdxl-lightning").mkdir(parents=True)
+    png = cache / "sdxl-lightning" / "r1001.png"
+    png.write_bytes(b"png")
+    job = logs / "s8-sdxl-lightning-2"
+    job.mkdir(parents=True)
+    (job / "manifest.json").write_text(json.dumps({
+        "model": "sdxl-lightning", "job_id": "s8-sdxl-lightning-2",
+        "images": [{"file": "r1001.png", "render_id": "r1001",
+                    "scene_id": "s01", "sha256": _sha(png), "bytes": 3}],
+    }), encoding="utf-8")
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--cache-root", str(cache),
+         "--logs-root", str(logs), "--out", str(out), "--models",
+         "sdxl-lightning"],
+        capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "s8-sdxl-lightning-2" in r.stdout

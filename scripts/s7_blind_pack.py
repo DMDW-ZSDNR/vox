@@ -68,24 +68,33 @@ def panel_order(scene: str, salt: str = "s7",
 
 def build_sheet(images: Dict[str, Path], order: Dict[str, str],
                 out_path: Path) -> tuple[int, int]:
-    """Compose one comparison sheet; returns (width, height)."""
-    labels = "ABC"[:len(order)]
-    width = MARGIN + len(labels) * PANEL + (len(labels) - 1) * GAP + MARGIN
+    """Compose one comparison sheet; returns (width, height).
+
+    Every model in `order` gets a panel: with 4 or 5 models the panel shrinks
+    so the sheet stays inside MAX_WIDTH (1600 px, phone-friendly). Dropping a
+    panel would silently blind the owner to a model.
+    """
+    labels = "ABCDE"[:len(order)]
+    if len(labels) != len(order):
+        raise ValueError(f"cannot show {len(order)} panels on one sheet")
+    panel = min(PANEL, (MAX_WIDTH - 2 * MARGIN - (len(labels) - 1) * GAP)
+                // len(labels))
+    width = MARGIN + len(labels) * panel + (len(labels) - 1) * GAP + MARGIN
     if width > MAX_WIDTH:
         raise ValueError(f"sheet width {width} exceeds {MAX_WIDTH}")
-    height = MARGIN + LABEL_H + PANEL + MARGIN
+    height = MARGIN + LABEL_H + panel + MARGIN
     sheet = Image.new("RGB", (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(sheet)
     font = _font(40)
     for i, label in enumerate(labels):
         model = order[label]
-        x = MARGIN + i * (PANEL + GAP)
+        x = MARGIN + i * (panel + GAP)
         with Image.open(images[model]) as im:
-            panel = im.convert("RGB").resize((PANEL, PANEL), Image.LANCZOS)
-        sheet.paste(panel, (x, MARGIN + LABEL_H))
+            tile = im.convert("RGB").resize((panel, panel), Image.LANCZOS)
+        sheet.paste(tile, (x, MARGIN + LABEL_H))
         draw.text((x + 8, MARGIN + 4), label, fill=(0, 0, 0), font=font)
         draw.rectangle([x - 1, MARGIN + LABEL_H - 1,
-                        x + PANEL, MARGIN + LABEL_H + PANEL],
+                        x + panel, MARGIN + LABEL_H + panel],
                        outline=(200, 200, 200))
     sheet.save(out_path, optimize=True)
     return sheet.size

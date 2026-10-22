@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -39,7 +40,18 @@ def sha256(path: Path) -> str:
 
 
 def newest_manifest(logs_root: Path, model: str) -> Path:
-    cands = sorted(logs_root.glob(f"s7-{model}-*/manifest.json"))
+    """The newest committed manifest for a model (S7 and S8 job ids).
+
+    The job folder must be exactly `<prefix>-<model>-<attempt>`; a plain glob
+    would also match `s7-sdxl-lightning-2` when the model is `sdxl`.
+    """
+    pattern = re.compile(rf"^(s7|s8)-{re.escape(model)}-\d+$")
+    cands: List[Path] = []
+    for folder in sorted(logs_root.iterdir() if logs_root.is_dir() else []):
+        if folder.is_dir() and pattern.match(folder.name):
+            man = folder / "manifest.json"
+            if man.is_file():
+                cands.append(man)
     if not cands:
         raise SystemExit(f"BLOCKED: no manifest for model {model} under {logs_root}")
     return cands[-1]

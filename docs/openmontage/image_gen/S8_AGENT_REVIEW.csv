@@ -29,16 +29,16 @@ r1007,s09,sdxl-lightning,0,0,0,1,2,0,0,"abstract marbled teal texture, no filter
 r1008,s10,sdxl-lightning,1,2,0,2,1,2,2,excellent flat-vector plate: teal/lime grazer with 8+ limbs plus 8 inset panels; small illegible pseudo-labels in the corner insets
 r1009,s11,sdxl-lightning,1,2,1,2,1,2,2,vintage teal natural-history plate with many specimens and three fish; a caption line at the bottom
 r1010,s12,sdxl-lightning,2,1,2,0,2,1,0,"painterly rocky canyon in teal/orange/yellow; no ice and no plume glow, off-palette"
-r2001,s01,dreamshaper-xl,,,,,,,,
-r2002,s03,dreamshaper-xl,,,,,,,,
-r2003,s04,dreamshaper-xl,,,,,,,,
-r2004,s05,dreamshaper-xl,,,,,,,,
-r2005,s06,dreamshaper-xl,,,,,,,,
-r2006,s08,dreamshaper-xl,,,,,,,,
-r2007,s09,dreamshaper-xl,,,,,,,,
-r2008,s10,dreamshaper-xl,,,,,,,,
-r2009,s11,dreamshaper-xl,,,,,,,,
-r2010,s12,dreamshaper-xl,,,,,,,,
+r2001,s01,dreamshaper-xl,1,1,0,1,2,1,0,"teal radial anemone with ~20 tendrils on brown rock; no grazer body, no 6 limbs, no eyes, photoreal off-palette"
+r2002,s03,dreamshaper-xl,1,1,0,1,2,1,0,"radial teal drifter with two orange eyes and a mouth; brief says 0 eyes/0 limbs, photoreal render"
+r2003,s04,dreamshaper-xl,1,1,0,1,2,1,0,"teal creature with tapered head but a tentacle skirt, not a segmented body; grey sand, photoreal"
+r2004,s05,dreamshaper-xl,2,1,2,0,2,1,0,"coral-encrusted rock with a teal smoke plume; not a chimney field, photoreal off-palette brown/gold"
+r2005,s06,dreamshaper-xl,2,1,2,0,2,1,0,"cavern ceiling with stalactites and a teal glow; no melt pool, painterly olive/brown"
+r2006,s08,dreamshaper-xl,1,1,0,1,2,1,0,"lime spiky sea-spider on black basalt - palette matches the bible but photoreal, whole animal instead of a forelimb macro, ~10 limbs"
+r2007,s09,dreamshaper-xl,0,0,0,0,2,0,0,"abstract brown/teal marbling with cyan veins; no filter mouth, no subject, off-palette"
+r2008,s10,dreamshaper-xl,0,0,0,0,2,0,0,"orange tendril web over teal; no plate layout, no creatures, off-palette"
+r2009,s11,dreamshaper-xl,1,1,0,0,2,1,0,"two teal blob creatures with long tendrils on porous olive rock; not a plate, not segmented"
+r2010,s12,dreamshaper-xl,2,1,2,1,2,1,0,"grey cratered surface with a teal glowing plume; subject right, photoreal not flat-vector"
 r3001,s01,sana-sprint-1.6b,,,,,,,,
 r3002,s03,sana-sprint-1.6b,,,,,,,,
 r3003,s04,sana-sprint-1.6b,,,,,,,,

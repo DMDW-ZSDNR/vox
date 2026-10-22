@@ -168,7 +168,8 @@ class EpisodeImages:
                  narration_minutes: Optional[float] = None,
                  script_path: Optional[str | Path] = None,
                  ledger_path: Optional[str | Path] = None,
-                 spec_dir: Optional[str | Path] = None) -> None:
+                 spec_dir: Optional[str | Path] = None,
+                 width: int = 1344, height: int = 768) -> None:
         self.episode_root = Path(episode_root)
         self.adapter = adapter
         self.style = style
@@ -181,6 +182,8 @@ class EpisodeImages:
             self.episode_root / "claim_ledger.md"
         self.spec_dir = Path(spec_dir) if spec_dir else \
             (Path("docs/openmontage/niches") / style.niche_id / "creatures")
+        self.width = int(width)
+        self.height = int(height)
         if not (IMAGES_PER_MINUTE_MIN <= self.images_per_minute
                 <= IMAGES_PER_MINUTE_MAX):
             raise BudgetError(
@@ -488,8 +491,8 @@ class EpisodeImages:
             "unet_checkpoint": self.adapter.unet_checkpoint,
             "revision": "main",
             "dtype": self.adapter.dtype,
-            "width": 1344,
-            "height": 768,
+            "width": self.width,
+            "height": self.height,
             "output_dir": f"illustrations_{self.episode_root.name}_"
                           f"b{batch['batch_id']}_{self.adapter.key}",
             "install_ladder": list(self.adapter.install_ladder),
@@ -670,7 +673,7 @@ class EpisodeImages:
     def _qc(self, path: Path) -> Dict[str, Any]:
         try:
             from tools.illustration.illustration_qc import qc_batch
-            report = qc_batch([str(path)])
+            report = qc_batch([str(path)], self.width, self.height)
             results = report.get("results") or []
             if not results:
                 return {"passed": False, "error": "qc produced no result"}

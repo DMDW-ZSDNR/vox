@@ -80,3 +80,17 @@ def test_blocks_without_narration_duration(tmp_path):
     ep = _episode(tmp_path)
     (ep / "artifacts" / "narration_manifest.json").unlink()
     assert bee.main(["--episode", "t_ep", "--episode-dir", str(ep)]) == 2
+
+
+def test_writes_rights_records_and_credits(tmp_path):
+    from tools.qa.qc import rights_record_problems
+
+    ep = _episode(tmp_path)
+    assert bee.main(["--episode", "t_ep", "--episode-dir", str(ep)]) == 0
+    records = json.loads(
+        (ep / "artifacts" / "rights_records.json").read_text(encoding="utf-8"))["assets"]
+    edl = json.loads((ep / "edit_decisions.json").read_text(encoding="utf-8"))
+    assert len(records) == len(edl["cuts"]) == 6  # one record per EDL asset
+    assert all(rights_record_problems(r) == [] for r in records)
+    credits = (ep / "artifacts" / "credits.txt").read_text(encoding="utf-8")
+    assert "Apache-2.0" in credits and "own work" in credits.lower()

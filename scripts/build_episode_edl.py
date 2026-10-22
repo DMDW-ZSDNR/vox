@@ -27,6 +27,11 @@ from tools.illustration.pilot_edl import (  # noqa: E402
     images_from_manifest,
     script_sections,
 )
+from tools.packaging.rights_records import (  # noqa: E402
+    build_rights_records,
+    credits_lines,
+    write_rights_records,
+)
 
 
 def narration_duration(episode_dir: Path, override: float | None = None) -> float | None:
@@ -65,6 +70,8 @@ def main(argv=None) -> int:
     ap.add_argument("--card-duration", type=float, default=3.0)
     ap.add_argument("--resolution", default="1280x720")
     ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--model", default="klein",
+                    help="illustration model used for the rights/credit block")
     args = ap.parse_args(argv)
 
     ep = Path(args.episode_dir) if args.episode_dir else (
@@ -116,11 +123,22 @@ def main(argv=None) -> int:
     manifest_path = out.parent / "render_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
+    # Rights records + credits are derived from the EDL, never hand-written.
+    illust_manifest = json.loads(images_manifest.read_text(encoding="utf-8"))
+    records = build_rights_records(edl, illust_manifest, model=args.model)
+    art = ep / "artifacts"
+    rights_path = write_rights_records(art / "rights_records.json", records)
+    credits_path = art / "credits.txt"
+    credits_path.write_text("\n".join(credits_lines(records)) + "\n",
+                            encoding="utf-8")
+
     cards_n = sum(1 for c in edl["cuts"] if c["role"] == "graphics_card")
     print(f"episode={args.episode} duration={dur:.3f}s cuts={len(edl['cuts'])} "
           f"cards={cards_n} illustrations={len(images)}")
     print(f"edl={out}")
     print(f"render_manifest={manifest_path} assets={len(assets)}")
+    print(f"rights_records={rights_path} records={len(records)}")
+    print(f"credits={credits_path}")
     return 0
 
 

@@ -15,6 +15,7 @@ Offline after the first model download (HF cache); no paid routes.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -93,13 +94,30 @@ def srt_text(cues: list[tuple[float, float, str]]) -> str:
     return "\n".join(blocks)
 
 
+def decode_16k_mono(wav: str) -> "object":
+    """Decode with ffmpeg (PyAV cannot load on this image) into float32 mono.
+
+    faster-whisper accepts a numpy array, which also keeps the model call
+    independent of the container/demuxer stack.
+    """
+    import numpy as np
+
+    res = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(wav), "-f", "s16le",
+         "-acodec", "pcm_s16le", "-ac", "1", "-ar", "16000", "pipe:1"],
+        capture_output=True, check=True)
+    if not res.stdout:
+        raise RuntimeError(f"ffmpeg decoded no audio from {wav}")
+    return np.frombuffer(res.stdout, dtype=np.int16).astype("float32") / 32768.0
+
+
 def transcribe(wav: str, model_name: str = DEFAULT_MODEL) -> list[dict]:
     from faster_whisper import WhisperModel
 
     model = WhisperModel(model_name, device="cpu", compute_type="int8")
     segments, _info = model.transcribe(
-        wav, language="en", word_timestamps=True, vad_filter=True,
-        beam_size=5, condition_on_previous_text=False)
+        decode_16k_mono(wav), language="en", word_timestamps=True,
+        vad_filter=True, beam_size=5, condition_on_previous_text=False)
     words: list[dict] = []
     for seg in segments:
         for w in (seg.words or []):

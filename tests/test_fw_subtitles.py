@@ -57,3 +57,21 @@ def test_srt_text_indexes_cues_from_one():
     out = srt_text(cues)
     assert out.startswith("1\n00:00:00,000 --> 00:00:01,000\none")
     assert "\n\n2\n00:00:01,200 --> 00:00:02,000\ntwo" in out
+
+
+def test_decode_16k_mono_uses_ffmpeg_and_returns_float32(tmp_path):
+    import subprocess
+
+    import numpy as np
+
+    from scripts.fw_subtitles import decode_16k_mono
+
+    wav = tmp_path / "a.wav"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi",
+                    "-i", "sine=frequency=440:duration=0.5:sample_rate=44100",
+                    "-ac", "2", str(wav)], check=True)
+    samples = decode_16k_mono(str(wav))
+    assert samples.dtype == np.float32
+    assert samples.ndim == 1
+    assert 0.4 * 16000 <= samples.size <= 0.6 * 16000
+    assert float(np.abs(samples).max()) > 0.01

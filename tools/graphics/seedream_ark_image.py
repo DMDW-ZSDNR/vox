@@ -217,6 +217,10 @@ class SeedreamArkImage(BaseTool):
             api_key = config.api_key
             count = self._parse_count(inputs.get("count", 3))
             scene_preset = str(inputs["scene_preset"])
+            if scene_preset not in {"luxury", "nature", "tech", "office"}:
+                raise ValueError(
+                    "scene_preset 必须是 luxury、nature、tech 或 office。"
+                )
             source_image = self._encode_source(Path(inputs["source_image_path"]))
             model = str(inputs.get("model") or config.image_model)
             base_url = config.api_base.rstrip("/")
@@ -248,6 +252,7 @@ class SeedreamArkImage(BaseTool):
                         data={"partial_outputs": outputs} if outputs else {},
                         artifacts=outputs,
                         error=self._http_error(response.status_code),
+                        cost_usd=None,
                         duration_seconds=round(time.time() - started, 2),
                     )
                 response.raise_for_status()
@@ -270,7 +275,7 @@ class SeedreamArkImage(BaseTool):
                 output_path.write_bytes(blob)
                 outputs.append(str(output_path))
         except SeedanceConfigError as exc:
-            return ToolResult(success=False, error=str(exc))
+            return ToolResult(success=False, error=str(exc), cost_usd=None)
         except (KeyError, TypeError, ValueError, OSError) as exc:
             message = str(exc)
             if api_key:
@@ -280,6 +285,7 @@ class SeedreamArkImage(BaseTool):
                 data={"partial_outputs": outputs} if outputs else {},
                 artifacts=outputs,
                 error=message,
+                cost_usd=None,
                 duration_seconds=round(time.time() - started, 2),
             )
         except Exception as exc:
@@ -291,6 +297,7 @@ class SeedreamArkImage(BaseTool):
                 data={"partial_outputs": outputs} if outputs else {},
                 artifacts=outputs,
                 error=f"火山方舟图片生成失败：{message}",
+                cost_usd=None,
                 duration_seconds=round(time.time() - started, 2),
             )
 

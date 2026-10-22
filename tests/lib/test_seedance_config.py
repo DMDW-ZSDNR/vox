@@ -116,6 +116,19 @@ def test_invalid_duration_is_rejected_without_echoing_key(tmp_path, monkeypatch)
     assert "ark-private-value" not in str(caught.value)
 
 
+def test_plain_http_api_base_is_rejected(tmp_path, monkeypatch):
+    config_file = tmp_path / "config.json"
+    _write_config(
+        config_file,
+        api_key="ark-private-value",
+        api_base="http://ark.example.test/api/v3",
+    )
+    monkeypatch.delenv("ARK_API_KEY", raising=False)
+
+    with pytest.raises(SeedanceConfigError, match="https"):
+        load_seedance_config(config_file)
+
+
 def test_defaults_apply_when_optional_model_fields_are_absent(
     tmp_path, monkeypatch
 ):

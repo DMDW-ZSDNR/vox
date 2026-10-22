@@ -257,11 +257,33 @@ def test_partial_batch_preserves_images_already_generated(monkeypatch, tmp_path)
     result = SeedreamArkImage().execute(_inputs(tmp_path, product))
 
     assert result.success is False
+    assert result.cost_usd is None
     assert result.data["partial_outputs"] == [
         str(tmp_path / "images" / "scene_luxury_1.png")
     ]
     assert result.artifacts == result.data["partial_outputs"]
     assert (tmp_path / "images" / "scene_luxury_1.png").is_file()
+
+
+def test_invalid_scene_preset_is_rejected_before_output_path_use(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setenv("SEEDANCE_CONFIG_PATH", str(_write_config(tmp_path)))
+    product = tmp_path / "product.png"
+    product.write_bytes(_png_bytes())
+
+    def fail_network(*args, **kwargs):
+        raise AssertionError("invalid preset must not call network")
+
+    monkeypatch.setattr("requests.post", fail_network)
+    result = SeedreamArkImage().execute(
+        _inputs(tmp_path, product, count=1, scene_preset="../../escape")
+    )
+
+    assert result.success is False
+    assert result.cost_usd is None
+    assert "scene_preset" in result.error
+    assert not (tmp_path / "escape").exists()
 
 
 def test_unknown_image_pricing_requires_quote():

@@ -95,8 +95,8 @@ def load_seedance_config(config_path: Path | None = None) -> SeedanceConfig:
         file_data=file_data,
         default=DEFAULT_API_BASE,
     )
-    if not api_base.startswith(("https://", "http://")):
-        raise SeedanceConfigError("火山方舟配置字段 api_base 必须是 http(s) 地址。")
+    if not api_base.startswith("https://"):
+        raise SeedanceConfigError("火山方舟配置字段 api_base 必须是 https 地址。")
 
     image_model = _string_setting(
         name="image_model",

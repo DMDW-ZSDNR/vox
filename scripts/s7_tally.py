@@ -308,6 +308,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--csv", default=str(DEFAULT_CSV))
     ap.add_argument("--mapping", default=str(DEFAULT_MAPPING))
     ap.add_argument("--agent", default=str(DEFAULT_AGENT))
+    ap.add_argument("--title", default="S7 blind-pack tally",
+                    help="heading of the printed report")
     args = ap.parse_args(argv)
 
     try:

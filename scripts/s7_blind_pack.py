@@ -125,7 +125,7 @@ def collect(root: Path) -> tuple[Dict[str, Dict[str, Path]], Dict[str, Any]]:
 
 
 def csv_header(n_panels: int, with_second_best: bool = False) -> str:
-    labels = "ABC"[:n_panels]
+    labels = "ABCDE"[:n_panels]
     cols = ["scene", "best_panel"]
     if with_second_best:
         cols.append("second_best")
@@ -146,7 +146,7 @@ def write_csv_template(out_dir: Path, scenes: List[str], n_panels: int = 3,
 
 def instructions(scenes: List[str], n_panels: int = 3,
                  blocked_note: str = "", with_second_best: bool = False) -> str:
-    panel_list = list("ABC"[:n_panels])
+    panel_list = list("ABCDE"[:n_panels])
     labels = " / ".join(panel_list)
     return (
         "S7 blind pack - how to review (5-10 minutes)\n"
@@ -168,7 +168,7 @@ def instructions(scenes: List[str], n_panels: int = 3,
         f"   best_panel / worst_panel: {' or '.join(panel_list)} "
         "(worst may be left empty)\n"
         f"   anatomy_ok_<panel>: yes or no (one column per panel: "
-        f"{', '.join('anatomy_ok_' + l for l in 'ABC'[:n_panels])})\n"
+        f"{', '.join('anatomy_ok_' + l for l in panel_list)})\n"
         "   Do not edit the scene column.\n\n"
         "4. Then run:  python scripts/s7_tally.py\n"
         "   It prints wins / losses / anatomy-ok per model plus the speed and\n"
@@ -212,9 +212,11 @@ def run(root: Path, out_dir: Path, salt: str = "s7",
         "sheets": [],
         "partial_scenes": partial,
     }
+    # one panel per compared model: A/B for 2 models, A..E for 5
+    panel_labels = list("ABCDE"[:len(pack_models)])
     for scene in complete:
         order = {label: model for label, model
-                 in zip("ABC", panel_order(scene, salt, pack_models))}
+                 in zip(panel_labels, panel_order(scene, salt, pack_models))}
         sheet_path = out_dir / f"sheet_{scene}.png"
         size = build_sheet(by_scene[scene], order, sheet_path)
         mapping["scenes"][scene] = order

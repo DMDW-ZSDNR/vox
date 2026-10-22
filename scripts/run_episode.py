@@ -592,6 +592,72 @@ def _render_graphics(path, dur, width, height, fps, out):
              "-r", str(fps), "-an", str(out)])
 
 
+def _ease_expr(var, easing):
+    """ffmpeg expression for eased progress 0..1 (`var` is on/frames)."""
+    e = str(easing or "linear").lower()
+    if e == "easein":
+        return f"pow({var},2)"
+    if e == "easeout":
+        return f"(1-pow(1-({var}),2))"
+    if e == "easeinout":
+        return f"if(lt({var},0.5),2*pow({var},2),1-2*pow(1-({var}),2))"
+    return f"({var})"
+
+
+def _render_kenburns(path, dur, width, height, fps, move, easing, direction, out):
+    """Render a still with a real pan/zoom move (no AI upscaling).
+
+    The still is first fitted to the output frame (downscale for 1280x720
+    from 1344x768 sources), then zoompan applies the move. `detail_crop`
+    starts tighter; `parallax` adds a vertical drift.
+    """
+    frames = max(1, int(round(float(dur) * int(fps))))
+    t = f"(on/{frames})"
+    prog = _ease_expr(t, easing)
+    kind = str(move or "pan").lower()
+    zoom_start, zoom_end = {
+        "zoom": (1.0, 1.10),
+        "detail_crop": (1.16, 1.16),
+        "parallax": (1.06, 1.06),
+    }.get(kind, (1.04, 1.04))
+    if kind == "zoom":
+        zexpr = f"({zoom_start}+({zoom_end - zoom_start})*{prog})"
+    else:
+        zexpr = f"({zoom_start})"
+    dx = f"(iw-iw/zoom)"
+    dy = f"(ih-ih/zoom)"
+    d = str(direction or "left").lower()
+    if kind == "pan" or kind == "detail_crop":
+        if d == "right":
+            xexpr = f"({dx}*{prog})"
+        elif d in ("up", "down"):
+            xexpr = f"({dx}/2)"
+        else:
+            xexpr = f"({dx}*(1-{prog}))"
+        if d == "down":
+            yexpr = f"({dy}*{prog})"
+        elif d == "up":
+            yexpr = f"({dy}*(1-{prog}))"
+        else:
+            yexpr = f"({dy}/2)"
+    elif kind == "parallax":
+        xexpr = f"({dx}/2)"
+        yexpr = f"({dy}*{prog})" if d != "up" else f"({dy}*(1-{prog}))"
+    else:
+        xexpr = f"({dx}/2)"
+        yexpr = f"({dy}/2)"
+
+    vf = (
+        f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+        f"crop={width}:{height},"
+        f"zoompan=z='{zexpr}':x='{xexpr}':y='{yexpr}':d={frames}:"
+        f"s={width}x{height}:fps={fps},format=yuv420p"
+    )
+    _ffmpeg(["-loop", "1", "-i", str(path), "-t", str(dur), "-vf", vf,
+             "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p",
+             "-r", str(fps), "-an", str(out)])
+
+
 def _render_archive(footage, src_start, dur, width, height, fps, out):
     """Trim dur seconds from footage starting at src_start, framed to resolution.
 
@@ -662,6 +728,11 @@ def cmd_render(topic_id, state):
             if not Path(path).exists():
                 return {"status": "BLOCKED", "error": f"graphics asset missing: {path}"}
             _render_graphics(path, dur, width, height, fps, seg)
+        elif role == "illustration" or kind == "ai_illustration":
+            if not Path(path).exists():
+                return {"status": "BLOCKED", "error": f"illustration missing: {path}"}
+            _render_kenburns(path, dur, width, height, fps, cut.get("move"),
+                             cut.get("easing"), cut.get("direction"), seg)
         elif role == "archive_insert" or kind == "footage":
             if not Path(path).exists():
                 return {"status": "BLOCKED", "error": f"footage asset missing: {path}"}

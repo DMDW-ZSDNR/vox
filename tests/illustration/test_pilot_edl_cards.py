@@ -91,3 +91,28 @@ def test_section_cards_must_match_sections():
         build_illustration_edl(_images(6), None, total_duration=30.0,
                                topic="t", episode="e",
                                sections=_sections(3), card_paths=_cards(2))
+
+
+def test_script_sections_parse_the_pilot_script():
+    from tools.illustration.pilot_edl import script_sections, sentence_rows
+
+    path = "projects/se_pilot/script.md"
+    sections = script_sections(path)
+    assert len(sections) == 10, [s["title"] for s in sections]
+    assert sections[0]["title"].lower().startswith("hook")
+    assert sections[1]["title"].startswith("Chapter 1")
+    assert sum(len(s["sentences"]) for s in sections) == len(sentence_rows(path)) == 46
+    # The numbered "3 truthful titles" block is not narration.
+    assert all("truthful titles" not in s["title"] for s in sections)
+
+
+def test_sections_skip_heading_without_bullets(tmp_path):
+    from tools.illustration.pilot_edl import script_sections
+
+    p = tmp_path / "script.md"
+    p.write_text(
+        "# T\n\n## Titles\n\n1. One\n2. Two\n\n## Hook\n\n- A sentence. [SE-01]\n",
+        encoding="utf-8")
+    sections = script_sections(p)
+    assert [s["title"] for s in sections] == ["Hook"]
+    assert sections[0]["sentences"][0]["claim_id"] == "SE-01"

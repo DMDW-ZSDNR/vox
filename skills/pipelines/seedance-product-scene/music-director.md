@@ -23,8 +23,8 @@ Confirm the track length, license, and project path. Present:
 
 1. Use candidate 1, 2, or 3.
 2. Search three new candidates.
-3. Use user-supplied music.
-4. Proceed without music.
+3. Use user-supplied licensed music.
+4. Stop and preserve the approved video/copy packages without final music muxing.
 
 Create the draft `product_delivery` with all candidate metadata and the selected
 track. 停止并等待用户审批，不要自动合成或替换候选音乐。

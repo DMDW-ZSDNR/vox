@@ -21,7 +21,17 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 DIMS = ["anatomy", "geometry", "count_relation", "texture", "text", "usefulness"]
+# S8 adds a style-fit dimension against the niche style bible.
+STYLE_DIM = "style_fit"
 HEADER = ["render_id", "scene_id", "model"] + DIMS + ["notes"]
+
+
+def dims_for(path: Path) -> List[str]:
+    """The rubric dimensions are read from the sheet's own header."""
+    import csv as _csv
+    with path.open(newline="", encoding="utf-8-sig") as fh:
+        header = _csv.DictReader(fh).fieldnames or []
+    return [d for d in DIMS + [STYLE_DIM] if d in header]
 
 
 def read_sheet(path: Path) -> List[Dict[str, str]]:
@@ -35,12 +45,20 @@ def read_sheet(path: Path) -> List[Dict[str, str]]:
         return [dict(r) for r in reader]
 
 
+def sheet_header(path: Path) -> List[str]:
+    """The sheet keeps its own columns (S8 adds style_fit to the S7 sheet)."""
+    with path.open(newline="", encoding="utf-8-sig") as fh:
+        header = csv.DictReader(fh).fieldnames or []
+    return list(header) if header else list(HEADER)
+
+
 def write_sheet(path: Path, rows: List[Dict[str, str]]) -> None:
+    fieldnames = sheet_header(path)
     with path.open("w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=HEADER)
+        w = csv.DictWriter(fh, fieldnames=fieldnames)
         w.writeheader()
         for r in rows:
-            w.writerow({k: r.get(k, "") for k in HEADER})
+            w.writerow({k: r.get(k, "") for k in fieldnames})
 
 
 def upsert(rows: List[Dict[str, str]], render_id: str, scores: Dict[str, int],
@@ -61,14 +79,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--csv", required=True)
     ap.add_argument("--render-id", required=True)
     ap.add_argument("--notes", default="")
-    for d in DIMS:
+    for d in DIMS + [STYLE_DIM]:
         ap.add_argument(f"--{d.replace('_', '-')}", type=int, default=None,
                         choices=[0, 1, 2], help=f"rubric score for {d}")
     args = ap.parse_args(argv)
 
     path = Path(args.csv)
-    rows = read_sheet(path)
-    scores = {d: getattr(args, d) for d in DIMS
+    rows = read_sheet(path)          # BLOCKED when the sheet is missing
+    dims = dims_for(path)
+    scores = {d: getattr(args, d) for d in dims
               if getattr(args, d, None) is not None}
     if not scores:
         raise SystemExit("BLOCKED: no dimension scores given")

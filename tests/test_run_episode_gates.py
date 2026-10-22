@@ -204,3 +204,66 @@ def test_pipeline_runs_real_gates_end_to_end(tmp_path):
     assert res["verdict"] == "OK", res
     assert res["state"]["stages"]["release_gate"]["status"] == "OK"
     assert json.loads(state_path.read_text())["stages"]["speculative_gate"]["status"] == "OK"
+
+
+# ---------------------------------------------------------------- qc inputs
+def test_qc_reads_episode_artifacts_not_legacy_shared_ones(tmp_path, monkeypatch):
+    """A pilot must be QC'd against its OWN manifest/credits/claims.
+
+    The legacy `docs/openmontage/slice/artifacts/` folder holds another
+    episode's files; reading them produced a false verdict.
+    """
+    ep, edl = _episode(tmp_path)
+    art = ep / "artifacts"
+    (ep / "renders").mkdir(parents=True)
+    (ep / "renders" / "final_t_ep_draft.mp4").write_bytes(b"not-a-video")
+    for name in ("credits.txt", "claim_ids.json", "rights_records.json",
+                 "narration_manifest.json"):
+        (art / name).write_text("{}", encoding="utf-8")
+    (ep / "claim_ledger.md").write_text("| id | claim |\n", encoding="utf-8")
+    (ep / "subtitles.srt").write_text("1\n00:00:00,000 --> 00:00:01,000\nx\n",
+                                      encoding="utf-8")
+
+    captured = {}
+
+    class FakeQC:
+        def execute(self, params):
+            captured.update(params)
+
+            class R:
+                success = True
+                data = {"verdict": "REVIEW"}
+
+            return R()
+
+    monkeypatch.setattr("tools.qa.qc.QCTool", FakeQC)
+    res = run_episode.cmd_qc("t_ep", {"episode_dir": str(ep),
+                                      "edl_path": str(edl)})
+    assert res["status"] == "OK", res
+    for key in ("narration_manifest", "credits_path", "claim_ids_path",
+                "rights_records_path", "output_path"):
+        assert Path(captured[key]).parent == art, (key, captured[key])
+    assert Path(captured["edit_decisions_path"]) == edl
+
+
+def test_package_draft_copies_only_episode_artifacts(tmp_path, monkeypatch):
+    """The package must never inherit another episode's credits/subtitles."""
+    ep, _edl = _episode(tmp_path)
+    art = ep / "artifacts"
+    (art / "narration_manifest.json").write_text('{"expected_duration": 1.0}',
+                                                 encoding="utf-8")
+    (art / "credits.txt").write_text("episode credits", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "tools.packaging.package_builder.build_package",
+        lambda *a, **k: {"ok": True, "manifest": {
+            "title": "T", "shorts_beats": [], "credits_lines": []},
+            "outputs": {"metadata.json": "m", "shorts_plan.json": "s",
+                        "DISCLOSURE.md": "d"}})
+    res = run_episode.cmd_package_draft("t_ep", {"episode_dir": str(ep),
+                                                 "speculative": True})
+    assert res["status"] == "OK", res
+    pkg = ep / "package"
+    assert (pkg / "narration_manifest.json").is_file()
+    assert (pkg / "credits.txt").read_text() == "episode credits"
+    assert not (pkg / "subtitles.srt").exists(), "legacy subtitles leaked in"

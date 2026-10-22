@@ -848,7 +848,7 @@ def cmd_qc(topic_id, state):
     inputs = {
         "input_path": str(video),
         "output_path": str(state.get("qa_report_path") or assets / f"qa_report{tag}.json"),
-        "narration_manifest": str(shared_assets() / f"narration_manifest{tag}.json"),
+        "narration_manifest": str(assets / f"narration_manifest{tag}.json"),
         "subtitle_path": str(episode_root(topic_id, state) / f"subtitles{tag}.srt"),
         "credits_path": str(assets / "credits.txt"),
         "claim_ids_path": str(assets / "claim_ids.json"),
@@ -873,7 +873,9 @@ def cmd_qc(topic_id, state):
 def cmd_package_draft(topic_id, state):
     pkg = episode_root(topic_id, state) / "package"
     pkg.mkdir(parents=True, exist_ok=True)
-    assets = shared_assets()
+    # Episode artifacts only: a pilot must never inherit another episode's
+    # credits/subtitles/claims from the legacy shared folder.
+    assets = _qc_assets(topic_id, state)
     for name in ("narration_manifest.json", "subtitles.srt", "credits.txt", "edit_decisions.json",
                  "rights_records.json", "claim_ids.json", "word-timestamps.json"):
         src = assets / name

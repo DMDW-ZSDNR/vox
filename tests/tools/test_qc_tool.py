@@ -146,7 +146,12 @@ def test_good_clip_all_pass(tmp_path):
     claims = tmp_path / "claims.json"
     claims.write_text(json.dumps([{"text": "The crash happened.", "claim_id": "CID-01", "source_flags": ""}]))
     rights = tmp_path / "rights.json"
-    rights.write_text(json.dumps([{"asset_id": "good.mp4", "rights_basis": "source_policy_us_gov"}]))
+    rights.write_text(json.dumps([{
+        "asset_id": "good.mp4", "kind": "video",
+        "rights_basis": "source_policy_us_gov",
+        "source_url": "https://example.gov/item/1",
+        "credit": "Test source", "sha256": "a" * 64,
+    }]))
     ledger = tmp_path / "ledger.md"
     ledger.write_text(
         "| claim_id | claim | sources | source_type | verification_status | evidence_notes |\n"
@@ -156,8 +161,10 @@ def test_good_clip_all_pass(tmp_path):
     edits = tmp_path / "edits.json"
     edits.write_text(json.dumps({
         "cuts": [
-            {"source": "a.mp4", "in_seconds": 0, "out_seconds": 5, "annotation": "intro"},
-            {"source": "b.mp4", "in_seconds": 5, "out_seconds": 10, "annotation": "impact"},
+            {"id": "c1", "start": 0.0, "end": 5.0, "role": "graphics_card",
+             "asset_id": "card", "annotation": "intro card"},
+            {"id": "c2", "start": 5.0, "end": 10.0, "role": "archive_insert",
+             "asset_id": "a.mp4", "annotation": "impact insert"},
         ]
     }))
 

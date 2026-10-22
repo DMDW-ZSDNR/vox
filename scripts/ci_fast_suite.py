@@ -27,6 +27,8 @@ FAST_TEST_FILES = [
     "tests/tools/test_analytics_import.py",
     "tests/lib/test_footage_classifier.py",
     "tests/factory/test_artifact_id_resolution.py",
+    "tests/qa/test_qc_gates_l7.py",
+    "tests/qa/test_release_gate.py",
 ]
 
 

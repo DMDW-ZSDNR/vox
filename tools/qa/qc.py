@@ -38,6 +38,11 @@ DEFAULT_THRESHOLDS = {
     "true_peak_max": -1.5,              # true peak max (dBTP)
     "duration_tolerance": 1.0,          # seconds; script vs actual duration
     "subtitle_drift_max": 0.5,          # seconds; subtitle vs audio drift
+    # L7 added-value gates (QA_SPEC.md INITIAL GUESSES; owner confirms).
+    "narration_share_min": 0.90,        # narration coverage of runtime
+    "graphics_per_90s_min": 1.0,        # original graphics density
+    "unannotated_clip_max_s": 20.0,     # max unannotated archive clip
+    "still_only_max_s": 15.0,           # max consecutive still-only run
 }
 
 # Repo-level threshold config (SCR-05). Loaded by default; fail-closed when
@@ -176,6 +181,85 @@ def _load_json(path: str | None):
         return None
 
 
+def cut_duration(cut: dict[str, Any]) -> float:
+    """Duration of an EDL cut, from start/end when present, else `duration`.
+
+    The generic EDL writes `start`/`end` only; older hand-built EDLs write
+    `duration`. Reading only `duration` silently passes every gate, so both
+    shapes are supported here and a cut with neither is 0.0 (callers treat a
+    non-positive duration as a problem where it matters).
+    """
+    start, end = cut.get("start"), cut.get("end")
+    if start is not None and end is not None:
+        try:
+            return max(0.0, float(end) - float(start))
+        except (TypeError, ValueError):
+            return 0.0
+    try:
+        return max(0.0, float(cut.get("duration", 0)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _cut_duration(cut: dict[str, Any]) -> float:
+    return cut_duration(cut)
+
+
+def _truthy_flag(value: Any) -> bool:
+    """Flags arrive as True/False or as the legacy strings "yes"/"no"."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in ("1", "true", "yes", "y")
+
+
+REJECTING_LICENSE_TOKENS = ("nc", "nd", "noncommercial", "non-commercial", "noderiv")
+
+
+def rights_record_problems(rec: dict[str, Any]) -> list[str]:
+    """Fail-closed rights checks for one asset record (L3/L7).
+
+    Reject: third-party credit, NC/ND licence terms, emblem as the main
+    picture, `unknown`/missing rights_basis, `usable: false`, and missing
+    provenance (source_url + credit + sha256 for media; own-graphics cards are
+    exempt from sha256/source_url but still need a credit/centre).
+    """
+    problems: list[str] = []
+    flags = rec.get("flags")
+    flags = flags if isinstance(flags, dict) else {}
+    for flag in ("third_party_credit", "nc_nd", "emblem_as_main_picture"):
+        if _truthy_flag(flags.get(flag)) or _truthy_flag(rec.get(flag)):
+            problems.append(f"{flag}=true")
+
+    license_text = str(rec.get("license") or rec.get("license_text") or "").lower()
+    for token in REJECTING_LICENSE_TOKENS:
+        if token in license_text.split() or f"-{token}" in license_text:
+            problems.append(f"licence term {token!r} in {license_text!r}")
+            break
+
+    basis = rec.get("rights_basis")
+    if basis not in VALID_RIGHTS:
+        problems.append(f"rights_basis {basis!r} not in {VALID_RIGHTS}")
+    if rec.get("usable") is False:
+        problems.append("usable=false")
+
+    own_graphic = (
+        str(rec.get("kind", "")) == "graphics"
+        and "original" in str(rec.get("center", "")).lower()
+    )
+    credit = rec.get("credit") or rec.get("center")
+    if not str(credit or "").strip():
+        problems.append("missing credit")
+    if not own_graphic:
+        if not str(rec.get("source_url") or "").strip():
+            problems.append("missing source_url")
+        sha = str(rec.get("sha256") or "")
+        if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha.lower()):
+            problems.append("missing/invalid sha256")
+    return problems
+
+
 def load_thresholds(config_path: str | Path | None = None):
     """Load QC thresholds from the repo config, fail-closed.
 
@@ -287,6 +371,8 @@ class QCTool(BaseTool):
         "rights_basis",
         "added_value",
         "claim_ids_resolve",
+        "motion_variety",
+        "speculative_label",
     ]
     resource_profile = ResourceProfile(cpu_cores=1, ram_mb=256, vram_mb=0, disk_mb=50)
     idempotency_key_fields = ["input_path"]
@@ -313,6 +399,7 @@ class QCTool(BaseTool):
             "rights_records_path": {"type": "string"},
             "edit_decisions_path": {"type": "string"},
             "ai_label_max_share": {"type": "number", "default": 0.15},
+            "speculative_niche": {"type": "boolean", "default": False},
             "static_segments": {
                 "type": "array",
                 "items": {
@@ -913,30 +1000,36 @@ class QCTool(BaseTool):
                     )
                 else:
                     total = len(data)
-                    bad = [
-                        i for i, c in enumerate(data)
-                        if c.get("rights_basis") not in VALID_RIGHTS
-                    ]
+                    bad: list[str] = []
+                    for i, rec in enumerate(data):
+                        if not isinstance(rec, dict):
+                            bad.append(f"record {i}: not an object")
+                            continue
+                        probs = rights_record_problems(rec)
+                        if probs:
+                            bad.append(f"{rec.get('asset_id', i)}: {'; '.join(probs)}")
                     if bad:
                         report.append(
                             entry(
                                 "rights_basis", "FAILED",
-                                f"{len(bad)}/{total} clips lack valid rights_basis",
-                                total, f"100% in {VALID_RIGHTS}",
+                                "; ".join(bad)[:400],
+                                len(bad), f"0/{total} records with rights problems",
                             )
                         )
                     else:
                         report.append(
                             entry(
                                 "rights_basis", "PASS",
-                                f"{total}/{total} clips have valid rights_basis",
-                                total, f"100% in {VALID_RIGHTS}",
+                                f"{total}/{total} records: rights_basis + provenance + no rejecting flag",
+                                total, "0 records with rights problems",
                             )
                         )
             except Exception as exc:  # noqa: BLE001
                 report.append(entry("rights_basis", "BLOCKED", f"rights unreadable: {exc}"))
 
         # ---- 12. added_value ----
+        # Duration is read via cut_duration(): the generic EDL writes start/end
+        # only, so reading a `duration` key silently passed every gate.
         edit_path = inputs.get("edit_decisions_path")
         if not edit_path or not Path(edit_path).is_file():
             report.append(
@@ -950,25 +1043,87 @@ class QCTool(BaseTool):
                         entry("added_value", "FAILED", "edit_decisions missing cuts[]")
                     )
                 else:
-                    cuts = data["cuts"]
-                    unannotated_long = [
+                    cuts = [c for c in data["cuts"] if isinstance(c, dict)]
+                    total_cut_s = sum(cut_duration(c) for c in cuts)
+                    denom = duration if duration > 0 else total_cut_s
+                    problems: list[str] = []
+
+                    # (a) no unannotated archive clip longer than the config max
+                    long_max = thresholds.get("unannotated_clip_max_s", 20.0)
+                    long_unannotated = [
                         c for c in cuts
-                        if c.get("duration", 0) > 20 and not c.get("annotation")
+                        if (c.get("role") in ("archive_insert",)
+                            or c.get("kind") == "footage")
+                        and cut_duration(c) > long_max
+                        and not str(c.get("annotation") or "").strip()
                     ]
-                    if unannotated_long:
+                    if long_unannotated:
+                        problems.append(
+                            f"{len(long_unannotated)} unannotated archive clip(s) > {long_max}s"
+                        )
+
+                    # (b) narration coverage >= narration_share_min
+                    manifest = _load_json(inputs.get("narration_manifest"))
+                    nar_min = float(thresholds.get("narration_share_min", 0.90))
+                    if manifest is None:
+                        problems.append(
+                            "narration share not measurable (narration_manifest missing)"
+                        )
+                    else:
+                        nar = manifest.get("expected_duration")
+                        if nar is None or denom <= 0:
+                            problems.append("narration share not measurable (no duration)")
+                        else:
+                            share = float(nar) / denom
+                            if share < nar_min:
+                                problems.append(
+                                    f"narration share {share:.2f} < {nar_min:.2f}"
+                                )
+
+                    # (c) original graphics density per 90 s
+                    g_min = float(thresholds.get("graphics_per_90s_min", 1.0))
+                    graphics = [
+                        c for c in cuts
+                        if c.get("role") in ("graphics_card", "graphic", "diagram")
+                        or c.get("kind") == "graphics"
+                    ]
+                    density = (len(graphics) / (denom / 90.0)) if denom > 0 else 0.0
+                    if denom > 0 and density < g_min:
+                        problems.append(
+                            f"original graphics density {density:.2f}/90s < {g_min}"
+                        )
+
+                    # (d) still-only run <= still_only_max_s
+                    still_max = float(thresholds.get("still_only_max_s", 15.0))
+                    run = 0.0
+                    worst = 0.0
+                    for c in cuts:
+                        static = bool(c.get("static_by_design")) or not c.get("move")
+                        if static:
+                            run += cut_duration(c)
+                            worst = max(worst, run)
+                        else:
+                            run = 0.0
+                    if worst > still_max:
+                        problems.append(
+                            f"still-only sequence {worst:.1f}s > {still_max}s"
+                        )
+
+                    if problems:
                         report.append(
                             entry(
-                                "added_value", "FAILED",
-                                f"{len(unannotated_long)} unannotated clips > 20s",
-                                len(unannotated_long), "0 unannotated > 20s",
+                                "added_value", "FAILED", "; ".join(problems)[:300],
+                                round(total_cut_s, 2),
+                                "narration>=90%, >=1 graphic/90s, no unannotated clip >20s, still-only<=15s",
                             )
                         )
                     else:
                         report.append(
                             entry(
                                 "added_value", "PASS",
-                                "no unannotated clips > 20s",
-                                0, "0 unannotated > 20s",
+                                "narration share, graphics density, annotation and still-only limits all met",
+                                round(total_cut_s, 2),
+                                "narration>=90%, >=1 graphic/90s, no unannotated clip >20s, still-only<=15s",
                             )
                         )
             except Exception as exc:  # noqa: BLE001
@@ -997,25 +1152,23 @@ class QCTool(BaseTool):
                 else:
                     cuts = data["cuts"]
                     problems = []
+                    ai_seconds = 0.0
                     ai_cuts = 0
+                    accepted = ("Illustration", "Speculative illustration")
                     for c in cuts:
                         if c.get("generator") != "AI":
                             continue
                         ai_cuts += 1
-                        if c.get("label") != "Illustration":
+                        if c.get("label") not in accepted:
                             problems.append(
-                                f"cut {c.get('id','?')} generator=AI lacks Illustration label"
+                                f"cut {c.get('id','?')} generator=AI lacks an Illustration label"
                             )
-                            continue
-                        try:
-                            dur = float(c.get("duration", 0))
-                        except (TypeError, ValueError):
-                            dur = 0.0
-                        share = (dur / duration) if duration > 0 else 0.0
-                        if share > ai_max_share:
-                            problems.append(
-                                f"cut {c.get('id','?')} AI share {share:.2f} > {ai_max_share}"
-                            )
+                        ai_seconds += cut_duration(c)
+                    share = (ai_seconds / duration) if duration > 0 else 0.0
+                    if share > ai_max_share:
+                        problems.append(
+                            f"AI share {share:.2f} of runtime > {ai_max_share}"
+                        )
                     if problems:
                         report.append(
                             entry(
@@ -1039,6 +1192,127 @@ class QCTool(BaseTool):
                         f"ai_illustration_label unrunnable: {exc}",
                     )
                 )
+
+        # ---- 14. motion_variety (L6 lint wired into the release gate) ----
+        edit_path = inputs.get("edit_decisions_path")
+        if not edit_path or not Path(edit_path).is_file():
+            report.append(
+                entry("motion_variety", "NOT_RUN", "edit_decisions not provided")
+            )
+        else:
+            try:
+                data = _load_json(edit_path)
+                cuts = data.get("cuts") if isinstance(data, dict) else None
+                if not isinstance(cuts, list):
+                    report.append(
+                        entry("motion_variety", "FAILED", "edit_decisions missing cuts[]")
+                    )
+                else:
+                    from tools.motion.motion_variety import lint_variation
+
+                    motion_cuts = [
+                        c for c in cuts
+                        if isinstance(c, dict) and c.get("move")
+                        and not c.get("static_by_design")
+                    ]
+                    problems = lint_variation(motion_cuts)
+                    if problems:
+                        report.append(
+                            entry(
+                                "motion_variety", "FAILED",
+                                "; ".join(p["reason"] for p in problems)[:300],
+                                len(problems), "0 consecutive identical moves",
+                            )
+                        )
+                    elif not motion_cuts:
+                        report.append(
+                            entry(
+                                "motion_variety", "REVIEW",
+                                "no motion segments (all cuts static_by_design or unmoved)",
+                                0, "0 consecutive identical moves",
+                            )
+                        )
+                    else:
+                        report.append(
+                            entry(
+                                "motion_variety", "PASS",
+                                f"{len(motion_cuts)} motion cuts, no two identical moves in a row",
+                                len(motion_cuts), "0 consecutive identical moves",
+                            )
+                        )
+            except Exception as exc:  # noqa: BLE001
+                report.append(
+                    entry("motion_variety", "BLOCKED", f"motion_variety unrunnable: {exc}")
+                )
+
+        # ---- 15. speculative_label (only for speculative niches) ----
+        # A speculative niche must label every AI cut "Speculative illustration"
+        # AND carry a description, so a hypothesis is never presented as fact.
+        if inputs.get("speculative_niche"):
+            edit_path = inputs.get("edit_decisions_path")
+            if not edit_path or not Path(edit_path).is_file():
+                report.append(
+                    entry(
+                        "speculative_label", "NOT_RUN",
+                        "edit_decisions not provided",
+                    )
+                )
+            else:
+                try:
+                    data = _load_json(edit_path)
+                    cuts = data.get("cuts") if isinstance(data, dict) else None
+                    if not isinstance(cuts, list):
+                        report.append(
+                            entry(
+                                "speculative_label", "FAILED",
+                                "edit_decisions missing cuts[]",
+                            )
+                        )
+                    else:
+                        from tools.illustration.s1_speculative_gate import (
+                            SPECULATIVE_LABEL,
+                        )
+
+                        problems = []
+                        ai_cuts = 0
+                        for c in cuts:
+                            if not isinstance(c, dict) or c.get("generator") != "AI":
+                                continue
+                            ai_cuts += 1
+                            if c.get("label") != SPECULATIVE_LABEL:
+                                problems.append(
+                                    f"cut {c.get('id','?')} label={c.get('label')!r} "
+                                    f"!= {SPECULATIVE_LABEL!r}"
+                                )
+                            if not str(c.get("description") or "").strip():
+                                problems.append(
+                                    f"cut {c.get('id','?')} has no description"
+                                )
+                        if problems:
+                            report.append(
+                                entry(
+                                    "speculative_label", "FAILED",
+                                    "; ".join(problems)[:300],
+                                    ai_cuts,
+                                    f"every AI cut labelled {SPECULATIVE_LABEL!r} + description",
+                                )
+                            )
+                        else:
+                            report.append(
+                                entry(
+                                    "speculative_label", "PASS",
+                                    f"{ai_cuts} AI cut(s) labelled {SPECULATIVE_LABEL!r} with description",
+                                    ai_cuts,
+                                    f"every AI cut labelled {SPECULATIVE_LABEL!r} + description",
+                                )
+                            )
+                except Exception as exc:  # noqa: BLE001
+                    report.append(
+                        entry(
+                            "speculative_label", "BLOCKED",
+                            f"speculative_label unrunnable: {exc}",
+                        )
+                    )
 
         # ---- overall verdict ----
         statuses = [e["status"] for e in report]

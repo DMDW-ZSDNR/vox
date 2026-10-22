@@ -111,5 +111,5 @@ if [ "$failures" -gt 0 ] || [ "$verified" -ne "$TOTAL_COUNT" ]; then
     echo "[rebuild] ABORT: $failures asset(s) failed download/verify; verified $verified/$TOTAL_COUNT"
     exit 1
 fi
-echo "[rebuild] DONE: all $TOTAL_COUNT assets present and sha256-verified"
+echo "[rebuild] DONE: verified $verified/$TOTAL_COUNT assets (all sha256-verified)"
 exit 0

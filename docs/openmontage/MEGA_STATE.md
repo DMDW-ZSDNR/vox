@@ -16,7 +16,7 @@ paths this agent owns, then `git pull --rebase` + non-force push.
 | Phase | Status | Evidence | Commit |
 |---|---|---|---|
 | G0 PREFLIGHT | DONE | ci_fast_suite 10/10 exit 0 (2247->2239 MB); 19 episode/EDL tests pass; 2515 tests collected exit 0; audit appendix A in FACTORY_GAP_AUDIT.md | (this commit) |
-| G1 QC + CONTRACTS | PENDING | — | — |
+| G1 QC + CONTRACTS | DONE | qc.py: added_value start/end fix + narration/graphics/still gates, motion_variety, speculative_label, strict rights flags/provenance; qc_report schema test; release_gate (SINGLE_SOURCE blocks publish); run_evals.py 6/6 PASS; fast suite 12/12 exit 0 | (this commit) |
 | G2 EPISODE PIPELINE | PENDING | — | — |
 | G3 IMAGE ENGINE | PENDING | — | — |
 | G4 VISUAL SOURCES | PENDING | — | — |

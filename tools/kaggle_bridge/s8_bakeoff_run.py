@@ -167,6 +167,12 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls,
 
 _ENGINE._load_pipeline = _load_pipeline  # the engine calls the module global
 
+# The engine's own main() must be captured BEFORE the function below is
+# defined: when this file is appended to the engine source, both live in the
+# same module namespace, so `def main` would shadow the engine's main and
+# `_ENGINE.main()` would call itself forever (RecursionError, S8 attempt 1).
+_ENGINE_MAIN = _ENGINE.main
+
 
 def main() -> int:
     raw = os.environ.get("S8_JOB_JSON")
@@ -179,7 +185,7 @@ def main() -> int:
                   "s8_job.json", file=sys.stderr)
             return 1
         _ENGINE.JOB_EMBEDDED = json.loads(job_path.read_text(encoding="utf-8"))
-    return _ENGINE.main()
+    return _ENGINE_MAIN()
 
 
 if __name__ == "__main__":

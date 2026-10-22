@@ -140,3 +140,12 @@ def test_composed_runner_registers_the_s8_models_without_the_engine_file():
     assert ns["LOAD_CONFIG"]["sdxl-lightning"]["scheduler"]["kwargs"] == {
         "timestep_spacing": "trailing"}
     assert ns["JOB_EMBEDDED"]["model"] == "sdxl-lightning"
+
+
+def test_s8_additions_capture_the_engine_main_before_defining_their_own():
+    """RecursionError in S8 attempt 1: `def main` shadowed the engine's main."""
+    src = (REPO / "tools/kaggle_bridge/s8_bakeoff_run.py").read_text(
+        encoding="utf-8")
+    assert src.index("_ENGINE_MAIN = _ENGINE.main") < src.index("def main() -> int:")
+    assert "return _ENGINE.main()" not in src
+    assert "return _ENGINE_MAIN()" in src

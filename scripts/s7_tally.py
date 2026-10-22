@@ -38,13 +38,15 @@ PANELS = ("A", "B", "C")
 TOTAL_SCENES = 10
 
 
-def _panel(value: str, field: str, scene: str, allow_blank: bool = False) -> str:
+def _panel(value: str, field: str, scene: str,
+           allowed: tuple = PANELS, allow_blank: bool = False) -> str:
     v = (value or "").strip().upper()
     if not v and allow_blank:
         return ""
-    if v not in PANELS:
+    if v not in allowed:
         raise ValueError(
-            f"{field} for scene {scene} is {value!r}; expected one of A|B|C")
+            f"{field} for scene {scene} is {value!r}; expected one of "
+            + "|".join(allowed))
     return v
 
 
@@ -79,8 +81,24 @@ def load_mapping(path: Path | str | Dict[str, Any] = DEFAULT_MAPPING) -> Dict[st
     }
 
 
-def load_results(path: Path | str = DEFAULT_CSV) -> List[Dict[str, Any]]:
+def panels_from_csv(path: Path | str) -> tuple:
+    """Panel letters are taken from the CSV's own `anatomy_ok_*` columns.
+
+    S7 used A|B|C; S8 uses A|B|C|D|E. Reading them from the header keeps one
+    tally script working for both packs.
+    """
     p = Path(path)
+    with p.open(newline="", encoding="utf-8-sig") as fh:
+        header = csv.DictReader(fh).fieldnames or []
+    found = tuple(sorted(h.split("_")[-1].upper() for h in header
+                         if h and h.startswith("anatomy_ok_")))
+    return found or PANELS
+
+
+def load_results(path: Path | str = DEFAULT_CSV,
+                 allowed_panels: Optional[tuple] = None) -> List[Dict[str, Any]]:
+    p = Path(path)
+    panels = tuple(allowed_panels) if allowed_panels else panels_from_csv(p)
     with p.open(newline="", encoding="utf-8-sig") as fh:
         rows = list(csv.DictReader(fh))
     out: List[Dict[str, Any]] = []
@@ -88,17 +106,30 @@ def load_results(path: Path | str = DEFAULT_CSV) -> List[Dict[str, Any]]:
         scene = (row.get("scene") or "").strip()
         if not scene:
             continue
-        best = _panel(row.get("best_panel", ""), "best_panel", scene, allow_blank=True)
-        worst = _panel(row.get("worst_panel", ""), "worst_panel", scene, allow_blank=True)
+        best = _panel(row.get("best_panel", ""), "best_panel", scene,
+                      panels, allow_blank=True)
+        second = _panel(row.get("second_best", ""), "second_best", scene,
+                        panels, allow_blank=True)
+        worst = _panel(row.get("worst_panel", ""), "worst_panel", scene,
+                       panels, allow_blank=True)
         if best and worst and best == worst:
             raise ValueError(
                 f"scene {scene}: best_panel and worst_panel are both {best!r}")
+        if second and best and second == best:
+            raise ValueError(
+                f"scene {scene}: second_best is the same panel as best_panel "
+                f"({best!r})")
+        if second and worst and second == worst:
+            raise ValueError(
+                f"scene {scene}: second_best is the same panel as worst_panel "
+                f"({worst!r})")
         out.append({
             "scene": scene,
             "best": best,
+            "second": second,
             "worst": worst,
             "comment": (row.get("comment") or "").strip(),
-            "anatomy": {p_: _yes(row.get(f"anatomy_ok_{p_}", "")) for p_ in PANELS},
+            "anatomy": {p_: _yes(row.get(f"anatomy_ok_{p_}", "")) for p_ in panels},
         })
     if not out:
         raise ValueError(f"{p} has no scene rows")
@@ -140,8 +171,8 @@ def tally(results: List[Dict[str, Any]],
     ordered = [m for m in MODEL_ORDER if m in present] + \
               [m for m in present if m not in MODEL_ORDER]
     stats: Dict[str, Dict[str, Any]] = {
-        m: {"wins": 0, "losses": 0, "anatomy_ok": 0, "anatomy_judged": 0,
-            "scenes_won": []}
+        m: {"wins": 0, "seconds": 0, "losses": 0, "anatomy_ok": 0,
+            "anatomy_judged": 0, "scenes_won": []}
         for m in ordered
     }
     for row in results:
@@ -152,6 +183,9 @@ def tally(results: List[Dict[str, Any]],
             model = panels[scene][row["best"]]
             stats[model]["wins"] += 1
             stats[model]["scenes_won"].append(scene)
+        if row.get("second"):
+            model = panels[scene][row["second"]]
+            stats[model]["seconds"] += 1
         if row["worst"]:
             model = panels[scene][row["worst"]]
             stats[model]["losses"] += 1
@@ -190,20 +224,22 @@ def _owner_winner(stats: Dict[str, Dict[str, Any]], total: int
 
 
 def render_report(results: List[Dict[str, Any]], mapping: Dict[str, Any],
-                  agent_pick: Optional[str] = None) -> str:
+                  agent_pick: Optional[str] = None,
+                  title: str = "S7 blind-pack tally") -> str:
     panels = _panels(mapping)
     total_scenes = len(panels)
     filled = sum(1 for r in results if r["best"])
     stats = tally(results, mapping)
     lines: List[str] = []
 
-    lines.append(f"S7 blind-pack tally - {filled}/{total_scenes} scenes filled")
+    lines.append(f"{title} - {filled}/{total_scenes} scenes filled")
     lines.append("")
-    lines.append("| model | wins | losses | anatomy ok |")
-    lines.append("|---|---|---|---|")
+    lines.append("| model | wins | 2nd places | losses | anatomy ok |")
+    lines.append("|---|---|---|---|---|")
     for m in stats:
         s = stats[m]
-        lines.append(f"| {m} | {s['wins']} | {s['losses']} | "
+        lines.append(f"| {m} | {s['wins']} | {s.get('seconds', 0)} | "
+                     f"{s['losses']} | "
                      f"{s['anatomy_ok']}/{s['anatomy_out_of']} |")
     lines.append("")
 
@@ -285,7 +321,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"BLOCKED: {exc}")
         return 2
 
-    print(render_report(results, mapping, load_agent_pick(args.agent)))
+    print(render_report(results, mapping, load_agent_pick(args.agent),
+                        title=args.title))
     return 0
 
 

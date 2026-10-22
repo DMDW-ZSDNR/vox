@@ -115,3 +115,17 @@ def test_manifest_engine_matches_the_helper_that_ran(episode, monkeypatch):
     manifest = json.loads(
         (episode / "artifacts" / "narration_manifest.json").read_text(encoding="utf-8"))
     assert manifest["engine"] == "kokoro_82m_torch_cpu"
+
+
+def test_resumed_narration_rewrites_a_missing_manifest(episode):
+    """A resume must not leave QC without a narration manifest."""
+    state = {"episode_dir": str(episode)}
+    wav = episode / "narration_finished.wav"
+    _write_wav(wav, 3.0, sr=44100)
+    res = run_episode.cmd_narration("se_pilot", state)
+    assert res["status"] == "OK", res
+    manifest = json.loads(
+        (episode / "artifacts" / "narration_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["expected_duration"] == pytest.approx(3.0, abs=0.05)
+    assert manifest["sentences"] == 2
+    assert manifest["engine"].startswith("kokoro")

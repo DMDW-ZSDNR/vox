@@ -246,14 +246,60 @@ def narration_helper(state=None):
     return None
 
 
+
+def _engine_name(helper):
+    """Name the TTS engine from the helper that produced the audio."""
+    if helper is None:
+        return "kokoro_unknown"
+    return ("kokoro_onnx_82m_cpu"
+            if Path(helper).name.startswith("z3_kokoro")
+            else "kokoro_82m_torch_cpu")
+
+
+def _narration_manifest_path(topic_id, state):
+    chap = _chap_idx(state)
+    mtag = f"_chapter{chap}" if chap is not None else ""
+    return _artifacts_dir(topic_id, state) / f"narration_manifest{mtag}.json"
+
+
+def _write_narration_manifest(topic_id, state, script, dur, helper):
+    """Write the narration manifest QC reads; returns the manifest dict."""
+    manifest = {
+        "expected_duration": dur,
+        "tolerance": 1.0,
+        "sample_rate": 44100,
+        "voice": "af_heart",
+        "engine": _engine_name(helper),
+        "sentences": (len([r for r in _parse_script_rows(script)
+                           if str(r.get("sentence", "")).strip()])
+                      if script else 0),
+    }
+    _narration_manifest_path(topic_id, state).write_text(
+        json.dumps(manifest, indent=2), encoding="utf-8")
+    return manifest
+
+
+def _ensure_narration_manifest(topic_id, state, script, wav):
+    """A resumed stage must still leave a manifest behind (QC needs it)."""
+    path = _narration_manifest_path(topic_id, state)
+    if path.is_file():
+        return None
+    dur = _ffprobe_duration(wav)
+    if not dur:
+        return None
+    return _write_narration_manifest(topic_id, state, script, round(dur, 6),
+                                     narration_helper(state))
+
+
 def cmd_narration(topic_id, state):
     episode_root(topic_id, state).mkdir(parents=True, exist_ok=True)
     raw, wav = _narration_paths(topic_id, state)
+    script = state.get("chapter_script") or topic_script(topic_id, state)
     if wav.exists():
+        _ensure_narration_manifest(topic_id, state, script, wav)
         return {"status": "OK", "outputs": {"narration_wav": str(wav)}}
     # Chapter mode: synthesize only this chapter's sentences (chapter_script),
     # otherwise the full topic script.
-    script = state.get("chapter_script") or topic_script(topic_id, state)
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     if not raw.exists():
@@ -285,22 +331,8 @@ def cmd_narration(topic_id, state):
             dur = round(float(_json.loads(probe.stdout)["format"]["duration"]), 6)
         except Exception:
             dur = None
-    manifest = {
-        "expected_duration": dur,
-        "tolerance": 1.0,
-        "sample_rate": 44100,
-        "voice": "af_heart",
-        "engine": ("kokoro_onnx_82m_cpu"
-                   if Path(helper).name.startswith("z3_kokoro")
-                   else "kokoro_82m_torch_cpu"),
-        "sentences": len([r for r in _parse_script_rows(script)
-                          if str(r.get("sentence", "")).strip()]),
-    }
-    _artifacts_dir(topic_id, state)
-    chap = _chap_idx(state)
-    mtag = f"_chapter{chap}" if chap is not None else ""
-    manifest_path = _artifacts_dir(topic_id, state) / f"narration_manifest{mtag}.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    _write_narration_manifest(topic_id, state, script, dur,
+                              narration_helper(state))
     return {"status": "OK", "outputs": {"narration_wav": str(wav), **result.data,
                                         "narration_duration_s": dur}}
 

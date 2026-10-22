@@ -170,7 +170,15 @@ AUDIO: no music, no dialogue, no sound effects
 
 ### 5.5 音乐
 
-每个入选场景使用 `pixabay_music` 搜索三条不同气质的候选。候选下载到项目 `assets/music/`，skill 向用户展示标题、作者、时长、授权和本地播放路径，等待用户选择。
+每个入选场景使用 `pixabay_music` 的候选搜索模式一次返回最多三条结果。skill 向用户展示标题、作者、时长和授权，等待用户选择后才下载选中的曲目到 `assets/music/`。
+
+为保持现有调用兼容，`pixabay_music` 增加：
+
+- `operation="search"`：只搜索，不写音频文件，返回最多 `max_results` 条候选及受限的 Pixabay 下载地址；
+- `operation="download"`：下载用户选中的 Pixabay 候选；
+- `operation="search_and_download"`：保留原有“搜索并下载第一条”行为。
+
+下载地址必须来自允许的 Pixabay CDN 域名，避免把通用 URL 下载器暴露给模型。
 
 选择后用 `video_compose` 的 encode 路径或现有音频合入能力将音乐加入视频，并通过 `ffprobe` 验证：
 

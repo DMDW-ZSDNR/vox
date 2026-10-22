@@ -469,6 +469,8 @@ git commit -m "feat: add seedance product scene skills"
 ### Task 11: Music, Copy, Compose, and Delivery Flow
 
 **Files:**
+- Modify: `tools/audio/pixabay_music.py`
+- Create: `tests/contracts/test_pixabay_music_candidates.py`
 - Modify: `tests/contracts/test_seedance_product_scene_pipeline.py`
 - Modify: `skills/pipelines/seedance-product-scene/music-director.md`
 - Modify: `skills/pipelines/seedance-product-scene/compose-director.md`
@@ -476,33 +478,62 @@ git commit -m "feat: add seedance product scene skills"
 
 **Interfaces:**
 - Consumes: `pixabay_music`, `audio_mixer`, `video_compose`
-- Produces: three downloaded music candidates per selected style, one approved selection, a muxed video, and a `product_delivery` artifact
+- Produces: `pixabay_music.operation="search"` with up to three candidates and no file download
+- Produces: `pixabay_music.operation="download"` for the one user-approved Pixabay candidate
+- Produces: one approved music file, a muxed video, and a `product_delivery` artifact
 
-- [ ] **Step 1: Add failing flow assertions**
+- [ ] **Step 1: Write failing candidate-search tests**
+
+Mock Pixabay HTML/bootstrap data. Assert:
+
+- `operation="search"` returns three ordered candidates;
+- no output file is written;
+- each candidate exposes title, artist, duration, license, and a Pixabay-owned download URL;
+- `operation="download"` writes exactly the selected candidate;
+- non-Pixabay download URLs are rejected before network access;
+- legacy `search_and_download` still downloads the first result.
+
+- [ ] **Step 2: Run RED**
+
+Run: `.venv/bin/python -m pytest tests/contracts/test_pixabay_music_candidates.py -q`
+
+Expected: unsupported operation or missing candidate fields.
+
+- [ ] **Step 3: Implement candidate search and selected download**
+
+Extend the input schema without removing existing fields. Restrict `download_url` to HTTPS hosts under `pixabay.com`, and preserve the current output and metadata contract for the legacy path.
+
+- [ ] **Step 4: Run music tests GREEN**
+
+Run: `.venv/bin/python -m pytest tests/contracts/test_pixabay_music_candidates.py -q`
+
+Expected: all candidate tests pass without real network access.
+
+- [ ] **Step 5: Add failing flow assertions**
 
 Assert the manifest requires `pixabay_music` in `music`, `audio_mixer` and `video_compose` in `compose`, and `video_compose` in `compose` emits `render_report` plus `final_review`.
 
-- [ ] **Step 2: Run RED**
+- [ ] **Step 6: Run flow RED**
 
 Run: `.venv/bin/python -m pytest tests/contracts/test_seedance_product_scene_pipeline.py -q`
 
 Expected: assertions fail until task names and tool lists are complete.
 
-- [ ] **Step 3: Complete the skills and manifest dependencies**
+- [ ] **Step 7: Complete the skills and manifest dependencies**
 
-Specify three distinct Pixabay queries per scene family, download all candidates, never auto-select, then use `audio_mixer`/`video_compose` with `audio_path` and verify with ffprobe. Product copy uses the active Codex model and records `agent_generated`.
+Each scene calls candidate search once for up to three results, presents all candidates, never auto-selects, then downloads only the approved track. Use `audio_mixer`/`video_compose` with `audio_path` and verify with ffprobe. Product copy uses the active Codex model and records `agent_generated`.
 
-- [ ] **Step 4: Run GREEN**
+- [ ] **Step 8: Run combined GREEN**
 
-Run: `.venv/bin/python -m pytest tests/contracts/test_seedance_product_scene_pipeline.py tests/contracts/test_product_scene_artifacts.py -q`
+Run: `.venv/bin/python -m pytest tests/contracts/test_pixabay_music_candidates.py tests/contracts/test_seedance_product_scene_pipeline.py tests/contracts/test_product_scene_artifacts.py -q`
 
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add pipeline_defs/seedance-product-scene.yaml skills/pipelines/seedance-product-scene tests/contracts/test_seedance_product_scene_pipeline.py
-git commit -m "feat: complete music and delivery workflow"
+git add tools/audio/pixabay_music.py tests/contracts/test_pixabay_music_candidates.py pipeline_defs/seedance-product-scene.yaml skills/pipelines/seedance-product-scene tests/contracts/test_seedance_product_scene_pipeline.py
+git commit -m "feat: add music candidate selection workflow"
 ```
 
 ### Task 12: Offline End-to-End Test

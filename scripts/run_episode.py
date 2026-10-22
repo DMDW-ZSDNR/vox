@@ -205,15 +205,32 @@ def cmd_script_validation(topic_id, state):
 
 
 def cmd_footage_manifest_rights(topic_id, state):
-    rights = shared_assets() / "rights_records.json"
+    # Episode artifacts first; the legacy folder belongs to other episodes.
+    rights = _qc_assets(topic_id, state) / "rights_records.json"
     if not rights.exists():
         return {"status": "BLOCKED", "error": "rights_records.json missing"}
-    records = json.loads(rights.read_text(encoding="utf-8"))
-    allowed = {"explicit_license", "source_policy_us_gov"}
-    bad = [r["asset_id"] for r in records if r.get("rights_basis") not in allowed]
+    data = json.loads(rights.read_text(encoding="utf-8"))
+    records = data.get("assets", []) if isinstance(data, dict) else data
+    if not records:
+        return {"status": "BLOCKED", "error": "rights_records.json lists no assets"}
+    # Same enum QC enforces (L3): an AI illustration is a valid basis, but it
+    # must be labelled and may never be presented as real footage.
+    allowed = {"explicit_license", "source_policy_us_gov",
+               "ai_generated_illustration"}
+    bad = [(r.get("asset_id"), r.get("rights_basis")) for r in records
+           if r.get("rights_basis") not in allowed]
     if bad:
-        return {"status": "BLOCKED", "error": f"rights_basis not permitted: {bad}"}
-    return {"status": "OK", "outputs": {"rights_records": str(rights), "assets": len(records)}}
+        return {"status": "BLOCKED",
+                "error": f"rights_basis not permitted: {bad[:5]}"}
+    ai = [r for r in records if r.get("rights_basis") == "ai_generated_illustration"]
+    unlabelled = [r.get("asset_id") for r in ai
+                  if not str(r.get("label") or "").strip()]
+    if unlabelled:
+        return {"status": "BLOCKED",
+                "error": f"AI illustrations without a label: {unlabelled[:5]}"}
+    return {"status": "OK", "outputs": {"rights_records": str(rights),
+                                        "assets": len(records),
+                                        "ai_illustrations": len(ai)}}
 
 
 KOKORO_ONNX_MODEL = Path("/tmp/kilo/kokoro_onnx_weights/kokoro-v1.0.onnx")

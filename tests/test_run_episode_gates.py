@@ -267,3 +267,42 @@ def test_package_draft_copies_only_episode_artifacts(tmp_path, monkeypatch):
     assert (pkg / "narration_manifest.json").is_file()
     assert (pkg / "credits.txt").read_text() == "episode credits"
     assert not (pkg / "subtitles.srt").exists(), "legacy subtitles leaked in"
+
+
+# ------------------------------------------------------- rights manifest gate
+def test_footage_manifest_rights_reads_episode_assets_and_allows_ai(tmp_path):
+    """An all-illustration episode must pass: ai_generated_illustration is a
+    valid rights basis, and the episode's own records are the input."""
+    ep, _edl = _episode(tmp_path)
+    (ep / "artifacts" / "rights_records.json").write_text(json.dumps({
+        "assets": [
+            {"asset_id": "ill_1", "kind": "ai_illustration",
+             "rights_basis": "ai_generated_illustration", "usable": True,
+             "label": "Speculative illustration"},
+            {"asset_id": "card_1", "kind": "graphics",
+             "rights_basis": "explicit_license", "usable": True},
+        ]}), encoding="utf-8")
+    res = run_episode.cmd_footage_manifest_rights("t_ep", {"episode_dir": str(ep)})
+    assert res["status"] == "OK", res
+    assert res["outputs"]["assets"] == 2
+
+
+def test_footage_manifest_rights_blocks_unknown_basis(tmp_path):
+    ep, _edl = _episode(tmp_path)
+    (ep / "artifacts" / "rights_records.json").write_text(json.dumps({
+        "assets": [{"asset_id": "x", "kind": "footage", "rights_basis": "unknown"}]}),
+        encoding="utf-8")
+    res = run_episode.cmd_footage_manifest_rights("t_ep", {"episode_dir": str(ep)})
+    assert res["status"] == "BLOCKED", res
+    assert "unknown" in res["error"]
+
+
+def test_footage_manifest_rights_blocks_unlabelled_ai(tmp_path):
+    ep, _edl = _episode(tmp_path)
+    (ep / "artifacts" / "rights_records.json").write_text(json.dumps({
+        "assets": [{"asset_id": "ill_1", "kind": "ai_illustration",
+                    "rights_basis": "ai_generated_illustration"}]}),
+        encoding="utf-8")
+    res = run_episode.cmd_footage_manifest_rights("t_ep", {"episode_dir": str(ep)})
+    assert res["status"] == "BLOCKED", res
+    assert "label" in res["error"]

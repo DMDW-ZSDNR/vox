@@ -142,6 +142,17 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls,
         if vae is not None:
             vae.to(dtype=torch.float32)
             notes["vae_fp32"] = True
+    if cfg.get("text_encoder_fp32"):
+        # fp16 overflow in a large text encoder (Gemma2) produces NaN
+        # embeddings -> NaN latents -> black frames. The encoder is small
+        # enough to run in fp32 without leaving the T4's VRAM budget; the
+        # DiT and the VAE stay fp16 (the S8 brief).
+        te = getattr(pipe, "text_encoder", None)
+        if te is not None:
+            te.to(dtype=torch.float32)
+            notes["text_encoder_fp32"] = True
+        else:
+            notes["text_encoder_fp32"] = "no text_encoder on this pipeline"
 
     sched = cfg.get("scheduler")
     if sched:

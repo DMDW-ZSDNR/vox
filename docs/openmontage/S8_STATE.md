@@ -16,11 +16,11 @@ git.
 | Phase | Status | Note |
 |---|---|---|
 | S8-1 LICENSE AND FIT GATE | DONE | `docs/openmontage/image_gen/CANDIDATES_S8.md` + evidence `S8_CANDIDATE_FACTS.json` (official HF cards only, no weights downloaded). Krea 2 Turbo = LICENSE_BLOCKED (gated auto, community licence PDF unreadable, 12.8 B params) -> NOT RUN. SDXL-Lightning, dreamshaper-xl-lightning, Sana Sprint 1.6B = FITS_T4. sdxl-turbo = LICENSE_BLOCKED (revenue cap). |
-| S8-2 RUN THE NEW MODELS | IN_PROGRESS | sdxl-lightning attempt 1 crashed before any model was touched (RecursionError in the composed runner) -> attempt 2 RUNNING. dreamshaper-xl and sana-sprint-1.6b are queued. |
-| S8-3 MEASURE + OBJECTIVE QC | PENDING | load time, steady s/image, usable img/min, peak VRAM, black/NaN/OOM, attempts, versions; per-image blur / text-like / pHash flags (text detector was unreliable in S7 - say so). |
-| S8-4 AGENT SELF-ASSESSMENT | PENDING | advisory only, labelled "agent opinion, not independent, a vision model can miss anatomy errors". |
-| S8-5 OWNER PACK (5 panels) | PENDING | `projects/s8_blind/` (gitignored), panels A-E per scene, `results.csv`, tally extended to 5 models (test-first). |
-| S8-6 REPORT | PENDING | `docs/openmontage/image_gen/BAKEOFF_S8.md` + this file + LESSONS.md + commit. No winner declared by the agent. |
+| S8-2 RUN THE NEW MODELS | DONE | sdxl-lightning DONE (attempt 2; attempt 1 was a runner crash), dreamshaper-xl DONE (attempt 1), sana-sprint-1.6b **BLOCKED** after 4 attempts (0 usable frames, fp16 NaN). |
+| S8-3 MEASURE + OBJECTIVE QC | DONE | `docs/openmontage/image_gen/S8_CHECKS.json` (40 compared frames + the blocked SANA row). The text detector is unreliable in S7 and S8 - the report says so. |
+| S8-4 AGENT SELF-ASSESSMENT | DONE | 40 frames scored (20 reused from S7 + 20 new), 7 dimensions incl. style fit -> `S8_AGENT_REVIEW.csv`, `S8_AGENT_ASSESSMENT.json`. Pick: **klein**, confidence medium. Advisory only. |
+| S8-5 OWNER PACK (up to 5 panels) | DONE | `projects/s8_blind/` (gitignored): 10 sheets, 4 panels A-D per scene (SANA is blocked, so it is not in the pack), `results.csv` with `second_best`, `mapping.json` separate. Tally extended to N panels with second places (test-first: `tests/test_s8_tally.py`). |
+| S8-6 REPORT | DONE | `docs/openmontage/image_gen/BAKEOFF_S8.md` (sections 1-9) + this file + LESSONS.md + commits. **No winner declared by the agent.** |
 
 ## Facts carried over from S7 (reuse, do not redo)
 
@@ -48,7 +48,12 @@ manifests): `output/s7_cache/sdxl/`, `output/s7_cache/klein/`.
 | model | attempt | what changed | result |
 |---|---|---|---|
 | sdxl-lightning | 1 | first attempt (vendor-card recipe, rung released_037_x4) | FAILED before any model call - `RecursionError: maximum recursion depth exceeded`: in the concatenated run.py the S8 additions' `def main()` shadowed the engine's `main()`, so `_ENGINE.main()` called itself. Traceback: `docs/openmontage/image_gen/logs/s8-sdxl-lightning-1/kernel.log` |
-| sdxl-lightning | 2 | fixed the runner: the engine's `main` is captured as `_ENGINE_MAIN` before the S8 `main` is defined; same released stack (the stack was never exercised) | RUNNING (submitted 01:05Z) |
+| sdxl-lightning | 2 | fixed the runner: the engine's `main` is captured as `_ENGINE_MAIN` before the S8 `main` is defined; same released stack (the stack was never exercised) | DONE - 10/10, verify PASS, 3.943 s/image, 12.51 img/min, 9168.6 MB |
+| dreamshaper-xl | 1 | vendor-card recipe: fp16 variant, DPMSolverMultistep, 4 steps, guidance 2 | DONE - 10/10, verify PASS, 5.112 s/image, 10.12 img/min, 9968.01 MB |
+| sana-sprint-1.6b | 1 | vendor-card recipe in fp16, 2 steps, guidance 4.5, CPU offload | 10 BLACK frames (NaN) |
+| sana-sprint-1.6b | 2 | Gemma2 text encoder in fp32 (DiT/VAE stay fp16) | 10 BLACK frames - the encoder is not the source |
+| sana-sprint-1.6b | 3 | no CPU offload + fp32 VAE | hung in an OOM loop (12.2 GB of weights do not fit with 1024x1024 activations) - abandoned |
+| sana-sprint-1.6b | 4 | offload on, fp32 text encoder, 4 steps | FAILED before any frame: `ValueError: Intermediate timesteps for SCM is not supported when num_inference_steps != 2.` -> **cap reached: BLOCKED, 0 usable images** |
 | dreamshaper-xl-lightning | - | - | not started |
 | sana-sprint-1.6b | - | - | not started |
 

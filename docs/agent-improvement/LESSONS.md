@@ -195,3 +195,79 @@ Record only useful, evidence-backed lessons. Do not include secrets or personal 
   reproduced run 1 bit-for-bit on all 10 sha256), klein DONE (24.691 s/img,
   7995.02 MB, 10/10 verify PASS), Z-Image-Turbo BLOCKED after the 4-attempt cap with
   0 usable images. Agent advisory ranking: klein > SDXL; the owner's blind CSV decides.
+
+- Date / task: 2026-10-22 / G2+G3+G6 episode vertical slice (Kilo, inline)
+- Observed failure and evidence: (1) `cmd_qc` fell back to the legacy
+  `shared_assets()` when the per-episode artifact dir had no assets, so an empty
+  episode inherited another episode's assets and produced an OK verdict; (2)
+  `tools/illustration/illustration_qc.qc_batch` returns the key `results`, not
+  `images`, so a loop over `data["images"]` silently inspected zero renders; (3)
+  `run_illustrations.py status` takes `--kernel-slug`, not `--job-json`, and the
+  kernel ref (`owner/kernel`) differs from the `job_id` — passing `job_id` returns
+  `Permission 'kernels.get' was denied`, which reads like an auth problem; (4) a
+  background torch TTS run was killed by a sandbox restart and left no WAV, while
+  the log tail still looked healthy; (5) `cmd | tail -8; echo EXIT=$?` prints the
+  exit code of `tail`, not of the command under test.
+- Confirmed cause / certainty: (1) legacy-first fallback ordering; (2) untyped dict
+  shape in an internal helper; (3) CLI surface differs from the job manifest; (4)
+  process lifetime is not an artifact; (5) shell pipeline semantics. All four are
+  harness/contract defects, not model quality.
+- Fix or proposed rule: (a) release/QC gates prefer `episode_dir` artifacts and only
+  consult the legacy QA report when `episode_dir` is unset; (b) assert the helper's
+  own key name in a test before looping over its output; (c) status calls take the
+  kernel ref from the constant, confirm `KernelWorkerStatus`, never the job id; (d)
+  prove long jobs by the artifact (open the WAV, check frames/duration), not by the
+  exit echo; (e) run shells with `set -o pipefail` and no `tail` in the measured path.
+- Regression test: tests/test_run_episode_gates.py (episode-dir artifacts win, draft
+  BLOCKED without script/artifacts), tests/test_episode_batch.py (qc_batch key shape),
+  tests/test_render_kenburns_lavfi.py (a real ffmpeg render at 1280x720 with audio).
+- Result: pilot narration produced 46 sentences / 299.775 s at 24 kHz mono (torch
+  KPipeline path, ONNX weights absent); 84-render klein episode job still RUNNING at
+  the time of writing, so no image was claimed as fetched.
+
+- Date / task: 2026-10-22 / S8 5-model image bake-off (Kilo)
+- Observed failure and evidence: (1) the Kaggle runner is uploaded as ONE
+  self-contained `run.py`, and appending the S8 additions to the S7 engine made
+  the additions' `def main()` shadow the engine's `main()` -> `RecursionError:
+  maximum recursion depth exceeded` before any model was touched (log:
+  `docs/openmontage/image_gen/logs/s8-sdxl-lightning-1/kernel.log`); (2) the
+  blind-sheet builder drew only `"ABC"[:len(order)]` panels, so a 4-model pack
+  silently dropped the fourth model while the mapping still listed it - the
+  owner would have scored a 3-model comparison; (3) the pack-root staging
+  matched manifests with a plain glob, so model `sdxl` picked up
+  `s7-sdxl-lightning-2/manifest.json`; (4) the review-sheet writer used a
+  fixed header and dropped the new `style_fit` column; (5) SANA-Sprint 1.6B
+  in fp16 produced 10/10 black frames with
+  `diffusers/image_processor.py: RuntimeWarning: invalid value encountered in
+  cast` - the same NaN signature as S7's Z-Image-Turbo - and the diffusers
+  SCMScheduler refuses any step count other than 2
+  (`ValueError: Intermediate timesteps for SCM is not supported when
+  num_inference_steps != 2.`).
+- Confirmed cause / certainty: (1) name collision in a concatenated module;
+  (2) a fixed 3-panel limit in a pack builder that already claimed to support
+  N models; (3) glob ambiguity between model names that share a prefix; (4) a
+  hard-coded column list; (5) fp16 overflow in a bf16-native model - high
+  confidence for the black frames, high confidence for the scheduler error, and
+  the transformer-vs-VAE split is narrowed but not proven (the VAE fp32 and the
+  fp32 text encoder were both eliminated).
+- Fix or proposed rule: (a) when composing a single-file runner, capture the
+  engine entry point under a new name before defining your own, and test the
+  composed file with `exec` against a fake module; (b) derive the panel count
+  and the panel size from the number of models and assert that every model in
+  the mapping has a drawn panel; (c) match manifest folders with a strict
+  `<prefix>-<model>-<digits>` regex; (d) let the sheet keep its own header;
+  (e) treat "all frames black" as a numerics failure first: check the kernel
+  log for a cast warning, try an fp32 VAE and an fp32 text encoder, and only
+  then blame the model - and check the scheduler's supported step count before
+  changing it.
+- Regression test: tests/test_s8_bakeoff.py (composed runner registers the
+  models, captures the engine `main`, embeds the job), tests/test_s7_blind_pack.py
+  (4- and 5-panel sheets draw every model and stay under 1600 px),
+  tests/test_s7_stage_pack_root.py (S8 job manifests, strict model matching),
+  tests/test_s7_review_write.py (the sheet keeps its own columns).
+- Result: SDXL-Lightning 8-step DONE (3.943 s/image, 12.51 usable img/min,
+  9168.6 MB, 10/10 verify PASS), DreamShaper XL Lightning DONE (5.112 s/image,
+  10.12 img/min, 9968.01 MB, 10/10 verify PASS), SDXL Base and
+  FLUX.2-klein-4B reused from S7 (sha256 verified), SANA-Sprint 1.6B BLOCKED
+  after the 4-attempt cap with 0 usable frames. Agent advisory ranking:
+  klein > SDXL-Lightning > SDXL > DreamShaper XL; the owner's blind CSV decides.

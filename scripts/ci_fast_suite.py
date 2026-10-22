@@ -37,6 +37,8 @@ FAST_TEST_FILES = [
     "tests/illustration/test_reference_workflow.py",
     "tests/test_runner_static.py",
     "tests/illustration/test_episode_run.py",
+    "tests/illustration/test_qc_text_detector.py",
+    "tests/illustration/test_qc_v2.py",
 ]
 
 

@@ -77,10 +77,40 @@ Each item: what the spec says, what the repository shows, proposed wording, impa
 **Proposal:** replace with: "If the worktree is dirty or diverged, fetch and rebase only your own commits (`git rebase --onto`/ dedicated worktree); never rebase another agent's tracked edits; if the divergence is only the spec upload, merge it forward instead of rebasing."
 **If ignored:** a rebase can silently mix two agents' work or fail mid-milestone.
 
+## SCR-11 — A real text detector for the illustration QC (new dependency, owner decision)
+
+**Spec:** the QC must flag text-like artifacts in generated stills, and the
+episode must not publish an image with lettering; the spec's hard rules also
+forbid a new dependency without a decision ("no new dependencies unless they
+solve a concrete problem and have acceptable licenses" - AGENTS.md).
+**Reality (P4, 2026-10-22):** the QC now uses a connected-component detector
+(`tools/illustration/text_detect.py`, numpy + Pillow only). Measured on a
+synthetic fixture set it is exact (precision 1.00, recall 1.00, 16 labelled
+fixtures), but on the **real** episode images it still produces false positives:
+of 36 real images it flags 1 (`frozen_ocean_food_web_r0025.png`), a flat
+illustration with **no lettering** (a row of small lime shapes reads as
+characters). The old band heuristic flagged 3 of the same 36 (all false
+positives). The environment has **no OCR engine**: `tesseract` is not
+installed and neither `pytesseract`, `easyocr`, `opencv-python` nor `scipy`
+are in `pip list` (only numpy 2.5.4, pillow 13.0.0 and matplotlib-inline).
+**Proposal:** allow **one** of these, as an optional, offline dependency of
+the QC step (the QC stays fail-closed when it is missing):
+  (a) `pytesseract` + the `tesseract-ocr` system package (Apache-2.0;
+      needs a system package, so a Docker/apt change), or
+  (b) `easyocr` (Apache-2.0, pulls torch - heavy), or
+  (c) a small ONNX/DBNet text detector (e.g. `rapidocr-onnxruntime`,
+      Apache-2.0, ~15 MB, CPU-only, no torch) - the smallest addition.
+  The detector would only *confirm* lettering; the connected-component
+  heuristic stays as the fallback and as the "flat art" guard.
+**If ignored:** the QC keeps a small but real false-positive rate on flat
+vector art, so the owner sees pointless review items and a real lettering
+case could still slip through on an unusual layout.
+
+
 ---
 
 ## Not proposed (deliberately)
 
 - No threshold value changes (owner-only).
 - No change to the 10-layer structure, the hard rules in §1, or the "100% done" bar in §7.
-- No new dependencies or paid routes.
+- No new dependencies or paid routes (except SCR-11, which is a request, not an applied change).

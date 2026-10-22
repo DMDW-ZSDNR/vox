@@ -24,7 +24,7 @@ table.
 | P1 | DONE | image model locked as CONFIG: `config/image_engine.json` (klein, OWNER_GATED, SDXL-Lightning FAST_FALLBACK) + model-adapter interface (`tools/illustration/model_registry.py`) + CLI (`scripts/image_engine.py`); 40 new tests pass; CI fast suite 12/12 exit 0 | (this commit) |
 | P2 | DONE | style kit for 4 niches (`style.json` + finalized `STYLE_BIBLE.md` each) + consistency kit (canonical front/side/3-4 sheets, seed + card-supported reference policy) + LoRA feasibility note; 30 new tests; 4-image smoke job on Kaggle | (this commit) |
 | P3 | DONE | episode-scale image pipeline: image brief (46 visual beats from the script, tagged KNOWN/INFERENCE/SPECULATION), budget (7 img/min), batches 40-100, resume by sha256, retry-only-failed, owner-approved cache, hard fail, seed log, manifest; 19 new tests; ONE live 24-image job submitted | (this commit) |
-| P4 | PENDING | — | — |
+| P4 | DONE | image QC v2: connected-component text detector (precision 1.00 / recall 1.00 on 16 labelled synthetic fixtures; 1 false positive on 36 real images), palette drift vs the style file, episode near-duplicates (aHash+dHash+brightness), size/aspect checks, REVIEW queue builder (objective flags only), owner approved/rejected CSV ledger read by the P3 cache, OCR dependency request SCR-11; 21 new/updated tests | (this commit) |
 | P5 | PENDING | — | — |
 | P6 | PENDING | — | — |
 | P7 | PENDING | — | — |
@@ -191,3 +191,49 @@ Statuses used here: `PENDING` (queued, not started), `IN_PROGRESS`, `DONE`,
   outside the 24-image job by choice, not by truncation of the script.
 - **Next action:** fetch the live job (verify + QC), record the real seconds/image and
   the usable share, and let the owner approve or reject the images.
+
+### 2026-10-22 — P4: image QC v2 (objective checks, honest numbers)
+
+- **No new runtime component:** checked `pip list` (numpy 2.5.4, pillow 13.0.0,
+  matplotlib-inline - no scipy/opencv/torch) and `which tesseract` (not installed):
+  there is **no OCR engine** in the environment. The better detector would need a new
+  dependency -> **request SCR-11** in `docs/openmontage/SPEC_CHANGE_REQUESTS.md`
+  (rapidocr-onnxruntime / pytesseract+system package; nothing was installed).
+- **The weak heuristic is replaced:** `tools/illustration/text_detect.py` detects lettering
+  with connected components (morphological background, both polarities, glyph/line rules:
+  thin strokes, common baseline, no overlap, no identical-shape rows). The old
+  "thin near-white band" rule is kept only as a separate `band_artifact` flag.
+- **Measured honestly:** on a generated fixture set (8 text, 8 clean, 2 ambiguous)
+  precision **1.000**, recall **1.000** on the 16 labelled images; the ambiguous
+  dashes/barcode are reported separately. On the **36 real episode images** the new
+  detector flags **1** (a flat plate without lettering - a false positive) vs **3** for
+  the old rule (all false positives). ~0.17 s per image. The synthetic set is a floor for
+  this method, not a general accuracy claim.
+- **New objective checks:** exact size + aspect, **palette drift** against the niche
+  `style.json` (coverage / dominant off-palette colour), **episode near-duplicates**
+  (average hash + difference hash + a mean-brightness guard, because two different flat
+  images share an all-zero hash). Thresholds live in `config/qc_thresholds.json`
+  (`illustration_qc`): **new keys only, no existing threshold changed**.
+- **REVIEW queue:** `tools/illustration/review_queue.py` + `scripts/image_review.py queue`
+  -> `review_queue.json`/`.csv` sorted by objective flags (text 60, size 40, palette 25,
+  blur 20, duplicate 15). The pilot queue: 36 images -> 12 queued (1 text, 11 blur).
+  **Anatomy, composition and beauty stay owner-judged** - the queue says so and no tool
+  scores them.
+- **Owner approved/rejected ledger (CSV):** `assets/illustrations/owner_review.csv`
+  (`render_id,prompt_sha256,sha256,decision,reviewer,reviewed_utc,note`), read by the P3
+  cache: **approved -> never regenerated**; **rejected -> re-queued with a new seed**
+  (max 4 attempts, then `rejected_exhausted` and the episode fails closed).
+- **Tests (red then green):** `tests/illustration/test_qc_text_detector.py` (7),
+  `tests/illustration/test_qc_v2.py` (14), `tests/tools/test_illustration_qc.py` updated (7)
+  -> 21 pass in 3 consecutive runs; `tests/illustration` + illustration QC/batch ->
+  177 passed / 1 skipped, exit 0; `python scripts/ci_fast_suite.py` -> 21 files, all
+  pass (3 consecutive runs; one run failed once right after the new files were added and
+  could not be reproduced).
+- **Not done / NOT_CHECKED:** no OCR dependency installed; the remaining real-image false
+  positive is unfixed (SCR-11); the palette-drift and duplicate checks are verified on
+  synthetic fixtures and on the pilot episode, not on a large corpus.
+- **Owner decision:** (a) decide SCR-11 (allow one OCR dependency for the QC step, or
+  keep the heuristic); (b) work through the review queue and record approve/reject
+  decisions - the ledger then decides what is never regenerated.
+- **Next action:** owner reviews the 12 queued pilot images; the ledger decisions feed
+  the next P3 plan.

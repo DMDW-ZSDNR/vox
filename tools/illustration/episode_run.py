@@ -27,6 +27,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 from tools.illustration.image_brief import ImageBriefError, build_brief
+from tools.illustration.owner_review import (
+    decisions_by_render,
+    ledger_path as owner_ledger_path,
+)
 from tools.illustration.model_registry import ModelAdapter
 from tools.illustration.style_kit import StyleSpec
 
@@ -34,6 +38,10 @@ from tools.illustration.style_kit import StyleSpec
 IMAGES_PER_MINUTE_MIN = 6
 IMAGES_PER_MINUTE_MAX = 8
 IMAGES_PER_MINUTE_DEFAULT = 7
+
+#: How often a rejected image may be re-generated before the run gives up
+#: (the episode then fails closed and the owner has to supply a replacement).
+MAX_OWNER_REJECTION_ATTEMPTS = 4
 
 #: A retry must change something concrete: the seed is re-drawn inside the
 #: reserved range with this stride (prime-ish, bigger than the largest beat
@@ -200,6 +208,7 @@ class EpisodeImages:
         self.state_path = self.asset_dir / "run_state.json"
         self.seed_log_path = self.asset_dir / "seed_log.jsonl"
         self.approved_path = self.asset_dir / "approved.json"
+        self.owner_ledger_path = owner_ledger_path(self.episode_root)
         self.manifest_path = self.asset_dir / "episode_manifest.json"
 
     # ------------------------------------------------------------- state
@@ -323,6 +332,7 @@ class EpisodeImages:
         state.setdefault("renders", {})
         state.setdefault("batches", {})
         approved = {a.get("prompt_sha256") for a in self.load_approved()}
+        ledger = decisions_by_render(self.owner_ledger_path)
 
         entries = list(brief.get("entries") or [])
         dropped: List[str] = []
@@ -375,6 +385,22 @@ class EpisodeImages:
                         record["status"] = "pending"
                         record["error"] = "hash mismatch: the cached file no " \
                                           "longer matches the verified sha256"
+            decision = ledger.get(render_id)
+            if decision:
+                record["owner_decision"] = decision.get("decision")
+                record["owner_reviewer"] = decision.get("reviewer")
+                record["owner_reviewed_utc"] = decision.get("reviewed_utc")
+                if decision.get("decision") == "approved":
+                    record["status"] = "approved"
+                elif decision.get("decision") == "rejected":
+                    attempt = int(record.get("attempts", 0)) + 1
+                    record["attempts"] = attempt
+                    record["last_error"] = "owner_rejected"
+                    if attempt > MAX_OWNER_REJECTION_ATTEMPTS:
+                        record["status"] = "rejected_exhausted"
+                    else:
+                        record["status"] = "pending"
+                        self._reseed(record, attempt)
             if record["prompt_sha256"] in approved:
                 record["status"] = "approved"
             state["renders"][render_id] = record
@@ -480,6 +506,33 @@ class EpisodeImages:
         return batches[key]
 
     # ----------------------------------------------------------- submit
+    def _reseed(self, entry: Dict[str, Any], attempt: int) -> bool:
+        """Draw a new seed inside the reserved range (a retry must change
+        something concrete). Returns True when the seed changed."""
+        low, high = self.style.seed_policy.get("range", [3000, 3999])
+        size = int(high) - int(low) + 1
+        old_seed = int(entry.get("seed") or low)
+        new_seed = int(low) + ((old_seed - int(low) + attempt * RETRY_SEED_STRIDE)
+                               % size)
+        if new_seed == old_seed:
+            return False
+        entry["brief_seed"] = entry.get("brief_seed", old_seed)
+        entry["seed"] = new_seed
+        entry["prompt_sha256"] = hashlib.sha256(
+            f"{self.adapter.key}|{entry.get('prompt')}|{new_seed}"
+            .encode("utf-8")).hexdigest()
+        self._log_seed({
+            "ts": _now(),
+            "render_id": entry["render_id"],
+            "prompt_sha256": entry["prompt_sha256"],
+            "seed": new_seed,
+            "model": self.adapter.key,
+            "attempt": attempt,
+            "status": "retry",
+            "reason": entry.get("last_error") or "owner_rejected",
+        })
+        return True
+
     def _job_for(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         state = self.load_state()
         renders = [state["renders"][rid] for rid in batch["render_ids"]
@@ -646,25 +699,7 @@ class EpisodeImages:
             attempt = int(entry.get("attempts", 0)) + 1
             entry["attempts"] = attempt
             entry["last_error"] = errors.get(rid)
-            old_seed = int(entry.get("seed") or low)
-            new_seed = int(low) + ((old_seed - int(low) + attempt * RETRY_SEED_STRIDE)
-                                   % size)
-            if new_seed != old_seed:
-                entry["brief_seed"] = entry.get("brief_seed", old_seed)
-                entry["seed"] = new_seed
-                entry["prompt_sha256"] = hashlib.sha256(
-                    f"{self.adapter.key}|{entry.get('prompt')}|{new_seed}"
-                    .encode("utf-8")).hexdigest()
-                self._log_seed({
-                    "ts": _now(),
-                    "render_id": rid,
-                    "prompt_sha256": entry["prompt_sha256"],
-                    "seed": new_seed,
-                    "model": self.adapter.key,
-                    "attempt": attempt,
-                    "status": "retry",
-                    "reason": errors.get(rid),
-                })
+            self._reseed(entry, attempt)
             retry.append(entry)
         if retry:
             retry_ids = {r["render_id"] for r in retry}

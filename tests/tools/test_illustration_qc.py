@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from tools.illustration.illustration_qc import (  # noqa: E402
     laplacian_variance,
     average_hash,
+    flag_caption_band,
     hamming_distance,
     check_aspect_size,
     flag_text_like,
@@ -92,11 +93,27 @@ def test_check_aspect_size_within_tolerance():
 
 
 def test_flag_text_like():
+    """P4: the text verdict comes from the connected-component detector.
+
+    A bare caption band carries no glyphs, so it is no longer a text verdict
+    (the old band heuristic over-fired on flat art) - it is reported as a
+    separate `band_artifact` flag instead.
+    """
     texty = TMP / "texty.png"; clean = TMP / "clean.png"
     _make(texty, 1280, 720, "textzone")
     _make(clean, 1280, 720, "gradient")
-    assert flag_text_like(texty) is True
+    assert flag_text_like(texty) is False
     assert flag_text_like(clean) is False
+    assert flag_caption_band(texty) is True
+    assert flag_caption_band(clean) is False
+
+
+def test_qc_image_reports_the_band_artefact():
+    texty = TMP / "texty.png"
+    _make(texty, 1280, 720, "textzone")
+    result = qc_image(texty, 1280, 720)
+    assert result["band_artifact"] is True
+    assert result["text_like"] is False
 
 
 def test_qc_image_pass_and_fail():

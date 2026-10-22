@@ -355,7 +355,7 @@ def main() -> None:
         _blocked("JOB_EMBEDDED not set; runner cannot run", code=1)
 
     model: str = job["model"]
-    OUT = Path("/kaggle/working") / f"s7_bakeoff_{model}"
+    OUT = Path("/kaggle/working") / (job.get("output_dir") or f"s7_bakeoff_{model}")
     images_dir = OUT / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
 

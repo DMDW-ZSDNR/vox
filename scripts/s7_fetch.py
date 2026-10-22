@@ -12,6 +12,9 @@ stable path for the traceback; the PNGs stay in /tmp (media is never
 committed).
 
 Usage: python scripts/s7_fetch.py {sdxl|klein|zimage} [--job-id s7-sdxl-1]
+
+S8 uses the same fetcher with `--prefix s8` (the kernel output folder is
+`s8_bakeoff_<model>` and the local cache is /tmp/kilo/s8_out/<model>/).
 """
 from __future__ import annotations
 
@@ -32,8 +35,11 @@ OUT_ROOT = Path("/tmp/kilo/s7_out")
 LOGS_DIR = REPO / "docs/openmontage/image_gen/logs"
 
 
-def fetch(model: str, job_id: Optional[str] = None) -> Dict[str, Any]:
-    dest = OUT_ROOT / model
+def fetch(model: str, job_id: Optional[str] = None,
+          prefix: str = "s7") -> Dict[str, Any]:
+    out_root = OUT_ROOT if prefix == "s7" else Path(f"/tmp/kilo/{prefix}_out")
+    folder = f"{prefix}_bakeoff_{model}"
+    dest = out_root / model
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True, exist_ok=True)
@@ -49,8 +55,8 @@ def fetch(model: str, job_id: Optional[str] = None) -> Dict[str, Any]:
     if not fo.success:
         raise SystemExit(f"FETCH FAILED ({model}): {fo.error}")
 
-    man_path = dest / f"s7_bakeoff_{model}" / "manifest.json"
-    status_path = dest / f"s7_bakeoff_{model}" / "status.txt"
+    man_path = dest / folder / "manifest.json"
+    status_path = dest / folder / "status.txt"
     status = status_path.read_text(encoding="utf-8").strip() if status_path.is_file() else ""
     if not man_path.is_file():
         raise SystemExit(
@@ -94,6 +100,7 @@ def fetch(model: str, job_id: Optional[str] = None) -> Dict[str, Any]:
 
     summary = {
         "model": model,
+        "prefix": prefix,
         "job_id": manifest.get("job_id"),
         "status": status,
         "verify_verdict": verdict,
@@ -120,10 +127,16 @@ def fetch(model: str, job_id: Optional[str] = None) -> Dict[str, Any]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("model", choices=["sdxl", "klein", "zimage"])
+    ap.add_argument("model",
+                    help="model name (sdxl, klein, zimage, s8 model ids)")
     ap.add_argument("--job-id", default=None)
+    ap.add_argument("--prefix", default="s7",
+                    help="output folder prefix inside the kernel output "
+                         "(s7 -> s7_bakeoff_<model>, s8 -> s8_bakeoff_<model>)")
     args = ap.parse_args()
-    s = fetch(args.model, args.job_id)
+    if not args.model.replace("-", "").replace("_", "").isalnum():
+        raise SystemExit(f"BLOCKED: unsafe model name: {args.model!r}")
+    s = fetch(args.model, args.job_id, args.prefix)
     print(json.dumps({k: v for k, v in s.items() if k != "install_log"}, indent=2))
     if s["verify_verdict"] != "PASS":
         print(f"VERIFY {s['verify_verdict']} — see {s['log_dir']}", file=sys.stderr)

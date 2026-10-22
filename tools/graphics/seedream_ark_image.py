@@ -47,8 +47,7 @@ class SeedreamArkImage(BaseTool):
         "setup command, or set ARK_API_KEY. Optional: ARK_BASE_URL and "
         "ARK_SEEDREAM_MODEL."
     )
-    # Task 10 creates the Layer 3 skill and attaches its pointer.
-    agent_skills: list[str] = []
+    agent_skills = ["seedance-product-scene"]
 
     capabilities = [
         "generate_image",

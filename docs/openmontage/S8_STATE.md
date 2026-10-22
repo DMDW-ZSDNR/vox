@@ -16,7 +16,7 @@ git.
 | Phase | Status | Note |
 |---|---|---|
 | S8-1 LICENSE AND FIT GATE | DONE | `docs/openmontage/image_gen/CANDIDATES_S8.md` + evidence `S8_CANDIDATE_FACTS.json` (official HF cards only, no weights downloaded). Krea 2 Turbo = LICENSE_BLOCKED (gated auto, community licence PDF unreadable, 12.8 B params) -> NOT RUN. SDXL-Lightning, dreamshaper-xl-lightning, Sana Sprint 1.6B = FITS_T4. sdxl-turbo = LICENSE_BLOCKED (revenue cap). |
-| S8-2 RUN THE NEW MODELS | PENDING | 3 new models, one kernel each, back-to-back: SDXL-Lightning 8-step, DreamShaper XL Lightning, SANA-Sprint 1.6B. Same 10 scenes, same seeds, 1024x1024. |
+| S8-2 RUN THE NEW MODELS | IN_PROGRESS | sdxl-lightning attempt 1 crashed before any model was touched (RecursionError in the composed runner) -> attempt 2 RUNNING. dreamshaper-xl and sana-sprint-1.6b are queued. |
 | S8-3 MEASURE + OBJECTIVE QC | PENDING | load time, steady s/image, usable img/min, peak VRAM, black/NaN/OOM, attempts, versions; per-image blur / text-like / pHash flags (text detector was unreliable in S7 - say so). |
 | S8-4 AGENT SELF-ASSESSMENT | PENDING | advisory only, labelled "agent opinion, not independent, a vision model can miss anatomy errors". |
 | S8-5 OWNER PACK (5 panels) | PENDING | `projects/s8_blind/` (gitignored), panels A-E per scene, `results.csv`, tally extended to 5 models (test-first). |
@@ -47,7 +47,8 @@ manifests): `output/s7_cache/sdxl/`, `output/s7_cache/klein/`.
 
 | model | attempt | what changed | result |
 |---|---|---|---|
-| sdxl-lightning | - | - | not started |
+| sdxl-lightning | 1 | first attempt (vendor-card recipe, rung released_037_x4) | FAILED before any model call - `RecursionError: maximum recursion depth exceeded`: in the concatenated run.py the S8 additions' `def main()` shadowed the engine's `main()`, so `_ENGINE.main()` called itself. Traceback: `docs/openmontage/image_gen/logs/s8-sdxl-lightning-1/kernel.log` |
+| sdxl-lightning | 2 | fixed the runner: the engine's `main` is captured as `_ENGINE_MAIN` before the S8 `main` is defined; same released stack (the stack was never exercised) | RUNNING (submitted 01:05Z) |
 | dreamshaper-xl-lightning | - | - | not started |
 | sana-sprint-1.6b | - | - | not started |
 

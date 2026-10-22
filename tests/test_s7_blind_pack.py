@@ -137,3 +137,33 @@ def test_instructions_list_only_the_real_panels(tmp_path):
     text = (pack / "INSTRUCTIONS.txt").read_text(encoding="utf-8")
     assert "anatomy_ok_A, anatomy_ok_B" in text
     assert "A, B or C" not in text
+
+
+def test_five_panel_pack_with_second_best(tmp_path):
+    """S8 pack: five panels A-E and a second_best column."""
+    root = tmp_path / "out"
+    models = ["sdxl", "klein", "sdxl-lightning", "dreamshaper-xl",
+              "sana-sprint-1.6b"]
+    for model in models:
+        d = root / f"s7_bakeoff_{model}"
+        (d / "images").mkdir(parents=True)
+        im = Image.new("RGB", (1024, 1024), (30, 30, 30))
+        im.save(d / "images" / "r0001.png")
+        (d / "manifest.json").write_text(json.dumps({
+            "model": model, "job_id": f"s8-{model}-1", "images": [
+                {"render_id": "r0001", "scene_id": "s01", "file": "r0001.png",
+                 "sha256": "x", "bytes": 1},
+            ],
+        }), encoding="utf-8")
+    pack = tmp_path / "pack"
+    mapping = run(root, pack, salt="s8", with_second_best=True)
+    assert len(mapping["pack_models"]) == 5
+    assert set(mapping["scenes"]["s01"]) == {"A", "B", "C", "D", "E"}
+    with (pack / "results.csv").open(encoding="utf-8") as fh:
+        rows = list(csv.reader(fh))
+    assert rows[0] == ["scene", "best_panel", "second_best", "worst_panel",
+                        "anatomy_ok_A", "anatomy_ok_B", "anatomy_ok_C",
+                        "anatomy_ok_D", "anatomy_ok_E", "comment"]
+    sheet = Image.open(pack / "sheet_s01.png")
+    assert sheet.width <= 1600
+    assert "second_best" in (pack / "INSTRUCTIONS.txt").read_text(encoding="utf-8")

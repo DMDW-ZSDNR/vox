@@ -124,15 +124,20 @@ def collect(root: Path) -> tuple[Dict[str, Dict[str, Path]], Dict[str, Any]]:
     return by_scene, metrics
 
 
-def csv_header(n_panels: int) -> str:
+def csv_header(n_panels: int, with_second_best: bool = False) -> str:
     labels = "ABC"[:n_panels]
-    return ",".join(["scene", "best_panel", "worst_panel"]
-                    + [f"anatomy_ok_{l}" for l in labels] + ["comment"])
+    cols = ["scene", "best_panel"]
+    if with_second_best:
+        cols.append("second_best")
+    cols += ["worst_panel"]
+    cols += [f"anatomy_ok_{l}" for l in labels] + ["comment"]
+    return ",".join(cols)
 
 
-def write_csv_template(out_dir: Path, scenes: List[str], n_panels: int = 3) -> Path:
+def write_csv_template(out_dir: Path, scenes: List[str], n_panels: int = 3,
+                       with_second_best: bool = False) -> Path:
     p = out_dir / "results.csv"
-    lines = [csv_header(n_panels)]
+    lines = [csv_header(n_panels, with_second_best)]
     for s in scenes:
         lines.append(f"{s},,,,,,")
     p.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -140,7 +145,7 @@ def write_csv_template(out_dir: Path, scenes: List[str], n_panels: int = 3) -> P
 
 
 def instructions(scenes: List[str], n_panels: int = 3,
-                 blocked_note: str = "") -> str:
+                 blocked_note: str = "", with_second_best: bool = False) -> str:
     panel_list = list("ABC"[:n_panels])
     labels = " / ".join(panel_list)
     return (
@@ -153,7 +158,9 @@ def instructions(scenes: List[str], n_panels: int = 3,
         "2. On each sheet decide:\n"
         "   - best_panel: the panel you would actually use\n"
         "   - worst_panel: the panel you would throw away\n"
-        f"   - anatomy_ok_<panel>: for EACH panel, yes if the creature's limbs /\n"
+        + ("   - second_best: the runner-up panel for this scene\n"
+           if with_second_best else "")
+        + f"   - anatomy_ok_<panel>: for EACH panel, yes if the creature's limbs /\n"
         "     eyes / horns match the scene brief and there are no obvious extra /\n"
         "     missing limbs, fused bodies, duplicated heads or duplicated subjects.\n"
         "   - comment: optional, one short line (what is wrong / what works).\n\n"
@@ -177,7 +184,7 @@ def instructions(scenes: List[str], n_panels: int = 3,
 
 
 def run(root: Path, out_dir: Path, salt: str = "s7",
-        blocked_note: str = "") -> Dict[str, Any]:
+        blocked_note: str = "", with_second_best: bool = False) -> Dict[str, Any]:
     by_scene, metrics = collect(root)
     scenes = sorted(by_scene)
     # Only the models that produced a frame for EVERY scene are compared, so a
@@ -214,11 +221,12 @@ def run(root: Path, out_dir: Path, salt: str = "s7",
         mapping["sheets"].append({"scene": scene, "file": sheet_path.name,
                                   "width": size[0], "height": size[1]})
 
-    write_csv_template(out_dir, complete, len(pack_models))
+    write_csv_template(out_dir, complete, len(pack_models), with_second_best)
     (out_dir / "mapping.json").write_text(json.dumps(mapping, indent=2) + "\n",
                                           encoding="utf-8")
     (out_dir / "INSTRUCTIONS.txt").write_text(
-        instructions(complete, len(pack_models), blocked_note), encoding="utf-8")
+        instructions(complete, len(pack_models), blocked_note,
+                     with_second_best), encoding="utf-8")
     return mapping
 
 
@@ -229,8 +237,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--salt", default="s7")
     ap.add_argument("--blocked-note", default="",
                     help="one line naming a model that could not produce frames")
+    ap.add_argument("--with-second-best", action="store_true",
+                    help="add a second_best column to the CSV template (S8)")
     args = ap.parse_args(argv)
-    m = run(Path(args.root), Path(args.out), args.salt, args.blocked_note)
+    m = run(Path(args.root), Path(args.out), args.salt, args.blocked_note,
+            args.with_second_best)
     print(f"sheets: {len(m['sheets'])} in {args.out}")
     if m["partial_scenes"]:
         print(f"PARTIAL scenes (missing a model, no sheet): {m['partial_scenes']}")

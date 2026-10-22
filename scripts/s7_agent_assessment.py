@@ -29,14 +29,27 @@ from typing import Any, Dict, List, Optional
 
 REPO = Path(__file__).resolve().parent.parent
 DIMS = ["anatomy", "geometry", "count_relation", "texture", "text", "usefulness"]
+# S8 adds a style-fit dimension (0-2 against docs/openmontage/niches/
+# speculative_evolution/STYLE_BIBLE.md); it is used only when the review sheet
+# carries the column.
+STYLE_DIM = "style_fit"
 MODEL_ORDER = ["sdxl", "klein", "zimage"]
 DEFAULT_OUT = REPO / "docs/openmontage/image_gen/S7_AGENT_ASSESSMENT.json"
 
 
-def load_scores(path: Path) -> List[Dict[str, Any]]:
+def dims_from_csv(path: Path) -> List[str]:
+    """The rubric dimensions are read from the sheet's own header."""
+    with path.open(newline="", encoding="utf-8-sig") as fh:
+        header = csv.DictReader(fh).fieldnames or []
+    dims = [d for d in DIMS + [STYLE_DIM] if d in header]
+    return dims or list(DIMS)
+
+
+def load_scores(path: Path, dims: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    dims = list(dims) if dims else dims_from_csv(path)
     with path.open(newline="", encoding="utf-8-sig") as fh:
         reader = csv.DictReader(fh)
-        missing = [d for d in ("render_id", "model") + tuple(DIMS)
+        missing = [d for d in ("render_id", "model") + tuple(dims)
                    if d not in (reader.fieldnames or [])]
         if missing:
             raise SystemExit(f"BLOCKED: {path} missing columns: {missing}")
@@ -45,7 +58,7 @@ def load_scores(path: Path) -> List[Dict[str, Any]]:
             if not (raw.get("render_id") or "").strip():
                 continue
             scores: Dict[str, int] = {}
-            for d in DIMS:
+            for d in dims:
                 try:
                     v = int((raw[d] or "").strip())
                 except (TypeError, ValueError):
@@ -67,10 +80,11 @@ def load_scores(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
-def aggregate(rows: List[Dict[str, Any]], speed: Dict[str, float]
+def aggregate(rows: List[Dict[str, Any]], speed: Dict[str, float],
+              models: Optional[List[str]] = None
               ) -> Dict[str, Dict[str, Any]]:
     per_model: Dict[str, Dict[str, Any]] = {}
-    for model in MODEL_ORDER:
+    for model in (models or MODEL_ORDER):
         imgs = [r for r in rows if r["model"] == model]
         if not imgs:
             continue
@@ -92,10 +106,11 @@ def aggregate(rows: List[Dict[str, Any]], speed: Dict[str, float]
     return per_model
 
 
-def weakest_scenes(rows: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+def weakest_scenes(rows: List[Dict[str, Any]],
+                   models: Optional[List[str]] = None) -> Dict[str, List[str]]:
     """Scenes where a model scored 0 on any dimension, worst first."""
     out: Dict[str, List[str]] = {}
-    for model in MODEL_ORDER:
+    for model in (models or MODEL_ORDER):
         imgs = [r for r in rows if r["model"] == model]
         scored = sorted(
             imgs,
@@ -114,16 +129,21 @@ def rank(per_model: Dict[str, Dict[str, Any]]) -> List[str]:
                        per_model[m].get("sec_per_image") or 1e9))
 
 
-def emit_template(test_set: Path, out_csv: Path) -> int:
+def emit_template(test_set: Path, out_csv: Path,
+                  dims: Optional[List[str]] = None,
+                  extra_rows: Optional[List[Dict[str, Any]]] = None) -> int:
     """Write a review sheet pre-filled with render_id / scene_id / model."""
+    dims = list(dims) if dims else list(DIMS)
     doc = json.loads(test_set.read_text(encoding="utf-8"))
     out_csv.parent.mkdir(parents=True, exist_ok=True)
+    renders = list(doc["renders"]) + list(extra_rows or [])
     with out_csv.open("w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
-        w.writerow(["render_id", "scene_id", "model"] + DIMS + ["notes"])
-        for r in doc["renders"]:
-            w.writerow([r["render_id"], r["scene_id"], r["model"]] + [""] * len(DIMS) + [""])
-    return len(doc["renders"])
+        w.writerow(["render_id", "scene_id", "model"] + dims + ["notes"])
+        for r in renders:
+            w.writerow([r["render_id"], r["scene_id"], r["model"]]
+                       + [""] * len(dims) + [""])
+    return len(renders)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -140,41 +160,62 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--test-set", default=str(
         REPO / "docs/openmontage/image_gen/S7_TEST_SET.json"))
     ap.add_argument("--out", default=str(DEFAULT_OUT))
+    ap.add_argument("--models", default="",
+                    help="comma-separated model order for the ranking "
+                         "(default: every model found in the sheet)")
+    ap.add_argument("--dims", default="",
+                    help="comma-separated rubric dimensions (default: read "
+                         "from the sheet header)")
+    ap.add_argument("--milestone", default="S7-9")
+    ap.add_argument("--owner-csv", default="projects/s7_blind/results.csv")
+    ap.add_argument("--reuse-review", default="",
+                    help="a second review sheet to merge in (S8 second pass)")
     args = ap.parse_args(argv)
 
+    dims = [d.strip() for d in args.dims.split(",") if d.strip()] or None
     if args.emit_template:
-        n = emit_template(Path(args.test_set), Path(args.emit_template))
+        n = emit_template(Path(args.test_set), Path(args.emit_template), dims)
         print(f"wrote {args.emit_template} ({n} rows)")
         return 0
 
     if not (args.scores and args.pick and args.confidence):
         ap.error("--scores, --pick and --confidence are required")
 
-    rows = load_scores(Path(args.scores))
+    rows = load_scores(Path(args.scores), dims)
+    if args.reuse_review:
+        extra = load_scores(Path(args.reuse_review), dims)
+        seen = {r["render_id"] for r in rows}
+        rows.extend(r for r in extra if r["render_id"] not in seen)
     speed = json.loads(args.speed) if args.speed else {}
-    per_model = aggregate(rows, speed)
+    models = [m.strip() for m in args.models.split(",") if m.strip()]
+    if not models:
+        models = []
+        for r in rows:
+            if r["model"] not in models:
+                models.append(r["model"])
+    per_model = aggregate(rows, speed, models)
     order = rank(per_model)
 
     doc = {
         "schema_version": "1.0",
-        "milestone": "S7-9",
+        "milestone": args.milestone,
         "label": "agent opinion, not independent; a vision model can miss "
                  "anatomy errors and misread flat art",
         "rubric": "OpenCode rubric (scripts/score_rubric.py): 0-2 per dimension",
-        "dimensions": DIMS,
+        "dimensions": dims or DIMS,
         "agent_pick": args.pick,
         "confidence": args.confidence,
         "ranking_severe_then_usable_then_speed": order,
         "per_model": per_model,
-        "weakest_scenes": weakest_scenes(rows),
+        "weakest_scenes": weakest_scenes(rows, models),
         "images": [
             {"render_id": r["render_id"], "scene_id": r["scene_id"], "model": r["model"],
              "scores": r["scores"], "notes": r["notes"]}
             for r in rows
         ],
-        "owner_decides": "The owner's blind CSV (projects/s7_blind/results.csv) "
-                         "decides the winner; scripts/s7_tally.py compares it with "
-                         "this advisory pick.",
+        "owner_decides": f"The owner's blind CSV ({args.owner_csv}) decides the "
+                         "winner; scripts/s7_tally.py compares it with this "
+                         "advisory pick.",
         "note": args.note,
     }
     out = Path(args.out)

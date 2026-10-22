@@ -349,24 +349,39 @@ def cmd_subtitles(topic_id, state):
     srt_out = base / f"subtitles{tag}.srt"
     if words_out.exists() and srt_out.exists():
         return {"status": "OK", "outputs": {"words": str(words_out), "subtitles": str(srt_out)}}
-    helper = ROOT / "scripts" / "z3_subtitles.py"
+    fw_helper = ROOT / "scripts" / "fw_subtitles.py"
+    legacy_helper = ROOT / "scripts" / "z3_subtitles.py"
+    preferred = state.get("subtitle_helper", "")
+    if preferred == "stable_ts":
+        helper = legacy_helper
+    elif preferred == "faster_whisper":
+        helper = fw_helper
+    else:
+        # faster-whisper needs only CTranslate2; stable-ts pulls torchaudio,
+        # which fails to import on this image, so it is the fallback.
+        helper = fw_helper if fw_helper.exists() else legacy_helper
     if not helper.exists():
         return {"status": "BLOCKED", "error": "subtitle helper missing"}
     script_path = state.get("chapter_script") or topic_script(topic_id, state)
     if not script_path:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
-    sentences = []
-    for line in Path(script_path).read_text(encoding="utf-8").splitlines():
-        if not line.strip().startswith("| B"):
-            continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) >= 3 and cells[0][0] == "B" and cells[0][1:].isdigit():
-            sentences.append(cells[1])
-    text = " ".join(sentences)
-    res = subprocess.run(
-        [str(VENV_PY), str(helper), str(wav), text, str(words_out), str(srt_out)],
-        capture_output=True, text=True, timeout=1800,
-    )
+    # Both table and bullet scripts: the same parser the other stages use.
+    text = " ".join(str(r["sentence"]).strip()
+                    for r in _parse_script_rows(script_path))
+    if not text.strip():
+        return {"status": "BLOCKED",
+                "error": f"script {script_path} has no sentences for subtitles"}
+    interpreter = Path(VENV_PY)
+    if not interpreter.is_file():
+        return {"status": "BLOCKED",
+                "error": f"subtitle interpreter missing: {interpreter} "
+                         f"(set OPENMONTAGE_VENV); no subtitles were produced"}
+    if helper.name.startswith("fw_"):
+        cmd = [str(interpreter), str(helper), str(wav), str(words_out), str(srt_out)]
+    else:
+        cmd = [str(interpreter), str(helper), str(wav), text,
+               str(words_out), str(srt_out)]
+    res = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
     if res.returncode != 0:
         return {"status": "BLOCKED", "error": f"subtitles failed: {res.stderr[-500:]}"}
     return {"status": "OK", "outputs": {"words": str(words_out), "subtitles": str(srt_out)}}

@@ -129,3 +129,75 @@ def test_resumed_narration_rewrites_a_missing_manifest(episode):
     assert manifest["expected_duration"] == pytest.approx(3.0, abs=0.05)
     assert manifest["sentences"] == 2
     assert manifest["engine"].startswith("kokoro")
+
+
+# ------------------------------------------------------------------ subtitles
+def test_subtitles_use_bullet_script_sentences(episode, monkeypatch):
+    """A bullet script must produce a real transcript, not an empty one."""
+    state = {"episode_dir": str(episode)}
+    wav = episode / "narration_finished.wav"
+    _write_wav(wav, 1.0, sr=44100)
+    (episode / "scripts").mkdir(exist_ok=True)
+    (episode / "scripts" / "z3_subtitles.py").write_text("# fake\n", encoding="utf-8")
+    monkeypatch.setattr(run_episode, "ROOT", episode)
+    monkeypatch.setattr(run_episode, "VENV_PY", Path("/usr/bin/env"))
+    captured = {}
+
+    def fake_run(cmd, capture_output=True, text=True, timeout=None):
+        captured["cmd"] = cmd
+        Path(cmd[-2]).write_text('{"words": []}', encoding="utf-8")
+        Path(cmd[-1]).write_text("1\n00:00:00,000 --> 00:00:01,000\nx\n",
+                                 encoding="utf-8")
+
+        class R:
+            returncode = 0
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr(run_episode.subprocess, "run", fake_run)
+    res = run_episode.cmd_subtitles("se_pilot", state)
+    assert res["status"] == "OK", res
+    text = captured["cmd"][3]
+    assert "Sea ice seals the ocean" in text
+    assert "chemical gradients" in text
+
+
+def test_subtitles_block_instead_of_crashing_when_venv_missing(episode, monkeypatch):
+    state = {"episode_dir": str(episode)}
+    wav = episode / "narration_finished.wav"
+    _write_wav(wav, 1.0, sr=44100)
+    monkeypatch.setattr(run_episode, "VENV_PY", Path("/nonexistent/python"))
+    res = run_episode.cmd_subtitles("se_pilot", state)
+    assert res["status"] == "BLOCKED"
+    assert "subtitle" in res["error"].lower()
+
+
+def test_subtitles_prefer_the_faster_whisper_helper(episode, monkeypatch):
+    """stable-ts cannot import here (torchaudio ABI); the CTranslate2 helper
+    must be used with the (wav, words, srt) argument order."""
+    state = {"episode_dir": str(episode)}
+    _write_wav(episode / "narration_finished.wav", 1.0, sr=44100)
+    scripts = episode / "scripts"
+    scripts.mkdir(exist_ok=True)
+    (scripts / "fw_subtitles.py").write_text("# fw\n", encoding="utf-8")
+    (scripts / "z3_subtitles.py").write_text("# legacy\n", encoding="utf-8")
+    monkeypatch.setattr(run_episode, "ROOT", episode)
+    monkeypatch.setattr(run_episode, "VENV_PY", Path("/usr/bin/env"))
+    captured = {}
+
+    def fake_run(cmd, capture_output=True, text=True, timeout=None):
+        captured["cmd"] = cmd
+        Path(cmd[-2]).write_text('{"words": []}', encoding="utf-8")
+        Path(cmd[-1]).write_text("", encoding="utf-8")
+
+        class R:
+            returncode = 0
+            stderr = ""
+
+        return R()
+
+    monkeypatch.setattr(run_episode.subprocess, "run", fake_run)
+    assert run_episode.cmd_subtitles("se_pilot", state)["status"] == "OK"
+    assert captured["cmd"][1].endswith("fw_subtitles.py")
+    assert len(captured["cmd"]) == 5  # py, helper, wav, words, srt

@@ -29,6 +29,13 @@ FAST_TEST_FILES = [
     "tests/factory/test_artifact_id_resolution.py",
     "tests/qa/test_qc_gates_l7.py",
     "tests/qa/test_release_gate.py",
+    # image engine + style/creature-sheet kit (P1/P2)
+    "tests/illustration/test_image_engine_config.py",
+    "tests/illustration/test_image_engine_runner.py",
+    "tests/illustration/test_image_engine_cli.py",
+    "tests/illustration/test_style_kit.py",
+    "tests/illustration/test_reference_workflow.py",
+    "tests/test_runner_static.py",
 ]
 
 

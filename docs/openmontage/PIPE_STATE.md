@@ -131,7 +131,7 @@ Statuses used here: `PENDING` (queued, not started), `IN_PROGRESS`, `DONE`,
   `tests/illustration/test_reference_workflow.py` (4), `tests/test_runner_static.py` (3)
   -> 30 new tests pass; `tests/illustration tests/test_run_illustrations.py tests/test_s7_runner.py
   tests/test_s8_bakeoff.py tests/test_s7_push_bakeoff.py` -> 166 passed / 1 skipped, exit 0;
-  `python scripts/ci_fast_suite.py` -> 12/12, exit 0 (293 s, 4112 MB free after).
+  `python scripts/ci_fast_suite.py` -> 18/18 (the 6 new image-engine/style test files are now part of the fast gate), exit 0 (304 s, 4108 MB free after).
 - **Smoke job (the only generation in this milestone):** `smoke_sheet_klein_4img_2`,
   4 images (vent grazer front/side/3-4 + ice burrower front), klein, 1024x1024, ~4 min of
   T4 time. Attempt 1 FAILED with `NameError: name 'guidance' is not defined` (the manifest

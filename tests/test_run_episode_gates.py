@@ -163,9 +163,14 @@ def test_release_gate_reports_single_source_blocker(tmp_path):
 def test_episode_dir_override_used_by_package_draft(tmp_path):
     ep, _ = _episode(tmp_path)
     (ep / "renders").mkdir(parents=True, exist_ok=True)
+    (ep / "script.md").write_text(
+        "## 3 truthful titles\n\n1. Test Title\n\n## Hook\n\n"
+        "- Beneath the ice there is an ocean. [T-01]\n", encoding="utf-8")
     res = run_episode.cmd_package_draft("t_ep", {"episode_dir": str(ep)})
     assert res["status"] == "OK", res
     assert str(ep / "package") in res["outputs"]["package"]
+    assert (ep / "package" / "metadata.json").is_file()
+    assert (ep / "package" / "shorts_plan.json").is_file()
 
 
 def test_stage_order_puts_gates_around_the_expensive_stages():

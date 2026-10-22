@@ -212,6 +212,31 @@ def cmd_footage_manifest_rights(topic_id, state):
     return {"status": "OK", "outputs": {"rights_records": str(rights), "assets": len(records)}}
 
 
+KOKORO_ONNX_MODEL = Path("/tmp/kilo/kokoro_onnx_weights/kokoro-v1.0.onnx")
+NARRATION_PYTHON = Path(os.environ.get("OPENMONTAGE_NARRATION_PYTHON",
+                                       str(ROOT / "output/kokoro_venv/bin/python")))
+NARRATION_HELPERS = {
+    "onnx": ROOT / "scripts" / "z3_kokoro_narrate.py",
+    "torch": ROOT / "scripts" / "kokoro_torch_narrate.py",
+}
+
+
+def narration_helper(state=None):
+    """Pick a working Kokoro helper, or None (fail-closed: never fake audio).
+
+    ONNX wins when its weights are present; otherwise the torch KPipeline
+    helper is used with the project venv.
+    """
+    forced = (state or {}).get("narration_helper")
+    if forced:
+        return NARRATION_HELPERS.get(forced)
+    if KOKORO_ONNX_MODEL.is_file() and NARRATION_HELPERS["onnx"].is_file():
+        return NARRATION_HELPERS["onnx"]
+    if NARRATION_PYTHON.is_file() and NARRATION_HELPERS["torch"].is_file():
+        return NARRATION_HELPERS["torch"]
+    return None
+
+
 def cmd_narration(topic_id, state):
     episode_root(topic_id, state).mkdir(parents=True, exist_ok=True)
     raw, wav = _narration_paths(topic_id, state)
@@ -223,12 +248,14 @@ def cmd_narration(topic_id, state):
     if not script:
         return {"status": "BLOCKED", "error": f"no script for topic {topic_id}"}
     if not raw.exists():
-        helper = ROOT / "scripts" / "z3_kokoro_narrate.py"
-        if not helper.exists():
-            return {"status": "BLOCKED", "error": "kokoro narration helper missing"}
+        helper = narration_helper(state)
+        if helper is None:
+            return {"status": "BLOCKED",
+                    "error": "no usable Kokoro helper (ONNX weights missing and "
+                             "torch venv not found): narration cannot run"}
         res = subprocess.run(
-            [str(VENV_PY), str(helper), str(script), str(raw)],
-            capture_output=True, text=True, timeout=1800,
+            [str(NARRATION_PYTHON), str(helper), str(script), str(raw)],
+            capture_output=True, text=True, timeout=3600,
         )
         if res.returncode != 0:
             return {"status": "BLOCKED", "error": f"kokoro synthesis failed: {res.stderr[-500:]}"}
@@ -311,27 +338,48 @@ def _parse_script_rows(script_path):
     """
     import re
 
-    rows = []
+    table_rows = []
+    bullet_rows = []
+    beat_index = -1
+    pending_heading = False
+    claim_marker = re.compile(r"\s*\[[^\]]*\]\s*$")
     for line in Path(script_path).read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
-        if not stripped.startswith("|"):
+        if stripped.startswith("## "):
+            # Bullet scripts group sentences under `## Hook` / `## Chapter N`.
+            # A heading with no sentences (e.g. the titles block) is not a beat.
+            pending_heading = True
             continue
-        cells = [c.strip() for c in stripped.strip("|").split("|")]
-        if not cells:
-            continue
-        match = re.match(r"^B(\d+)(?:-\d+)?$", cells[0])
-        if not match:
-            continue
-        sentence = cells[1] if len(cells) > 1 else ""
-        if not sentence:
-            continue
-        claim_ids = cells[2] if len(cells) > 2 else ""
-        rows.append({
-            "beat": f"B{match.group(1)}",
-            "sentence": sentence,
-            "claim_ids": claim_ids,
-        })
-    return rows
+        if stripped.startswith("|"):
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if not cells:
+                continue
+            match = re.match(r"^B(\d+)(?:-\d+)?$", cells[0])
+            if not match:
+                continue
+            sentence = cells[1] if len(cells) > 1 else ""
+            if not sentence:
+                continue
+            table_rows.append({
+                "beat": f"B{match.group(1)}",
+                "sentence": sentence,
+                "claim_ids": cells[2] if len(cells) > 2 else "",
+            })
+        elif stripped.startswith("- "):
+            if pending_heading:
+                beat_index += 1
+                pending_heading = False
+            raw = stripped[2:]
+            ids = ", ".join(re.findall(r"\[([^\]]*)\]", raw))
+            sentence = claim_marker.sub("", raw).strip()
+            if not sentence:
+                continue
+            bullet_rows.append({
+                "beat": f"B{max(beat_index, 0)}",
+                "sentence": sentence,
+                "claim_ids": ids,
+            })
+    return table_rows or bullet_rows
 
 
 def _group_beats(rows):
@@ -717,7 +765,20 @@ def cmd_package_draft(topic_id, state):
         src = assets / name
         if src.exists():
             shutil.copy2(src, pkg / name)
-    video = episode_root(topic_id, state) / "renders" / f"final_{topic_id}_draft.mp4"
+    from tools.packaging.package_builder import build_package  # noqa: WPS433
+
+    ep = episode_root(topic_id, state)
+    built = build_package(
+        ep, pkg,
+        ai_illustration=bool(state.get("ai_illustration",
+                                       state.get("speculative", False))),
+        shorts_max_seconds=float(state.get("shorts_max_seconds", 45.0)),
+    )
+    if not built.get("ok"):
+        return {"status": "BLOCKED",
+                "error": f"package could not be built from artifacts: {built.get('error')}"}
+
+    video = ep / "renders" / f"final_{topic_id}_draft.mp4"
     verdict_path = _artifacts_dir(topic_id, state) / "release_verdict.json"
     verdict = None
     if verdict_path.is_file():
@@ -727,11 +788,17 @@ def cmd_package_draft(topic_id, state):
             verdict = None
     manifest = {
         "topic_id": topic_id,
-        "status": "DRAFT_NOT_PUBLISHABLE" if not (verdict or {}).get("publishable") else "DRAFT",
+        "status": "DRAFT_NOT_PUBLISHABLE",
         "package": str(pkg),
         "video": str(video) if video.exists() else None,
         "release_verdict": str(verdict_path) if verdict_path.is_file() else None,
         "blockers": len((verdict or {}).get("reasons", [])),
+        "title": built["manifest"]["title"],
+        "shorts_beats": built["manifest"]["shorts_beats"],
+        "credits_lines": built["manifest"]["credits_lines"],
+        "metadata": built["outputs"]["metadata.json"],
+        "shorts_plan": built["outputs"]["shorts_plan.json"],
+        "disclosure": built["outputs"]["DISCLOSURE.md"],
     }
     (pkg / "package_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return {"status": "OK", "outputs": {"package": str(pkg), "manifest": str(pkg / "package_manifest.json")}}

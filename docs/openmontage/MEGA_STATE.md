@@ -19,13 +19,13 @@ paths this agent owns, then `git pull --rebase` + non-force push.
 | G1 QC + CONTRACTS | DONE | qc.py: added_value start/end fix + narration/graphics/still gates, motion_variety, speculative_label, strict rights flags/provenance; qc_report schema test; release_gate (SINGLE_SOURCE blocks publish); run_evals.py 6/6 PASS; fast suite 12/12 exit 0 | (this commit) |
 | G2 EPISODE PIPELINE | DONE | run_episode.py now 13 stages: zero_cost_gate (fail-closed on unnamed/unpriced routes), speculative_gate (label + motion lint on EDL), release_gate (publication blockers; draft stays NOT_PUBLISHABLE), episode_dir state override; tests/test_run_episode_gates.py 14 passed, legacy run_episode 14 passed, lavfi integration (real ffmpeg clip -> real QC) 1 passed | (this commit) |
 | G3 IMAGE ENGINE | DONE (engine) | tools/illustration/episode_batch.py (niche-spec adapter, per-model plan, budget cap 120, cache reuse, fail-closed fetch verify, label+QC manifest) + scripts/run_illustrations.py (plan/submit/status/fetch, no polling); 28 tests passed; Kaggle job `ill-se_pilot-klein-1` submitted (84 renders, klein, 1344x768, ladder released_037_x4) -> status RUNNING at submit time; images NOT YET fetched (G8 owner of output) | (this commit) |
-| G4 VISUAL SOURCES | PENDING | — | — |
-| G5 AUDIO + VOICE | PENDING | — | — |
-| G6 EDITING + RENDER | PENDING | — | — |
-| G7 NICHE + TOPIC | PENDING | — | — |
+| G4 VISUAL SOURCES | DONE (re-verified) | stock-source adapters 35 passed + 3 xfail (offline fixtures), museum adapters/rights classifier 4 passed (third-party credit/NC/ND reject), footage classifier + governance tests pass; SOURCE_REGISTRY.md present | (this commit) |
+| G5 AUDIO + VOICE | DONE (code) / OWNER_GATED (voice) | kokoro torch KPipeline helper (scripts/kokoro_torch_narrate.py) synthesizes 8.25 s in 18.5 s incl. load; ONNX weights absent so helper auto-selects torch path; Piper refusal test passes; owner listening sign-off OWNER_GATED | (this commit) |
+| G6 EDITING + RENDER | PENDING (needs pilot assets) | stage orchestration already checkpoint/resume tested; real render awaits fetched images | — |
+| G7 NICHE + TOPIC | BLOCKED | demand measurement needs YouTube Data API quota (already recorded NOT_MEASURED by OpenCode lane); no measured numbers = no recommendation | — |
 | G8 PILOT A (speculative evolution) | PENDING | — | — |
 | G9 PILOT B (ISS real footage) | PENDING | — | — |
-| G10 PACKAGING + SHORTS | PENDING | — | — |
+| G10 PACKAGING + SHORTS | DONE (code) | tools/packaging/package_builder.py: metadata from script titles, credits derived from rights records, chapters, disclosure checklist (official YouTube URL), Shorts plan where every beat has claim_id, status always DRAFT_NOT_PUBLISHABLE; 6 tests + wired into cmd_package_draft (20 tests total) | (this commit) |
 | G11 REVIEW + VERIFICATION | PENDING | — | — |
 | G12 OPERATIONS + PORTABILITY | PENDING | — | — |
 | G13 SCORECARD | PENDING | — | — |

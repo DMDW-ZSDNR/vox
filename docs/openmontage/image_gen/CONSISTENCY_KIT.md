@@ -90,7 +90,9 @@ scale bars, arrows, numbers) are drawn in the editor, never by the model.
 | Renders | `vent grazer` front (T2I), side (reference r0001), three-quarter (reference r0001), `ice burrower` front (T2I) |
 | Seeds | 3015, 3016, 3017, 3006 |
 | Cost | 4 x 24.691 s + ~134 s load ≈ **4 min of T4 time** |
-| Status | see the session log below (submitted 2026-10-22, one status call) |
+| Attempt 1 | **FAILED** — `NameError: name 'guidance' is not defined` in the runner's manifest block (the P1 refactor had moved the guidance resolution into the call builder). The text-to-image render itself worked: `r0001.png` (1024x1024, non-black, 397 KB) was written before the manifest step failed. Fixed in `tools/kaggle_bridge/s7_bakeoff_run.py`; covered by the new static check `tests/test_runner_static.py` |
+| Attempt 2 | submitted 2026-10-22 (`smoke_sheet_klein_4img_2`); kernel status **QUEUED** at the time of writing — the fetch + verify + QC step is pending the GPU queue |
+| Fetch | `python scripts/creature_sheet.py fetch --job-json projects/sheets/work/smoke_sheet_klein_4img_2/job.json` (fail-closed verification + label + image QC) |
 
 The job exercises both paths of the kit (text-to-image and reference image)
 and the P1 runner change (the model contract now comes from the config).

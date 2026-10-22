@@ -135,8 +135,11 @@ Statuses used here: `PENDING` (queued, not started), `IN_PROGRESS`, `DONE`,
 - **Smoke job (the only generation in this milestone):** `smoke_sheet_klein_4img_2`,
   4 images (vent grazer front/side/3-4 + ice burrower front), klein, 1024x1024, ~4 min of
   T4 time. Attempt 1 FAILED with `NameError: name 'guidance' is not defined` (the manifest
-  block referenced a variable that the P1 refactor had moved into the call builder);
-  fixed in the runner and covered by the new static check; attempt 2 submitted.
+  block referenced a variable that the P1 refactor had moved into the call builder); the
+  text-to-image render itself worked (r0001.png, 1024x1024, non-black). Fixed in the runner
+  and covered by the new static check `tests/test_runner_static.py`; attempt 2
+  (`smoke_sheet_klein_4img_2`) submitted, kernel status QUEUED at the time of writing -
+  the fetch + verify + QC of the 4 images is still pending the GPU queue.
 - **Not done / NOT_CHECKED:** no LoRA trained (nothing installed, no dataset, no paid GPU);
   the I2I quality at the locked guidance 1.0 is NOT judged yet (owner); the seed range
   diverges from the S7 (4000) and episode (7000) seeds - new work uses the reserved

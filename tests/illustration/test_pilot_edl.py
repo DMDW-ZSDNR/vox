@@ -115,3 +115,23 @@ def test_rejects_empty_inputs():
         pass
     else:
         raise AssertionError("empty sentences must raise")
+
+
+def test_many_images_per_sentence_keeps_positive_durations():
+    """84 images over 46 sentences (the pilot ratio) must not overshoot.
+
+    The last cut of a multi-image sentence advances the cursor by the whole
+    sentence duration on top of the images already placed, which made the
+    final cut negative and the render BLOCKED.
+    """
+    rows = [{"sentence": f"sentence number {i} with some words", "claim_id": "SE-01"}
+            for i in range(5)]
+    edl = build_illustration_edl(_images(12), rows, total_duration=30.0,
+                                 topic="t_ep", episode="se_pilot")
+    assert all(c["duration"] > 0 for c in edl["cuts"]), edl["cuts"]
+    assert edl["cuts"][-1]["end"] == 30.0
+    starts = [c["start"] for c in edl["cuts"]]
+    ends = [c["end"] for c in edl["cuts"]]
+    assert starts[0] == 0.0
+    assert all(abs(a - b) < 1e-6 for a, b in zip(ends, starts[1:]))
+    assert sum(c["duration"] for c in edl["cuts"]) == 30.0

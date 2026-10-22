@@ -91,12 +91,18 @@ def build_illustration_edl(
             continue
         ids = _split_ids(row.get("claim_id"))
         per = dur / count
+        sentence_start = cursor
         for k in range(count):
             img = imgs[idx]
             move, easing, direction = cycle[idx % len(cycle)]
             cut_dur = round(per, 3)
             start = round(cursor, 3)
-            end = round(start + cut_dur, 3) if k < count - 1 else round(cursor + dur, 3)
+            end = (round(start + cut_dur, 3) if k < count - 1
+                   else round(sentence_start + dur, 3))
+            if end - start <= 0:
+                raise ValueError(
+                    f"non-positive cut duration at cut {len(cuts) + 1}: "
+                    f"{start}->{end}")
             cut = {
                 "cut_id": len(cuts) + 1,
                 "start": start,

@@ -104,3 +104,7 @@ venv/
 
 # Local Wan / diffusers GPU environment
 .venv-wan/
+
+# Superpowers implementation workspaces and isolated Git worktrees
+.superpowers/
+.worktrees/

@@ -107,8 +107,31 @@ python scripts/run_episode_images.py approve --render-id r0027 --approved-by own
 | Seeds | 3000-3046 (one per image, in the reserved range) |
 | Cost | 24 x 24.691 s + ~134 s load ≈ **12 min of T4 time** |
 
-Measured result of the live job: see the session log in
-`docs/openmontage/PIPE_STATE.md` (real seconds/image and usable share).
+### Measured result of the live job (2026-10-22, kernel COMPLETE)
+
+| Measure | Value |
+|---|---|
+| Images requested / generated | 24 / 24 (0 black, 0 NaN, 0 OOM) |
+| Model load | 121.74 s |
+| **Steady seconds/image (measured)** | **25.287 s** (warmup excluded, kernel manifest) |
+| Usable images/minute (kernel) | 2.15 |
+| Peak VRAM | 7991.4 MB (T4, CPU offload) |
+| **QC-passed (usable) images** | **11 / 24 = 45.8 %** |
+| Failed | 13 (11 `blur_ok=false` - flat/low-detail plates; 2 `text_like=true` - text-like artifacts on the food-web plate beats) |
+| Total GPU time | 121.74 s load + 24 x ~25.3 s ≈ **11.3 min of T4 time** |
+
+Facts only: no judgement of beauty is made here, and no QC threshold was
+changed (the failures are the configured thresholds doing their job).
+
+**State after the live job:** 11 images `verified`, 13 `pending` (re-queued
+with a **new seed** each - a retry changes something concrete: the seed is
+re-drawn inside the reserved range with stride 64, and the seed log records
+the retry line). `finalize()` therefore **fails closed**: "only 11 usable
+images for 24 prompts (13 failed) - the episode image set is incomplete".
+
+**No second live job was submitted** (this milestone ran ONE live job). The
+retry batch is planned and ready: `python scripts/run_episode_images.py submit`
+pushes only the 13 failed prompts with their new seeds.
 
 ## 8. Usage
 

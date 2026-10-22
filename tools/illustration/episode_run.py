@@ -35,6 +35,11 @@ IMAGES_PER_MINUTE_MIN = 6
 IMAGES_PER_MINUTE_MAX = 8
 IMAGES_PER_MINUTE_DEFAULT = 7
 
+#: A retry must change something concrete: the seed is re-drawn inside the
+#: reserved range with this stride (prime-ish, bigger than the largest beat
+#: offset, so two renders never land on the same seed).
+RETRY_SEED_STRIDE = 64
+
 #: Production batch size (prompts per kernel).
 BATCH_SIZE_MIN = 40
 BATCH_SIZE_MAX = 100
@@ -631,15 +636,47 @@ class EpisodeImages:
         # retry only the failed prompts: they go back into the queue and a
         # new batch is planned for them (verified images are never repeated)
         retry = []
+        low, high = self.style.seed_policy.get("range", [3000, 3999])
+        size = int(high) - int(low) + 1
         for rid in failed:
             entry = state["renders"].get(rid)
             if entry is None:
                 continue
             entry["status"] = "pending"
-            entry["attempts"] = int(entry.get("attempts", 0)) + 1
+            attempt = int(entry.get("attempts", 0)) + 1
+            entry["attempts"] = attempt
             entry["last_error"] = errors.get(rid)
+            old_seed = int(entry.get("seed") or low)
+            new_seed = int(low) + ((old_seed - int(low) + attempt * RETRY_SEED_STRIDE)
+                                   % size)
+            if new_seed != old_seed:
+                entry["brief_seed"] = entry.get("brief_seed", old_seed)
+                entry["seed"] = new_seed
+                entry["prompt_sha256"] = hashlib.sha256(
+                    f"{self.adapter.key}|{entry.get('prompt')}|{new_seed}"
+                    .encode("utf-8")).hexdigest()
+                self._log_seed({
+                    "ts": _now(),
+                    "render_id": rid,
+                    "prompt_sha256": entry["prompt_sha256"],
+                    "seed": new_seed,
+                    "model": self.adapter.key,
+                    "attempt": attempt,
+                    "status": "retry",
+                    "reason": errors.get(rid),
+                })
             retry.append(entry)
         if retry:
+            retry_ids = {r["render_id"] for r in retry}
+            # a planned (never submitted) batch that covers the same renders
+            # is superseded, not duplicated
+            for key, other in list(state["batches"].items()):
+                if other.get("status") != "planned":
+                    continue
+                ids = set(other.get("render_ids") or [])
+                if ids and ids <= retry_ids:
+                    other["status"] = "superseded"
+                    other["superseded_utc"] = _now()
             next_id = max((int(k) for k in state["batches"]), default=0) + 1
             size = int(state.get("batch_size") or BATCH_SIZE_DEFAULT)
             for chunk in self._batches(retry, size):

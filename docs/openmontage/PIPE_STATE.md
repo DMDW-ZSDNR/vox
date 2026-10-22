@@ -176,8 +176,13 @@ Statuses used here: `PENDING` (queued, not started), `IN_PROGRESS`, `DONE`,
   -> 19/19, exit 0 (312 s, 4100 MB free after).
 - **Live job:** `ill-se_pilot-b1-klein` - ONE kernel, 24 images (11 creature + 6 food-web
   + 7 habitat beats), klein, 1344x768, 4 steps, guidance 1.0, fp16, seeds 3000-3046,
-  ~12 min of T4 time. Status at the time of writing: QUEUED (the fetch/verify/QC and the
-  measured seconds/image + usable share are still pending the GPU queue).
+  ~12 min of T4 time. Kernel COMPLETE; fetched and verified: **24/24 generated**
+  (0 black, 0 NaN, 0 OOM), load **121.74 s**, **25.287 s/image** steady, peak VRAM
+  7991.4 MB, **usable share 11/24 = 45.8%** QC-passed; 13 failed (11 blur_ok=false =
+  flat/low-detail plates, 2 text_like=true on the food-web plate beats). The 13
+  failures were re-queued with **new seeds** (stride 64, recorded in the seed log);
+  `finalize` fails closed ("only 11 usable images for 24 prompts"). No second live job
+  was submitted (ONE live job per milestone).
 - **Not done / NOT_CHECKED:** the live job's output is not fetched yet (no measured
   seconds/image or usable share from this run); nothing in the pipeline judges the
   images (no beauty claim is made).

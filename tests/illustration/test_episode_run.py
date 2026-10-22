@@ -188,6 +188,30 @@ def test_partial_failure_retries_only_the_failed_prompts(tmp_path):
     assert [r["render_id"] for r in pending] == ["r0002"]
 
 
+def test_a_retry_changes_the_seed_concretely(tmp_path):
+    """A retry must not repeat the same image: the seed is re-drawn."""
+    bridge = FakeBridge(fail=("r0002",))
+    run = _run(tmp_path, bridge=bridge, narration_minutes=20.0)
+    brief = run.build_brief()
+    plan = run.plan(brief, batch_size=60)
+    batch = plan["batches"][0]
+    original = {r["render_id"]: r["seed"] for r in plan["renders"]}
+    run.submit(batch)
+    run.fetch(batch)
+
+    pending = run.pending()
+    assert len(pending) == 1
+    assert pending[0]["seed"] != original["r0002"]
+    retries = [l for l in run.seed_log_lines() if l.get("status") == "retry"]
+    assert retries and retries[0]["seed"] == pending[0]["seed"]
+    # the seed stays inside the reserved range and is unique in the batch
+    low, high = _style().seed_policy["range"]
+    assert low <= pending[0]["seed"] <= high
+    seeds = [r["seed"] for r in run.pending()] + \
+        [r["seed"] for r in plan["renders"] if r["render_id"] != "r0002"]
+    assert len(seeds) == len(set(seeds))
+
+
 def test_resume_does_not_regenerate_verified_images(tmp_path):
     bridge = FakeBridge()
     run = _run(tmp_path, bridge=bridge, narration_minutes=20.0)

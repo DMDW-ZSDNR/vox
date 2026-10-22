@@ -22,7 +22,7 @@ table.
 |---|---|---|---|
 | P0 | DONE | admin preflight: branch `kilo/mega-100` pushed non-force (`a502d69..1da2524`, exit 0); `RUN_RULES.md` + `PIPE_STATE.md` created; stray untracked files listed, not added | `0276b8d` |
 | P1 | DONE | image model locked as CONFIG: `config/image_engine.json` (klein, OWNER_GATED, SDXL-Lightning FAST_FALLBACK) + model-adapter interface (`tools/illustration/model_registry.py`) + CLI (`scripts/image_engine.py`); 40 new tests pass; CI fast suite 12/12 exit 0 | (this commit) |
-| P2 | PENDING | — | — |
+| P2 | DONE | style kit for 4 niches (`style.json` + finalized `STYLE_BIBLE.md` each) + consistency kit (canonical front/side/3-4 sheets, seed + card-supported reference policy) + LoRA feasibility note; 30 new tests; 4-image smoke job on Kaggle | (this commit) |
 | P3 | PENDING | — | — |
 | P4 | PENDING | — | — |
 | P5 | PENDING | — | — |
@@ -103,3 +103,46 @@ Statuses used here: `PENDING` (queued, not started), `IN_PROGRESS`, `DONE`,
   `OWNER_CONFIRMED`.
 - **Next action:** owner blind-scoring; then the pilot episode (G8) can use the locked
   engine.
+
+### 2026-10-22 — P2: niche styles + consistency kit (LOCKED model)
+
+- **Style files (machine-readable):** `docs/openmontage/niches/<niche>/style.json` for
+  `space_iss`, `art_history`, `speculative_science`, `speculative_evolution` — palette,
+  line style, camera vocabulary, constraints (positive AND negative forms), label rule,
+  anatomy rule, seed policy, aspect, provenance. Each niche also has a finalized
+  `STYLE_BIBLE.md` (Status: FINAL).
+- **Positive wording:** the locked model (klein) has no negative prompt, so every
+  constraint is written positively into the prompt; the SDXL family gets the negative
+  forms instead (same style file drives both).
+- **Consistency kit:** `tools/illustration/style_kit.py` + `tools/illustration/creature_sheet.py`
+  + driver `scripts/creature_sheet.py` (plan / submit / status / fetch). Canonical sheet
+  = front + side + three-quarter view per creature from OpenCode's YAML (read only),
+  anatomy counts ALWAYS in the prompt, one fixed seed per creature+view (range 3000-3999),
+  deterministic job file (byte-identical across runs).
+- **Reference workflow:** only for the locked model, because its official card documents
+  multi-reference image-to-image editing (https://huggingface.co/black-forest-labs/FLUX.2-klein-4B,
+  accessed 2026-10-22). Every other model falls back to seed + prompt anchoring.
+- **LoRA feasibility (read-only, nothing trained):** `docs/openmontage/image_gen/LORA_FEASIBILITY.md`
+  — a LoRA run for this family needs ~24 GB VRAM (BFL/HF article, 2026-06-04) and ~1 h on
+  an RTX 4090 at ~$0.50/run; a Kaggle T4 has 16 GB -> NOT feasible as documented, and the
+  rented-GPU path is a paid route -> BLOCKED. Inference fits (measured peak 7995 MB,
+  `s7-klein-1`). 81 community adapters exist for the model; the examples are Apache-2.0.
+- **Tests (red then green):** `tests/illustration/test_style_kit.py` (23),
+  `tests/illustration/test_reference_workflow.py` (4), `tests/test_runner_static.py` (3)
+  -> 30 new tests pass; `tests/illustration tests/test_run_illustrations.py tests/test_s7_runner.py
+  tests/test_s8_bakeoff.py tests/test_s7_push_bakeoff.py` -> 166 passed / 1 skipped, exit 0;
+  `python scripts/ci_fast_suite.py` -> 12/12, exit 0 (293 s, 4112 MB free after).
+- **Smoke job (the only generation in this milestone):** `smoke_sheet_klein_4img_2`,
+  4 images (vent grazer front/side/3-4 + ice burrower front), klein, 1024x1024, ~4 min of
+  T4 time. Attempt 1 FAILED with `NameError: name 'guidance' is not defined` (the manifest
+  block referenced a variable that the P1 refactor had moved into the call builder);
+  fixed in the runner and covered by the new static check; attempt 2 submitted.
+- **Not done / NOT_CHECKED:** no LoRA trained (nothing installed, no dataset, no paid GPU);
+  the I2I quality at the locked guidance 1.0 is NOT judged yet (owner); the seed range
+  diverges from the S7 (4000) and episode (7000) seeds - new work uses the reserved
+  3000-3999 range, recorded in `docs/openmontage/image_gen/CONSISTENCY_KIT.md`.
+- **Owner decision:** (a) blind-score the models to unlock the model lock (P1);
+  (b) approve or reject the LoRA route (it needs either a community adapter or a GPU
+  budget - no training happens on a T4).
+- **Next action:** fetch + verify + QC the smoke job output, then the owner judges the
+  four images (front/side/3-4 consistency).

@@ -411,6 +411,34 @@ def resolve_model_plan(job: Dict[str, Any]) -> Dict[str, Any]:
             "ladder": ladder, "cfg": cfg}
 
 
+def build_generation_call(rj: Dict[str, Any], cfg: Dict[str, Any],
+                          width: int, height: int,
+                          reference_path: Optional[str] = None) -> Dict[str, Any]:
+    """Build the pipeline call for one render (pure, testable offline).
+
+    `reference_path` turns the render into an image-to-image (reference) render:
+    the reference file is handed to the pipeline as `image=`. That is only used
+    for models whose official card documents reference-image editing.
+    """
+    call: Dict[str, Any] = dict(
+        prompt=rj["prompt"],
+        height=height,
+        width=width,
+        num_inference_steps=int(rj.get("steps") or 28),
+    )
+    if rj.get("negative_prompt") is not None:
+        call["negative_prompt"] = rj["negative_prompt"]
+    guidance = cfg.get("guidance_override")
+    if guidance is None:
+        guidance = rj.get("guidance_scale")
+    if guidance is not None:
+        call["guidance_scale"] = float(guidance)
+    if reference_path:
+        from PIL import Image as _PILImage
+        call["image"] = _PILImage.open(reference_path).convert("RGB")
+    return call
+
+
 def main() -> None:
     global OUT
     job = JOB_EMBEDDED
@@ -487,20 +515,19 @@ def main() -> None:
                   file=sys.stderr)
             break
         rid = rj["render_id"]
-        call: Dict[str, Any] = dict(
-            prompt=rj["prompt"],
-            height=height,
-            width=width,
-            num_inference_steps=int(rj.get("steps") or 28),
-            generator=torch.Generator("cuda").manual_seed(int(rj["seed"])),
-        )
-        if rj.get("negative_prompt") is not None:
-            call["negative_prompt"] = rj["negative_prompt"]
-        guidance = cfg.get("guidance_override")
-        if guidance is None:
-            guidance = rj.get("guidance_scale")
-        if guidance is not None:
-            call["guidance_scale"] = float(guidance)
+        reference_path = None
+        ref_id = rj.get("reference_render_id")
+        if ref_id:
+            candidate = images_dir / f"{ref_id}.png"
+            if not candidate.is_file():
+                # fail closed: the reference image must exist before use
+                images.append({"render_id": rid, "file": None, "seed": rj["seed"],
+                               "error": "missing_reference_image"})
+                continue
+            reference_path = str(candidate)
+        call = build_generation_call(rj, cfg, width, height, reference_path)
+        call["generator"] = torch.Generator("cuda").manual_seed(int(rj["seed"]))
+        guidance = call.get("guidance_scale")
 
         t_start = time.perf_counter()
         try:

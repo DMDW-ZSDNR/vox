@@ -1,104 +1,126 @@
-# Speculative Evolution Style Bible — OpenMontage Milestone S1
+# Speculative Evolution Style Bible — FINAL (P2)
 
 **Niche:** speculative_evolution / alien ecosystems (AI stills only).
-**Rights basis:** ai_generated_illustration, generator: AI.
-**Status:** DRAFT.
+**Rights basis:** ai_generated_illustration · generator: AI · AI share: 100%.
+**Machine-readable style:** `docs/openmontage/niches/speculative_evolution/style.json`
+(the kit reads this file; this document is its human-readable twin).
+**Locked model:** `config/image_engine.json` → `klein` (FLUX.2-klein-4B, prompt target
+`klein`, variant C, 4 steps, guidance 1.0, fp16). Status `OWNER_GATED` until the
+owner blind-scores the models.
+**Status: FINAL** (owner-gated on the model choice, not on this style).
 
 ## 1. Purpose
 
-Single source of truth for AI-generated still illustrations used in the
-speculative-evolution pilot ("How could life survive beneath a frozen alien
-ocean?"). This niche is 100% AI stills: every still is an AI-generated
-illustration carrying the persistent "Speculative illustration" label.
-No footage, no video generation, no text inside images.
+Single source of truth for every AI-generated still of the alien-ecosystem
+pilot ("How could life survive beneath a frozen alien ocean?"). 100% AI stills,
+no footage, no video generation, no legible text inside images.
 
 ## 2. Visual style — field-guide plate
 
-- **Style:** flat-vector field-guide plate, silhouette-first, minimal detail,
-  clean geometric lines, no gradients, no shading, no texture, no photographic
-  depth, not photorealistic.
-- **Subjects:** alien creatures, habitats, anatomy crops, food-web plates,
-  planet-surface views — objects only, no people, no real events.
-- **Composition:** centered or rule-of-thirds with copy space; no words, no
-  letters, no numerals (text-like artifacts are auto-flagged by QC).
-- **Aspect:** 1280x720 (16:9) for full-frame plates; 1024x1024 for cards.
+- Flat-vector field-guide plate, silhouette-first, minimal detail, clean
+  geometric lines, flat fills.
+- One flat fill per surface, no gradients, no shading, no photographic depth.
+- Outline weight constant across a plate; the silhouette must read at
+  thumbnail size.
+- Objects only: alien creatures, habitats, anatomy crops, food-web plates.
+  No people, no real events.
 
 ## 3. Palette
 
 | Token | Hex | Use |
 |---|---|---|
-| deep teal | #14455C | background / deep ocean |
-| bioluminescent lime | #A8E06F | creature glow, vents, flora |
-| basalt charcoal | #3B444B | rock, ice shadows, silhouettes |
-| pale bone | #EDE7D8 | highlights, mats, distant ice |
+| deep_teal | #14455C | background / deep ocean |
+| bioluminescent_lime | #A8E06F | creature glow, vents, flora |
+| basalt_charcoal | #3B444B | rock, ice shadows, silhouettes |
+| pale_bone | #EDE7D8 | highlights, mats, distant ice |
 
-## 4. Anatomy spec rule (mandatory per creature)
+## 4. Camera vocabulary
 
-Every creature must have a written anatomy spec before it is drawn:
+| View | Plate description |
+|---|---|
+| `front` | full body straight from the front, symmetric, both flanks visible |
+| `side` | full body in profile, silhouette readable edge to edge |
+| `three_quarter` | full body at a three-quarter angle, near and far side readable |
+| `detail_crop` | close crop on one anatomy detail |
+| `wide_context` | wide establishing view of the habitat, subject small in frame |
 
-- **limb count:** an integer (e.g. 6 limbs for the vent grazer).
-- **2–3 dominant features:** e.g. long neck + spade-like forelimbs; sensory crest + fin rays; peristaltic body + burrowing head.
+Every canonical creature sheet contains `front`, `side` and `three_quarter`.
 
-Plus:
-- **Canonical silhouette:** ONE fixed silhouette per creature, reused across all shots of that creature. Poses and detail crops vary, but the silhouette is fixed so the creature is recognizable shot to shot.
+## 5. Anatomy spec rule (mandatory per creature)
 
-Creature anatomy specs (pilot):
+Every creature carries a written anatomy spec before it is drawn
+(OpenCode's YAML, read only):
 
-| Creature | Limb count | Dominant features | Canonical silhouette role |
-|---|---|---|---|
-| Vent grazer | 6 | long neck; spade-like forelimbs | grips vent chimneys, grazes bacterial mats |
-| Filter drifter | 0 (fins) | undulating fin; wide filter mouth | sieves suspended microbes, neutral buoyancy |
-| Ice burrower | 0 (peristaltic) | tapered head; segmented body | peristaltic burrowing through sediment |
+- **limb count, eye count, horn count** — integers;
+- **2–3 dominant features**;
+- **one canonical silhouette**, reused across every shot of that creature.
 
-## 5. Prompt template
+The counts are written into **every** prompt ("6 limbs, 2 eyes, 0 horns"); a
+prompt without the counts is invalid and the kit refuses to build it. The
+canonical silhouette goes into the prompt as its first clause (the full text
+stays in the YAML spec) so the prompt stays inside the builder's 1200-character
+limit.
 
-```
-{subject}, flat vector illustration, field-guide plate, silhouette-first,
-{creature_anatomy}, deep teal #14455C, bioluminescent lime #A8E06F,
-basalt charcoal #3B444B, pale bone #EDE7D8, no text, no watermark, no
-letters, no numerals, not photorealistic, no people, no logos, --{aspect}
---seed {seed}
-```
+## 6. Constraints — positive wording (the locked model has no negative prompt)
 
-- `{subject}`: creature/habitat description (no text request).
-- `{creature_anatomy}`: filled from the anatomy spec (limb count + features).
-- `{aspect}`: 16:9 or 1:1.
-- `{seed}`: fixed seed per creature+shot, recorded in the manifest.
+The locked model (klein) takes **no negative prompt**, so every constraint is
+written **positively** into the prompt. The read-only prompt builder
+(`tools/prompting/builder.py`) already applies `no_text`, `not_photoreal`,
+`no_people`, `no_logos`; the style kit injects the rest:
 
-## 6. Editorial overlays — drawn in the editor, never by the image model
+| id | positive form (used) | negative form (sdxl-family only) |
+|---|---|---|
+| no_text | clean image without text, text-free, no letters, no numerals, no watermark | text, watermark, letters, numerals, signature |
+| not_photoreal | flat vector rendering, not photorealistic, no photographic depth | photorealism, photograph, photorealistic, 3d render |
+| no_people | uninhabited scene, no human figures | people, person, human figure |
+| no_logos | no emblems, no insignia, no flags, no logos | emblem, insignia, flag, logo, watermark |
+| even_light | uniform flat shading | gradients, bloom, volumetric light |
+| copy_space | wide empty copy space above | cluttered background, busy composition |
 
-Labels, scale bars, arrows, maps, and numbers are drawn in the editor
-(PIL/ffmpeg overlay), never by the image model. The image model must never
-render legible text. Generated images are checked for accidental text-like
-artifacts; borderline cases go to human review.
+For a model that accepts a negative prompt (the SDXL family: `sdxl`,
+`sdxl-lightning`, `dreamshaper-xl-lightning`) the negative forms are used
+instead — and only then.
 
-## 7. Label rule — "Speculative illustration" (AI share 100%)
+## 7. Editorial overlays — drawn in the editor, never by the image model
 
-Because this niche is 100% AI stills, every AI cut carries a persistent
-"Speculative illustration" label:
+Labels, scale bars, arrows, maps and numbers are drawn in the editor
+(PIL/ffmpeg overlay). The image model never renders legible text; text-like
+artifacts are auto-flagged by the image QC and borderline cases go to the owner.
 
-- **At start:** the label appears from the first frame of the cut.
-- **In description:** the label is carried in the cut description/metadata.
-- **Gate:** every cut with generator=AI must have label="Speculative
-  illustration" and a non-empty description; AI share is 1.0 (100%).
-- Other AI_IMAGE_POLICY.md gates are NOT weakened: no photoreal people,
-  no text in the image, no real events, no emblems/insignia, not
-  photorealistic.
+## 8. Label rule — "Speculative illustration"
 
-## 8. Motion variety (editor motion on stills)
+AI share is 100%, so every AI cut carries the label **from the first frame**
+and in the cut description/metadata. The gate requires
+`label = "Speculative illustration"` and a non-empty description on every AI
+cut. Other AI_IMAGE_POLICY gates are not weakened (no photoreal people, no
+text in the image, no real events, no emblems/insignia).
 
-Stills are animated in the editor with pan/zoom, detail crops, and parallax:
+## 9. Motion variety (editor motion on stills)
 
-- Pan/zoom with differing easing (easein / easeout / easeinout).
-- Detail crops to show anatomy/silhouette.
-- Parallax for depth.
-- **Lint:** no two identical moves in a row (motion_variety.lint_variation:
-  same move + easing + direction on consecutive segments is flagged).
+Pan/zoom with differing easing (easein / easeout / easeinout), detail crops,
+parallax; no two identical moves in a row (`motion_variety.lint_variation`).
 
-## 9. Prohibited content (hard rules)
+## 10. Seed policy
 
-- No photorealistic people, faces, or real individuals.
-- No photorealistic fake events presented as real.
-- No text, letters, numerals, or legible watermarks inside generated images.
-- No real vehicles presented as photos; no emblems, insignia, or flags.
-- Anything violating these is quarantined and not used.
+- Range **3000-3999** reserved for illustrations (G1/G2 used 1000-1099 and
+  2000-2009). The S7 bake-off used 4000-4022 and the episode planner 7000+ —
+  those are outside the reserved range; new work uses the reserved range.
+- One fixed seed per creature **and** view, recorded in the manifest.
+- Never reuse a seed for two subjects inside one batch.
+
+## 11. Prohibited content (hard rules)
+
+No photorealistic people, faces or real individuals · no photorealistic fake
+events presented as real · no text, letters, numerals or legible watermarks in
+the image · no real vehicles presented as photos · no emblems, insignia or
+flags. Anything violating these is quarantined and not used.
+
+## 12. Sources
+
+- Profile: `docs/openmontage/niches/speculative_evolution/speculative_evolution.yaml`
+- Creature specs: `docs/openmontage/niches/speculative_evolution/creatures/*.yaml`
+  (OpenCode-owned, **read only** — the kit never writes them)
+- Prompt builder: `tools/prompting/builder.py` (OpenCode-owned, **read only**)
+- Model card: https://huggingface.co/black-forest-labs/FLUX.2-klein-4B
+  (accessed 2026-10-22) — prompt style sensitivity, multi-reference editing
+- Style seeds: `docs/openmontage/image_gen/ILLUSTRATION_STYLE_BIBLE.md` §3

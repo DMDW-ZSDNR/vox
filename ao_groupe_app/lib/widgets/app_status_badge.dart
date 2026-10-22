@@ -25,7 +25,7 @@ class AppStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

@@ -4,6 +4,7 @@ import '../l10n/store_strings.dart';
 import '../models/catalog.dart';
 import '../models/store_controller.dart';
 import '../widgets/store_components.dart';
+import 'home_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({
@@ -168,7 +169,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                 : 2,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        mainAxisExtent: 286,
+                        mainAxisExtent: 300,
                       ),
                       itemBuilder: (context, index) {
                         final product = products[index];

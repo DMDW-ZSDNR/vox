@@ -40,6 +40,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final wide = constraints.maxWidth > 650;
+            final artHeight = constraints.maxHeight < 700
+                ? wide
+                    ? 240.0
+                    : 200.0
+                : wide
+                    ? 320.0
+                    : 250.0;
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 950),
@@ -66,7 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           children: [
                             Expanded(
                               child: Container(
-                                height: wide ? 320 : 250,
+                                height: artHeight,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
                                     begin: AlignmentDirectional.topStart,
@@ -86,7 +93,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       start: 18,
                                       child: Icon(
                                         icons[_step],
-                                        color: Colors.white.withOpacity(0.18),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.18),
                                         size: 62,
                                       ),
                                     ),
@@ -94,9 +102,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       width: wide ? 156 : 130,
                                       height: wide ? 156 : 130,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.12),
-                                        borderRadius:
-                                            BorderRadius.circular(40),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(40),
                                       ),
                                       child: Icon(
                                         icons[_step],

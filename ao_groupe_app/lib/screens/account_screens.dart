@@ -12,6 +12,7 @@ import '../widgets/store_components.dart';
 import 'catalog_screen.dart';
 import 'cart_screens.dart';
 import 'design_system_showcase.dart';
+import 'home_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({
@@ -49,7 +50,7 @@ class AccountScreen extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
+                  color: Colors.white.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Icon(Icons.bolt_rounded,
@@ -70,7 +71,7 @@ class AccountScreen extends StatelessWidget {
                     Text(
                       strings.text('accountBody'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withOpacity(0.82),
+                            color: Colors.white.withValues(alpha: 0.82),
                           ),
                     ),
                   ],
@@ -223,7 +224,7 @@ class SettingsScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 10),
           DropdownButtonFormField<Locale>(
-            value: locale,
+            initialValue: locale,
             decoration: InputDecoration(labelText: strings.text('language')),
             items: const [
               DropdownMenuItem(value: Locale('ar'), child: Text('العربية')),
@@ -791,7 +792,7 @@ class GeneralQuoteFormScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return QuoteRequestScreen();
+    return const QuoteRequestScreen();
   }
 }
 
@@ -819,7 +820,7 @@ class AdminDashboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.lowStock.withOpacity(0.12),
+                  color: AppColors.lowStock.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(

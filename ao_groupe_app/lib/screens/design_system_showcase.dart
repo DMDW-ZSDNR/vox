@@ -228,7 +228,7 @@ class _HeroPanel extends StatelessWidget {
           Container(
             padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
+              color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
@@ -251,7 +251,7 @@ class _HeroPanel extends StatelessWidget {
             child: Text(
               strings.showcaseDescription,
               style: textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withOpacity(0.86),
+                color: Colors.white.withValues(alpha: 0.86),
               ),
             ),
           ),
@@ -464,7 +464,7 @@ class _ComponentPreviews extends StatelessWidget {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.16),
+                      color: AppColors.accent.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(

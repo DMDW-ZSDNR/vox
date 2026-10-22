@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../l10n/store_strings.dart';
 import '../models/algeria_wilaya.dart';
-import '../models/catalog.dart';
 import '../models/store_controller.dart';
 import '../theme/app_colors.dart';
 import '../widgets/store_components.dart';
@@ -58,7 +57,8 @@ class _CartScreenState extends State<CartScreen> {
               couponController: _couponController,
               couponApplied: _couponApplied,
               onApplyCoupon: () {
-                final valid = _couponController.text.trim().toUpperCase() == 'AO5';
+                final valid =
+                    _couponController.text.trim().toUpperCase() == 'AO5';
                 setState(() => _couponApplied = valid);
                 if (!valid) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -162,7 +162,7 @@ class _CartItems extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: product.color.withOpacity(0.14),
+                    color: product.color.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(product.icon, color: product.color, size: 30),
@@ -180,7 +180,9 @@ class _CartItems extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        formatLocalizedDzd(product.priceForQuantity(quantity) * quantity, languageCode),
+                        formatLocalizedDzd(
+                            product.priceForQuantity(quantity) * quantity,
+                            languageCode),
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: Theme.of(context).colorScheme.primary,
                             ),
@@ -206,12 +208,13 @@ class _CartItems extends StatelessWidget {
                           ),
                           _QuantityButton(
                             icon: Icons.add_rounded,
-                            onPressed: quantity < controller.stockFor(product.id)
-                                ? () => controller.setQuantity(
-                                      product.id,
-                                      quantity + 1,
-                                    )
-                                : null,
+                            onPressed:
+                                quantity < controller.stockFor(product.id)
+                                    ? () => controller.setQuantity(
+                                          product.id,
+                                          quantity + 1,
+                                        )
+                                    : null,
                           ),
                         ],
                       ),
@@ -295,7 +298,8 @@ class _CartSummaryState extends State<_CartSummary> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(strings.text('cart'), style: Theme.of(context).textTheme.titleLarge),
+          Text(strings.text('cart'),
+              style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 14),
           TextField(
             controller: widget.couponController,
@@ -319,7 +323,7 @@ class _CartSummaryState extends State<_CartSummary> {
             ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _wilaya,
+            initialValue: _wilaya,
             decoration: InputDecoration(labelText: strings.text('wilaya')),
             items: algerianWilayas
                 .map((wilaya) => DropdownMenuItem(
@@ -468,14 +472,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _wilaya,
+              initialValue: _wilaya,
               decoration: InputDecoration(
                 labelText: strings.text('selectWilaya'),
               ),
               items: algerianWilayas
                   .map((wilaya) => DropdownMenuItem(
                         value: wilaya.code,
-                        child: Text('${wilaya.code} · ${wilaya.label(languageCode)}'),
+                        child: Text(
+                            '${wilaya.code} · ${wilaya.label(languageCode)}'),
                       ))
                   .toList(),
               onChanged: (value) {
@@ -527,29 +532,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Text(strings.text('payment'),
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            _PaymentOption(
-              value: 'cash',
-              selected: _payment,
-              title: strings.text('cash'),
-              icon: Icons.payments_outlined,
-              enabled: true,
-              onChanged: (value) => setState(() => _payment = value),
-            ),
-            _PaymentOption(
-              value: 'ccp',
-              selected: _payment,
-              title: strings.text('ccp'),
-              icon: Icons.account_balance_outlined,
-              enabled: false,
-              onChanged: (value) => setState(() => _payment = value),
-            ),
-            _PaymentOption(
-              value: 'edahabia',
-              selected: _payment,
-              title: strings.text('edahabia'),
-              icon: Icons.credit_card_rounded,
-              enabled: false,
-              onChanged: (value) => setState(() => _payment = value),
+            RadioGroup<String>(
+              groupValue: _payment,
+              onChanged: (value) {
+                if (value != null) setState(() => _payment = value);
+              },
+              child: Column(
+                children: [
+                  _PaymentOption(
+                    value: 'cash',
+                    title: strings.text('cash'),
+                    icon: Icons.payments_outlined,
+                    enabled: true,
+                  ),
+                  _PaymentOption(
+                    value: 'ccp',
+                    title: strings.text('ccp'),
+                    icon: Icons.account_balance_outlined,
+                    enabled: false,
+                  ),
+                  _PaymentOption(
+                    value: 'edahabia',
+                    title: strings.text('edahabia'),
+                    icon: Icons.credit_card_rounded,
+                    enabled: false,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             Text(strings.text('signInRequired'),
@@ -659,13 +668,14 @@ class _CheckoutStepHeader extends StatelessWidget {
             radius: 11,
             backgroundColor: index == 0
                 ? AppColors.primaryBright
-                : AppColors.primaryBright.withOpacity(0.10),
-            foregroundColor: index == 0 ? Colors.white : AppColors.primaryBright,
+                : AppColors.primaryBright.withValues(alpha: 0.10),
+            foregroundColor:
+                index == 0 ? Colors.white : AppColors.primaryBright,
             child: Text('${index + 1}', style: const TextStyle(fontSize: 11)),
           ),
           label: Text(labels[index]),
           backgroundColor: index == 0
-              ? AppColors.primaryBright.withOpacity(0.10)
+              ? AppColors.primaryBright.withValues(alpha: 0.10)
               : null,
           side: BorderSide.none,
         );
@@ -677,19 +687,15 @@ class _CheckoutStepHeader extends StatelessWidget {
 class _PaymentOption extends StatelessWidget {
   const _PaymentOption({
     required this.value,
-    required this.selected,
     required this.title,
     required this.icon,
     required this.enabled,
-    required this.onChanged,
   });
 
   final String value;
-  final String selected;
   final String title;
   final IconData icon;
   final bool enabled;
-  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -697,8 +703,7 @@ class _PaymentOption extends StatelessWidget {
       opacity: enabled ? 1 : 0.55,
       child: RadioListTile<String>(
         value: value,
-        groupValue: selected,
-        onChanged: enabled ? (value) => onChanged(value!) : null,
+        enabled: enabled,
         title: Text(title),
         secondary: Icon(icon),
         contentPadding: EdgeInsets.zero,
@@ -735,7 +740,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                   width: 94,
                   height: 94,
                   decoration: BoxDecoration(
-                    color: AppColors.available.withOpacity(0.12),
+                    color: AppColors.available.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -882,7 +887,8 @@ class _TimelineStep extends StatelessWidget {
                 ),
                 if (!last)
                   Expanded(
-                    child: Container(width: 2, color: color.withOpacity(0.4)),
+                    child: Container(
+                        width: 2, color: color.withValues(alpha: 0.4)),
                   ),
               ],
             ),

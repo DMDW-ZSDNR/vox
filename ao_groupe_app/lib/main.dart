@@ -67,7 +67,8 @@ class _AoGroupeAppState extends State<AoGroupeApp> {
       setState(() {
         _locale = locale;
         _themeMode = themeMode;
-        _showOnboarding = !(preferences.getBool('onboarding.complete') ?? false);
+        _showOnboarding =
+            !(preferences.getBool('onboarding.complete') ?? false);
         _startupError = null;
       });
     } catch (error) {
@@ -147,7 +148,7 @@ class _SplashScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1D4ED8).withOpacity(0.22),
+                    color: const Color(0xFF1D4ED8).withValues(alpha: 0.22),
                     blurRadius: 32,
                     offset: const Offset(0, 12),
                   ),

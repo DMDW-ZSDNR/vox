@@ -79,8 +79,8 @@ class StoreProductCard extends StatelessWidget {
                           begin: AlignmentDirectional.topStart,
                           end: AlignmentDirectional.bottomEnd,
                           colors: [
-                            product.color.withOpacity(0.20),
-                            product.color.withOpacity(0.06),
+                            product.color.withValues(alpha: 0.20),
+                            product.color.withValues(alpha: 0.06),
                           ],
                         ),
                       ),
@@ -95,7 +95,10 @@ class StoreProductCard extends StatelessWidget {
                     top: 8,
                     end: 8,
                     child: Material(
-                      color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withValues(alpha: 0.92),
                       shape: const CircleBorder(),
                       child: IconButton(
                         tooltip: strings.text('favorite'),
@@ -148,10 +151,15 @@ class StoreProductCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          product.quoteOnly ? strings.text('requestQuote') : price,
+                          product.quoteOnly
+                              ? strings.text('requestQuote')
+                              : price,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -275,7 +283,7 @@ class StoreEmptyState extends StatelessWidget {
               width: 76,
               height: 76,
               decoration: BoxDecoration(
-                color: AppColors.primaryBright.withOpacity(0.10),
+                color: AppColors.primaryBright.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
@@ -408,7 +416,7 @@ class _CategoryTile extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: category.color.withOpacity(0.12),
+                  color: category.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(category.icon, color: category.color),

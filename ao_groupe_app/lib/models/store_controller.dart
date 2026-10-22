@@ -58,9 +58,8 @@ class StoreController extends ChangeNotifier {
     final product = productById(productId);
     final stock = stockFor(productId);
     if (product.quoteOnly || stock == 0) return;
-    _cart[productId] = ((_cart[productId] ?? 0) + quantity)
-        .clamp(1, stock)
-        .toInt();
+    _cart[productId] =
+        ((_cart[productId] ?? 0) + quantity).clamp(1, stock).toInt();
     notifyListeners();
   }
 
@@ -113,7 +112,8 @@ class StoreController extends ChangeNotifier {
       throw StateError('Cannot place an order with an empty cart.');
     }
     final order = DemoOrder(
-      number: 'AO-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+      number:
+          'AO-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
       items: Map.unmodifiable(_cart),
       total: totalFor(wilaya, couponApplied: couponApplied),
       wilaya: wilaya,

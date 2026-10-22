@@ -21,8 +21,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = StoreStrings.of(context);
-    final popular = catalogProducts.where((product) => product.isPopular).toList();
-    final newArrivals = catalogProducts.where((product) => product.isNew).toList();
+    final popular =
+        catalogProducts.where((product) => product.isPopular).toList();
+    final newArrivals =
+        catalogProducts.where((product) => product.isNew).toList();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -109,7 +111,6 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
-
 }
 
 class _SearchEntry extends StatelessWidget {
@@ -189,7 +190,7 @@ class _WelcomeHero extends StatelessWidget {
                 Container(
                   padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.14),
+                    color: Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(99),
                   ),
                   child: Text(
@@ -214,7 +215,7 @@ class _WelcomeHero extends StatelessWidget {
                 Text(
                   body,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         height: 1.5,
                       ),
                 ),
@@ -238,7 +239,7 @@ class _WelcomeHero extends StatelessWidget {
               child: Container(
                 height: 170,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.10),
+                  color: Colors.white.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: const Icon(
@@ -265,7 +266,7 @@ class _DeliveryStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.16),
+        color: AppColors.accent.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -413,7 +414,7 @@ class _PromoTile extends StatelessWidget {
                       ),
                 ),
               ),
-              Icon(icon, size: 46, color: Colors.white.withOpacity(0.88)),
+              Icon(icon, size: 46, color: Colors.white.withValues(alpha: 0.88)),
             ],
           ),
         ),
@@ -546,7 +547,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ? Icons.request_quote_outlined
                 : Icons.add_shopping_cart_rounded,
           ),
-          label: Text(strings.text(product.quoteOnly ? 'requestQuote' : 'addToCart')),
+          label: Text(
+              strings.text(product.quoteOnly ? 'requestQuote' : 'addToCart')),
         ),
       ),
     );
@@ -568,8 +570,8 @@ class _ProductArtwork extends StatelessWidget {
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
           colors: [
-            product.color.withOpacity(0.24),
-            product.color.withOpacity(0.06),
+            product.color.withValues(alpha: 0.24),
+            product.color.withValues(alpha: 0.06),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
@@ -699,7 +701,11 @@ class _ProductInformation extends StatelessWidget {
 
   String _specificationLabel(String key, String locale) {
     const labels = {
-      'material': {'ar': 'العلامة / المادة', 'fr': 'Marque / matière', 'en': 'Brand / material'},
+      'material': {
+        'ar': 'العلامة / المادة',
+        'fr': 'Marque / matière',
+        'en': 'Brand / material'
+      },
       'section': {'ar': 'المواصفة', 'fr': 'Caractéristique', 'en': 'Rating'},
       'voltage': {'ar': 'تفاصيل', 'fr': 'Détails', 'en': 'Details'},
       'pack': {'ar': 'الوحدة', 'fr': 'Unité', 'en': 'Unit'},
@@ -719,7 +725,8 @@ class _SpecificationRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+        border:
+            Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [

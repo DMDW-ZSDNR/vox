@@ -14,8 +14,7 @@ abstract final class AppTheme {
         isDark ? AppColors.darkBackground : AppColors.lightBackground;
     final foreground =
         isDark ? const Color(0xFFE8EDF7) : const Color(0xFF17233C);
-    final borderColor =
-        isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? AppColors.darkBorder : const Color(0xFFE2E8F0);
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: brightness,
@@ -63,7 +62,8 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primaryBright, width: 2),
+          borderSide:
+              const BorderSide(color: AppColors.primaryBright, width: 2),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(

@@ -13,7 +13,8 @@ class StoreStrings {
       'cart': 'السلة',
       'account': 'حسابي',
       'welcome': 'كل حلول الكهرباء والطاقة، في مكان واحد',
-      'welcomeBody': 'اختَر من منتجات موثوقة، بأسعار واضحة وخيارات تناسب الأفراد والمهنيين.',
+      'welcomeBody':
+          'اختَر من منتجات موثوقة، بأسعار واضحة وخيارات تناسب الأفراد والمهنيين.',
       'shopNow': 'تسوق الآن',
       'wholesale': 'سعر الجملة من 5 قطع',
       'bestSellers': 'الأكثر مبيعاً',
@@ -53,7 +54,8 @@ class StoreStrings {
       'edahabia': 'بطاقة الذهبية',
       'placeOrder': 'تأكيد الطلب',
       'orderPlaced': 'تم تسجيل طلبك',
-      'orderPlacedBody': 'هذا طلب تجريبي محفوظ على هذا الجهاز، وليس طلباً مرسلاً للمتجر.',
+      'orderPlacedBody':
+          'هذا طلب تجريبي محفوظ على هذا الجهاز، وليس طلباً مرسلاً للمتجر.',
       'orderNumber': 'رقم الطلب',
       'trackOrder': 'تتبع الطلب',
       'orders': 'طلباتي',
@@ -78,7 +80,8 @@ class StoreStrings {
       'language': 'اللغة',
       'browseCategories': 'اكتشف أقسام المتجر',
       'quoteTitle': 'طلب عرض سعر',
-      'quoteBody': 'أرسل تفاصيل مشروعك، وسيعرض لك التطبيق مسودة محلية جاهزة للمشاركة.',
+      'quoteBody':
+          'أرسل تفاصيل مشروعك، وسيعرض لك التطبيق مسودة محلية جاهزة للمشاركة.',
       'projectName': 'اسم المشروع',
       'projectDetails': 'تفاصيل الطلب',
       'createQuote': 'إنشاء مسودة العرض',
@@ -93,7 +96,8 @@ class StoreStrings {
       'estimatedCurrent': 'التيار التقديري',
       'suggestedCable': 'المقطع المقترح مبدئياً',
       'estimatedPanels': 'عدد الألواح التقديري',
-      'contactElectrician': 'يجب مراجعة الحساب واعتماده من كهربائي مؤهل قبل التنفيذ.',
+      'contactElectrician':
+          'يجب مراجعة الحساب واعتماده من كهربائي مؤهل قبل التنفيذ.',
       'branchAlgiers': 'الجزائر العاصمة',
       'branchOran': 'وهران',
       'branchSetif': 'سطيف',
@@ -115,7 +119,8 @@ class StoreStrings {
       'sortRecommended': 'الترتيب المقترح',
       'showMore': 'عرض المزيد',
       'deliveryEstimate': 'التوصيل تقديري ويتأكد المتجر عند تفعيل الخدمة.',
-      'orderHistoryDisclaimer': 'الطلبات التجريبية لا تُرسل إلى متجر أو شركة توصيل.',
+      'orderHistoryDisclaimer':
+          'الطلبات التجريبية لا تُرسل إلى متجر أو شركة توصيل.',
       'reorder': 'إعادة إضافة المنتجات',
       'popular': 'الأكثر مبيعاً',
       'new': 'جديد',
@@ -172,11 +177,14 @@ class StoreStrings {
       'invalidPhone': 'أدخل رقماً جزائرياً صحيحاً من 10 أرقام أو بصيغة +213.',
       'couponInvalid': 'رمز الخصم غير صالح',
       'onboardingWelcome': 'أهلاً بك في AO groupe',
-      'onboardingWelcomeBody': 'تسوّق مستلزمات الكهرباء والإنارة والطاقة الشمسية بخيارات واضحة للأفراد والمهنيين.',
+      'onboardingWelcomeBody':
+          'تسوّق مستلزمات الكهرباء والإنارة والطاقة الشمسية بخيارات واضحة للأفراد والمهنيين.',
       'onboardingCatalog': 'اعثر على احتياج مشروعك',
-      'onboardingCatalogBody': 'تصفّح التصنيفات، راجع المواصفات والأسعار، واحفظ منتجاتك المفضلة.',
+      'onboardingCatalogBody':
+          'تصفّح التصنيفات، راجع المواصفات والأسعار، واحفظ منتجاتك المفضلة.',
       'onboardingOrders': 'مشروعك يبدأ بخطوة',
-      'onboardingOrdersBody': 'جهّز قائمة المشروع وقدّر احتياجاتك بأدوات مساعدة بسيطة.',
+      'onboardingOrdersBody':
+          'جهّز قائمة المشروع وقدّر احتياجاتك بأدوات مساعدة بسيطة.',
       'skip': 'تخطي',
       'next': 'التالي',
       'getStarted': 'ابدأ التسوق',
@@ -189,7 +197,8 @@ class StoreStrings {
       'cart': 'Panier',
       'account': 'Compte',
       'welcome': 'L’électricité et l’énergie, simplement',
-      'welcomeBody': 'Des produits fiables, des prix clairs pour les particuliers et les professionnels.',
+      'welcomeBody':
+          'Des produits fiables, des prix clairs pour les particuliers et les professionnels.',
       'shopNow': 'Découvrir',
       'wholesale': 'Prix de gros dès 5 pièces',
       'bestSellers': 'Meilleures ventes',
@@ -212,7 +221,8 @@ class StoreStrings {
       'favorite': 'Favoris',
       'noProducts': 'Aucun produit dans cette catégorie',
       'emptyCart': 'Votre panier attend son premier article',
-      'emptyCartBody': 'Parcourez le catalogue pour trouver votre prochain projet.',
+      'emptyCartBody':
+          'Parcourez le catalogue pour trouver votre prochain projet.',
       'continueShopping': 'Continuer les achats',
       'subtotal': 'Sous-total',
       'shipping': 'Livraison',
@@ -229,7 +239,8 @@ class StoreStrings {
       'edahabia': 'Carte Edahabia',
       'placeOrder': 'Confirmer la commande',
       'orderPlaced': 'Commande enregistrée',
-      'orderPlacedBody': 'Cette commande de démonstration est enregistrée localement et n’est pas transmise au magasin.',
+      'orderPlacedBody':
+          'Cette commande de démonstration est enregistrée localement et n’est pas transmise au magasin.',
       'orderNumber': 'Nº de commande',
       'trackOrder': 'Suivre la commande',
       'orders': 'Mes commandes',
@@ -242,7 +253,8 @@ class StoreStrings {
       'statusDelivered': 'Livrée',
       'stockDemo': 'Catalogue et prix indicatifs',
       'accountTitle': 'Espace AO groupe',
-      'accountBody': 'Le catalogue utilise actuellement des données de démonstration locales.',
+      'accountBody':
+          'Le catalogue utilise actuellement des données de démonstration locales.',
       'branches': 'Nos agences',
       'tools': 'Outils électriques',
       'favorites': 'Favoris',
@@ -254,12 +266,14 @@ class StoreStrings {
       'language': 'Langue',
       'browseCategories': 'Explorer les catégories',
       'quoteTitle': 'Demande de devis',
-      'quoteBody': 'Décrivez votre projet pour préparer un brouillon de devis local.',
+      'quoteBody':
+          'Décrivez votre projet pour préparer un brouillon de devis local.',
       'projectName': 'Nom du projet',
       'projectDetails': 'Détails de la demande',
       'createQuote': 'Créer le brouillon',
       'quoteReady': 'Brouillon de devis préparé',
-      'shareUnavailable': 'Le partage sera disponible après connexion au service du magasin.',
+      'shareUnavailable':
+          'Le partage sera disponible après connexion au service du magasin.',
       'cableCalculator': 'Calculateur de câble',
       'solarCalculator': 'Calculateur solaire',
       'loadWatts': 'Puissance requise (W)',
@@ -269,7 +283,8 @@ class StoreStrings {
       'estimatedCurrent': 'Courant estimé',
       'suggestedCable': 'Section indicative proposée',
       'estimatedPanels': 'Nombre de panneaux estimé',
-      'contactElectrician': 'Un électricien qualifié doit vérifier et valider ce calcul avant toute installation.',
+      'contactElectrician':
+          'Un électricien qualifié doit vérifier et valider ce calcul avant toute installation.',
       'branchAlgiers': 'Alger',
       'branchOran': 'Oran',
       'branchSetif': 'Sétif',
@@ -278,7 +293,8 @@ class StoreStrings {
       'branchAddressSetif': 'Agence de démonstration - adresse à confirmer',
       'call': 'Appeler',
       'adminDemo': 'Aperçu administration',
-      'adminNotice': 'Administration de démonstration locale, sans connexion ni données réelles.',
+      'adminNotice':
+          'Administration de démonstration locale, sans connexion ni données réelles.',
       'manageProducts': 'Produits et stock',
       'manageOrders': 'Commandes',
       'customerCount': 'Clients de démonstration',
@@ -290,8 +306,10 @@ class StoreStrings {
       'sortByPrice': 'Trier par prix',
       'sortRecommended': 'Tri recommandé',
       'showMore': 'Voir plus',
-      'deliveryEstimate': 'Le délai de livraison sera confirmé lorsque le service sera connecté.',
-      'orderHistoryDisclaimer': 'Les commandes de démonstration ne sont pas transmises à un magasin ou transporteur.',
+      'deliveryEstimate':
+          'Le délai de livraison sera confirmé lorsque le service sera connecté.',
+      'orderHistoryDisclaimer':
+          'Les commandes de démonstration ne sont pas transmises à un magasin ou transporteur.',
       'reorder': 'Ajouter à nouveau',
       'popular': 'Best-seller',
       'new': 'Nouveau',
@@ -306,7 +324,8 @@ class StoreStrings {
       'catCustom': 'Sur mesure',
       'moreCategories': 'Acheter par catégorie',
       'yourProjects': 'Vos projets',
-      'projectHint': 'Recommandez facilement les articles de votre dernier projet.',
+      'projectHint':
+          'Recommandez facilement les articles de votre dernier projet.',
       'shopCategories': 'Explorer les catégories',
       'deliveryPromo': 'Livraison estimée offerte dès 15 000 DA',
       'featuredSolar': 'Solutions solaires',
@@ -314,7 +333,8 @@ class StoreStrings {
       'compare': 'Comparer les produits',
       'remove': 'Retirer',
       'savings': 'Économisé',
-      'promoHint': 'Essayez le code AO5 pour 5 % de remise sur cette commande démo',
+      'promoHint':
+          'Essayez le code AO5 pour 5 % de remise sur cette commande démo',
       'selectWilaya': 'Sélectionner une wilaya',
       'address': 'Adresse de livraison',
       'addressHint': 'Quartier, rue et point de repère',
@@ -325,7 +345,8 @@ class StoreStrings {
       'updatedLocally': 'Modification locale de démonstration',
       'quoteOnly': 'Prix sur devis',
       'deliveryUnavailable': 'Le service de livraison n’est pas connecté',
-      'branchMapHint': 'Les coordonnées et itinéraires nécessitent les informations des agences.',
+      'branchMapHint':
+          'Les coordonnées et itinéraires nécessitent les informations des agences.',
       'calculatorResult': 'Résultat indicatif',
       'powerFactor': 'Facteur de puissance',
       'systemHours': 'Heures de fonctionnement par jour',
@@ -345,14 +366,18 @@ class StoreStrings {
       'callUnavailable': 'Les numéros des agences doivent être configurés.',
       'customerName': 'Nom du destinataire',
       'phone': 'Numéro de téléphone',
-      'invalidPhone': 'Saisissez un numéro algérien valide (10 chiffres ou format +213).',
+      'invalidPhone':
+          'Saisissez un numéro algérien valide (10 chiffres ou format +213).',
       'couponInvalid': 'Code promo invalide',
       'onboardingWelcome': 'Bienvenue chez AO groupe',
-      'onboardingWelcomeBody': 'Équipements électriques, éclairage et solaire, avec une offre pensée pour les particuliers et les professionnels.',
+      'onboardingWelcomeBody':
+          'Équipements électriques, éclairage et solaire, avec une offre pensée pour les particuliers et les professionnels.',
       'onboardingCatalog': 'Trouvez les fournitures du projet',
-      'onboardingCatalogBody': 'Parcourez les catégories, consultez les caractéristiques et gardez vos favoris.',
+      'onboardingCatalogBody':
+          'Parcourez les catégories, consultez les caractéristiques et gardez vos favoris.',
       'onboardingOrders': 'Chaque projet commence simplement',
-      'onboardingOrdersBody': 'Préparez une liste de fournitures et estimez les besoins grâce aux outils intégrés.',
+      'onboardingOrdersBody':
+          'Préparez une liste de fournitures et estimez les besoins grâce aux outils intégrés.',
       'skip': 'Passer',
       'next': 'Suivant',
       'getStarted': 'Commencer',
@@ -365,7 +390,8 @@ class StoreStrings {
       'cart': 'Cart',
       'account': 'Account',
       'welcome': 'Electrical and energy supplies, made simple',
-      'welcomeBody': 'Reliable products, clear pricing, and choices for both homes and professionals.',
+      'welcomeBody':
+          'Reliable products, clear pricing, and choices for both homes and professionals.',
       'shopNow': 'Shop now',
       'wholesale': 'Wholesale pricing from 5 units',
       'bestSellers': 'Best sellers',
@@ -388,7 +414,8 @@ class StoreStrings {
       'favorite': 'Favorites',
       'noProducts': 'No products in this category yet',
       'emptyCart': 'Your cart is ready for its first item',
-      'emptyCartBody': 'Browse the catalog to find the right fit for your project.',
+      'emptyCartBody':
+          'Browse the catalog to find the right fit for your project.',
       'continueShopping': 'Continue shopping',
       'subtotal': 'Subtotal',
       'shipping': 'Delivery',
@@ -405,7 +432,8 @@ class StoreStrings {
       'edahabia': 'Edahabia card',
       'placeOrder': 'Place order',
       'orderPlaced': 'Order recorded',
-      'orderPlacedBody': 'This demo order is stored locally and has not been sent to the store.',
+      'orderPlacedBody':
+          'This demo order is stored locally and has not been sent to the store.',
       'orderNumber': 'Order number',
       'trackOrder': 'Track order',
       'orders': 'My orders',
@@ -435,7 +463,8 @@ class StoreStrings {
       'projectDetails': 'Request details',
       'createQuote': 'Create quote draft',
       'quoteReady': 'Quote draft prepared',
-      'shareUnavailable': 'Sharing will be available after connecting the store service.',
+      'shareUnavailable':
+          'Sharing will be available after connecting the store service.',
       'cableCalculator': 'Cable sizing calculator',
       'solarCalculator': 'Solar calculator',
       'loadWatts': 'Required load (W)',
@@ -445,7 +474,8 @@ class StoreStrings {
       'estimatedCurrent': 'Estimated current',
       'suggestedCable': 'Indicative cable size',
       'estimatedPanels': 'Estimated panel count',
-      'contactElectrician': 'A qualified electrician must verify and approve this estimate before installation.',
+      'contactElectrician':
+          'A qualified electrician must verify and approve this estimate before installation.',
       'branchAlgiers': 'Algiers',
       'branchOran': 'Oran',
       'branchSetif': 'Sétif',
@@ -466,8 +496,10 @@ class StoreStrings {
       'sortByPrice': 'Sort by price',
       'sortRecommended': 'Recommended order',
       'showMore': 'View more',
-      'deliveryEstimate': 'Delivery is an estimate until the store service is connected.',
-      'orderHistoryDisclaimer': 'Demo orders are not sent to a store or delivery company.',
+      'deliveryEstimate':
+          'Delivery is an estimate until the store service is connected.',
+      'orderHistoryDisclaimer':
+          'Demo orders are not sent to a store or delivery company.',
       'reorder': 'Add items again',
       'popular': 'Best seller',
       'new': 'New',
@@ -521,14 +553,18 @@ class StoreStrings {
       'callUnavailable': 'Branch phone numbers need to be configured.',
       'customerName': 'Recipient name',
       'phone': 'Phone number',
-      'invalidPhone': 'Enter a valid Algerian mobile number (10 digits or +213 format).',
+      'invalidPhone':
+          'Enter a valid Algerian mobile number (10 digits or +213 format).',
       'couponInvalid': 'Invalid discount code',
       'onboardingWelcome': 'Welcome to AO groupe',
-      'onboardingWelcomeBody': 'Shop electrical, lighting, and solar supplies with clear choices for homes and trade.',
+      'onboardingWelcomeBody':
+          'Shop electrical, lighting, and solar supplies with clear choices for homes and trade.',
       'onboardingCatalog': 'Find what your project needs',
-      'onboardingCatalogBody': 'Browse categories, compare specifications, and save products for later.',
+      'onboardingCatalogBody':
+          'Browse categories, compare specifications, and save products for later.',
       'onboardingOrders': 'Start your project with confidence',
-      'onboardingOrdersBody': 'Build a project list and estimate your needs with simple planning tools.',
+      'onboardingOrdersBody':
+          'Build a project list and estimate your needs with simple planning tools.',
       'skip': 'Skip',
       'next': 'Next',
       'getStarted': 'Start shopping',

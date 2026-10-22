@@ -116,7 +116,8 @@ class AppLocalizations {
       'productTitle': 'Ampoule LED économique E27',
       'productDescription': '9 W · lumière blanc chaud',
       'samplePrice': '450 DA / pièce',
-      'previewNote': 'Aperçu du système de design — pas l’écran final du magasin',
+      'previewNote':
+          'Aperçu du système de design — pas l’écran final du magasin',
     },
     'en': {
       'showcase': 'Design system preview',
@@ -157,8 +158,8 @@ class _AppLocalizationsDelegate
   const _AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => const ['ar', 'fr', 'en']
-      .contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      const ['ar', 'fr', 'en'].contains(locale.languageCode);
 
   @override
   Future<AppLocalizations> load(Locale locale) async {

@@ -286,6 +286,29 @@ def test_invalid_scene_preset_is_rejected_before_output_path_use(
     assert not (tmp_path / "escape").exists()
 
 
+def test_existing_candidate_batch_is_rejected_before_paid_network(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setenv("SEEDANCE_CONFIG_PATH", str(_write_config(tmp_path)))
+    product = tmp_path / "product.png"
+    product.write_bytes(_png_bytes())
+    output_dir = tmp_path / "images"
+    output_dir.mkdir()
+    (output_dir / "scene_luxury_1.png").write_bytes(_png_bytes("red"))
+
+    def fail_network(*args, **kwargs):
+        raise AssertionError("existing output batch must not call network")
+
+    monkeypatch.setattr("requests.post", fail_network)
+    result = SeedreamArkImage().execute(
+        _inputs(tmp_path, product, output_dir=str(output_dir))
+    )
+
+    assert result.success is False
+    assert result.cost_usd is None
+    assert "已存在" in result.error
+
+
 def test_unknown_image_pricing_requires_quote():
     with pytest.raises(PriceQuoteRequired):
         SeedreamArkImage().estimate_cost({"count": 3})

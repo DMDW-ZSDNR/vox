@@ -14,8 +14,9 @@ Call `seedream_ark_image` once per style with `count=1`:
 - `office`: clean desk, daylight, laptop; stable lateral move.
 
 Use direct Chinese prompts and the product lock from the Layer 3 skill.
-Save under `assets/images/previews/<style>/`. Record model, prompt, and paths in
-`asset_manifest`.
+Save under `assets/images/previews/<style>/batch-001/`. Record model, prompt,
+and paths in `asset_manifest`. Use the next `batch-NNN` directory when
+regenerating; never overwrite a reviewed preview.
 
 After generation, present all four images and ask the user to choose complete
 styles. Use 4 choices: luxury, nature, tech, office. Allow 1–3 selections.

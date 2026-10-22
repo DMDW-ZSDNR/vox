@@ -9,10 +9,12 @@ Required: `scene_plan`.
 For every selected style, call `seedream_ark_image` with `count=3`, the exact
 storyboard prompt, the original product image, and:
 
-`assets/images/<style>/scene_<style>_<1..3>.png`
+`assets/images/<style>/batch-001/scene_<style>_<1..3>.png`
 
 Announce provider `ark`, model, three-candidate batch, and cost status first.
 Do not generate styles the user did not select. Do not add text or logos.
+Every regenerated batch uses the next `batch-NNN` directory; never overwrite an
+already reviewed batch.
 
 ## Review
 

@@ -227,6 +227,15 @@ class SeedreamArkImage(BaseTool):
             output_dir = Path(inputs["output_dir"])
             output_dir.mkdir(parents=True, exist_ok=True)
             prompt = str(inputs["prompt"])
+            candidate_paths = [
+                output_dir / f"scene_{scene_preset}_{index}.png"
+                for index in range(1, count + 1)
+            ]
+            existing_paths = [path for path in candidate_paths if path.exists()]
+            if existing_paths:
+                raise ValueError(
+                    "候选图批次已存在，请使用新的 batch-NNN 目录后再生成。"
+                )
             payload_base = {
                 "model": model,
                 "prompt": prompt,
@@ -236,7 +245,7 @@ class SeedreamArkImage(BaseTool):
                 "watermark": bool(inputs.get("watermark", False)),
             }
 
-            for index in range(1, count + 1):
+            for output_path in candidate_paths:
                 response = requests.post(
                     f"{base_url}/images/generations",
                     headers={
@@ -271,7 +280,6 @@ class SeedreamArkImage(BaseTool):
                 else:
                     blob = self._decode_image(item)
                 self._validate_png(blob)
-                output_path = output_dir / f"scene_{scene_preset}_{index}.png"
                 output_path.write_bytes(blob)
                 outputs.append(str(output_path))
         except SeedanceConfigError as exc:

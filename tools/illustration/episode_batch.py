@@ -23,29 +23,63 @@ from typing import Any, Dict, Iterable, List, Sequence
 from PIL import Image
 
 from tools.illustration.illustration_qc import qc_batch
+from tools.illustration.model_registry import (
+    DEFAULT_CONFIG_PATH,
+    EngineConfigError,
+    ImageEngine,
+    ModelAdapter,
+    adapter_for,
+    load_engine,
+    project_gpu_minutes,
+)
 from tools.prompting.builder import AnatomySpec, CreatureSpec, PromptBuilder
 
-# Measured on the S7 Kaggle runs (docs/openmontage/image_gen/BAKEOFF_S7.md).
-MEASURED_SEC_PER_IMAGE = {"klein": 24.691, "sdxl": 41.400, "zimage": None}
+# The image model is CONFIG, not code: config/image_engine.json holds one
+# entry per model (verified versions, prompt rules, measured seconds/image).
+# The three legacy tables below are derived from that registry on demand
+# (PEP 562 __getattr__), so there is a single source of truth.
+_ENGINE_CACHE: Dict[str, ImageEngine] = {}
 
-MODEL_IDS = {
-    "klein": {"model_id": "black-forest-labs/FLUX.2-klein-4B",
-              "pipeline_class": "Flux2KleinPipeline", "vae_model_id": None},
-    "sdxl": {"model_id": "stabilityai/stable-diffusion-xl-base-1.0",
-             "pipeline_class": "StableDiffusionXLPipeline",
-             "vae_model_id": "madebyollin/sdxl-vae-fp16-fix"},
-    "zimage": {"model_id": "Tongyi-MAI/Z-Image-Turbo",
-               "pipeline_class": "ZImagePipeline", "vae_model_id": None},
-}
 
-DEFAULT_INSTALL_LADDER = {
-    "klein": ["released_037_x4", "released_037_x5", "released_041_x5_ao",
-              "git_main_x5_ao"],
-    "sdxl": ["released_036_x4", "released_037_x4", "released_041_x5_ao",
-             "git_main_x4"],
-    "zimage": ["released_037_x4", "released_037_x5", "released_041_x5_ao",
-               "git_main_x5_ao"],
-}
+def get_engine(path: str | Path | None = None) -> ImageEngine:
+    """Load (and cache) the image engine config."""
+    key = str(path or DEFAULT_CONFIG_PATH)
+    if key not in _ENGINE_CACHE:
+        _ENGINE_CACHE[key] = load_engine(key)
+    return _ENGINE_CACHE[key]
+
+
+def resolve_adapter(model: str, engine: ImageEngine | None = None) -> ModelAdapter:
+    """The adapter for `model`. Unknown models raise ValueError (as before)."""
+    try:
+        return adapter_for(engine or get_engine(), model)
+    except EngineConfigError as exc:
+        raise ValueError(str(exc)) from exc
+
+
+def _legacy_maps() -> Dict[str, Any]:
+    engine = get_engine()
+    return {
+        "MEASURED_SEC_PER_IMAGE": {
+            key: (adapter.sec_per_image if adapter.usable else None)
+            for key, adapter in engine.models.items()
+        },
+        "MODEL_IDS": {
+            key: {"model_id": a.model_id, "pipeline_class": a.pipeline_class,
+                  "vae_model_id": a.vae_model_id}
+            for key, a in engine.models.items()
+        },
+        "DEFAULT_INSTALL_LADDER": {
+            key: list(a.install_ladder) for key, a in engine.models.items()
+        },
+    }
+
+
+def __getattr__(name: str) -> Any:
+    # PEP 562: the legacy tables stay importable but come from the config.
+    if name in {"MEASURED_SEC_PER_IMAGE", "MODEL_IDS", "DEFAULT_INSTALL_LADDER"}:
+        return _legacy_maps()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 IMAGE_LABEL = "Illustration"
 SPECULATIVE_LABEL = "Speculative illustration"
@@ -206,12 +240,18 @@ def plan_renders(
     *,
     per_spec: int = 1,
     seed_base: int = 7000,
-    variants: Iterable[str] = ("A",),
+    variants: Iterable[str] | None = None,
+    engine: ImageEngine | None = None,
 ) -> List[Dict[str, Any]]:
-    """Build the batched render plan for ONE model (prompt rules per model)."""
-    if model not in MODEL_IDS:
-        raise ValueError(f"unknown model {model!r}")
-    variant_list = [v.upper() for v in variants]
+    """Build the batched render plan for ONE model.
+
+    The model entry in config/image_engine.json decides the prompt target
+    (tools/prompting), the prompt variant, the steps and the guidance, so the
+    plan follows the config lock instead of a code-side table.
+    """
+    adapter = resolve_adapter(model, engine)
+    variant_list = [v.upper() for v in
+                    (variants if variants is not None else [adapter.prompt_variant])]
     if not variant_list:
         raise ValueError("at least one variant is required")
     renders: List[Dict[str, Any]] = []
@@ -220,15 +260,16 @@ def plan_renders(
         for rep in range(per_spec):
             variant = variant_list[rep % len(variant_list)]
             seed = seed_base + i
-            built = PromptBuilder(seed=seed).build(model, variant, spec.creature)
+            built = PromptBuilder(seed=seed).build(
+                adapter.prompt_target, variant, spec.creature)
             renders.append({
                 "render_id": f"r{len(renders) + 1:04d}",
                 "scene_id": spec.name,
                 "variant": variant,
                 "prompt": built["prompt"],
                 "negative_prompt": built.get("negative_prompt"),
-                "guidance_scale": built.get("guidance_scale"),
-                "steps": built.get("steps"),
+                "guidance_scale": adapter.guidance,
+                "steps": adapter.steps,
                 "seed": seed,
                 "prompt_sha256": hashlib.sha256(
                     f"{model}|{built['prompt']}|{seed}".encode("utf-8")
@@ -248,39 +289,50 @@ def build_job(
     ladder: Sequence[str] | None = None,
     max_wall_seconds: int = 5400,
     attempt: int = 1,
+    engine: ImageEngine | None = None,
 ) -> Dict[str, Any]:
-    if model not in MODEL_IDS:
-        raise ValueError(f"unknown model {model!r}")
-    cfg = MODEL_IDS[model]
+    adapter = resolve_adapter(model, engine)
+    job_ladder = list(ladder or adapter.install_ladder)
     return {
         "job_id": f"ill-{episode_id}-{model}-{attempt}",
         "episode_id": episode_id,
-        "model": model,
-        "model_id": cfg["model_id"],
-        "pipeline_class": cfg["pipeline_class"],
-        "vae_model_id": cfg["vae_model_id"],
+        "model": adapter.key,
+        "model_id": adapter.model_id,
+        "pipeline_class": adapter.pipeline_class,
+        "vae_model_id": adapter.vae_model_id,
+        "unet_checkpoint": adapter.unet_checkpoint,
         "revision": "main",
+        "dtype": adapter.dtype,
         "width": width,
         "height": height,
         "output_dir": f"illustrations_{episode_id}_{model}",
-        "install_ladder": list(ladder or DEFAULT_INSTALL_LADDER[model]),
+        "install_ladder": job_ladder,
+        "load_config": adapter.load_config(),
+        "model_config": adapter.job_model_config(),
         "max_wall_seconds": max_wall_seconds,
         "attempt": attempt,
         "changed_from_previous": (
             f"attempt {attempt}: batched episode plan "
-            f"{len(renders)} renders, ladder {list(ladder or DEFAULT_INSTALL_LADDER[model])}"
+            f"{len(renders)} renders, ladder {job_ladder}"
         ),
         "renders": renders,
         "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
 
 
-def estimate_wall_seconds(model: str, count: int) -> float | None:
+def estimate_wall_seconds(model: str, count: int,
+                           engine: ImageEngine | None = None) -> float | None:
     """Measured seconds/image x count + ~150 s model load. None if unmeasured."""
-    per = MEASURED_SEC_PER_IMAGE.get(model)
+    adapter = resolve_adapter(model, engine)
+    per = adapter.sec_per_image if adapter.usable else None
     if per is None:
         return None
     return round(per * count + 150.0, 1)
+
+
+def project_images(adapter: ModelAdapter, count: int) -> Dict[str, Any]:
+    """Projected GPU minutes for `count` images (fail-closed)."""
+    return project_gpu_minutes(adapter, count)
 
 
 def cache_index(cache_dir: str | Path) -> Dict[str, str]:

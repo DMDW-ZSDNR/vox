@@ -261,15 +261,25 @@ def _probe_classes(classes: List[str]) -> Tuple[Optional[str], Optional[str], Di
     return found, error, versions
 
 
-def install_and_probe(model: str, ladder: List[str]) -> Tuple[bool, Dict[str, Any]]:
-    """Walk the install ladder until the model's pipeline class imports."""
+def install_and_probe(model: str, ladder: List[str],
+                      candidates: Optional[List[str]] = None
+                      ) -> Tuple[bool, Dict[str, Any]]:
+    """Walk the install ladder until the model's pipeline class imports.
+
+    `candidates` lets the job payload (config/image_engine.json -> the
+    model_config block) name the pipeline classes, so the runner does not
+    need a hard-coded table per model.
+    """
     log: Dict[str, Any] = {"ladder": [], "rungs": []}
-    candidates = PIPELINE_CANDIDATES[model]
+    names = list(candidates or PIPELINE_CANDIDATES.get(model) or [])
+    if not names:
+        log["error"] = f"no pipeline candidates for model {model!r}"
+        return False, log
     for i, rung_name in enumerate(ladder, start=1):
         stack = RELEASED_STACKS[rung_name]
         ok, err = _pip(list(stack["pip_args"]))
         found, probe_err, vers = (None, "pip failed: " + err, {}) if not ok else \
-            _probe_classes(candidates)
+            _probe_classes(names)
         log["rungs"].append({
             "rung": i,
             "stack": rung_name,
@@ -313,7 +323,40 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls, cfg: Dict[str, Any
         kwargs["vae"] = AutoencoderKL.from_pretrained(
             job["vae_model_id"], torch_dtype=torch.float16)
         notes["vae"] = job["vae_model_id"]
+    unet_ckpt = job.get("unet_checkpoint")
+    if unet_ckpt:
+        # Distilled-UNet recipe (SDXL-Lightning): build the UNet from the base
+        # config, then load the distilled checkpoint's state dict into it and
+        # hand it to the pipeline (the S8 recipe, proven on the T4).
+        from diffusers import UNet2DConditionModel
+        from huggingface_hub import hf_hub_download
+        from safetensors.torch import load_file
+        base_model = job["model_id"]
+        unet = UNet2DConditionModel.from_config(base_model, subfolder="unet")
+        unet = unet.to(torch.float16)
+        state = load_file(hf_hub_download(unet_ckpt["repo"], unet_ckpt["file"]),
+                          device="cpu")
+        missing, unexpected = unet.load_state_dict(state, strict=False)
+        if missing:
+            raise RuntimeError(
+                f"distilled UNet checkpoint is missing {len(missing)} keys "
+                f"(first: {missing[0]}); the base architecture does not match")
+        kwargs["unet"] = unet
+        notes["unet_checkpoint"] = f"{unet_ckpt['repo']}/{unet_ckpt['file']}"
+        notes["unet_missing_keys"] = len(missing)
+        notes["unet_unexpected_keys"] = len(unexpected)
     pipe = pipe_cls.from_pretrained(job["model_id"], **kwargs)
+    sched = cfg.get("scheduler")
+    if sched and sched.get("class"):
+        import diffusers as _diffusers
+        cls = getattr(_diffusers, str(sched["class"]), None)
+        if cls is None:
+            raise RuntimeError(
+                f"scheduler class {sched['class']!r} missing from diffusers")
+        pipe.scheduler = cls.from_config(pipe.scheduler.config,
+                                         **(sched.get("kwargs") or {}))
+        notes["scheduler"] = str(sched["class"])
+        notes["scheduler_kwargs"] = sched.get("kwargs") or {}
     if cfg.get("force_upcast_vae"):
         # fp16 VAE decoders overflow to NaN on the 16-channel latents these
         # models use; diffusers' own guidance for the SD3/Flux lineage is
@@ -346,6 +389,28 @@ def _load_pipeline(job: Dict[str, Any], model: str, pipe_cls, cfg: Dict[str, Any
     return pipe, notes
 
 
+def resolve_model_plan(job: Dict[str, Any]) -> Dict[str, Any]:
+    """Resolve the model plan for a job.
+
+    Precedence: the job payload wins over the runner's built-in tables. The
+    job carries a `model_config` block produced from
+    config/image_engine.json, so a model that the runner never saw before
+    still runs (a JSON edit, no code change).
+    """
+    model = str(job["model"])
+    model_cfg: Dict[str, Any] = job.get("model_config") or {}
+    candidates: List[str] = list(model_cfg.get("pipeline_candidates")
+                                  or PIPELINE_CANDIDATES.get(model) or [])
+    ladder: List[str] = list(job.get("install_ladder")
+                             or model_cfg.get("install_ladder")
+                             or DEFAULT_LADDERS.get(model, []))
+    cfg: Dict[str, Any] = dict(LOAD_CONFIG.get(model, {}))
+    cfg.update(model_cfg.get("load_config") or {})
+    cfg.update(job.get("load_config") or {})
+    return {"model": model, "candidates": candidates,
+            "ladder": ladder, "cfg": cfg}
+
+
 def main() -> None:
     global OUT
     job = JOB_EMBEDDED
@@ -359,13 +424,20 @@ def main() -> None:
     images_dir = OUT / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
 
-    ladder: List[str] = job.get("install_ladder") or DEFAULT_LADDERS[model]
+    plan = resolve_model_plan(job)
+    ladder: List[str] = plan["ladder"]
+    candidates: List[str] = plan["candidates"]
+    cfg: Dict[str, Any] = plan["cfg"]
     max_wall = int(job.get("max_wall_seconds") or MAX_WALL_SECONDS)
-    cfg = dict(LOAD_CONFIG[model])
-    cfg.update(job.get("load_config") or {})
+    if not ladder:
+        _blocked(f"no install ladder for model {model!r} "
+                 "(job.install_ladder / model_config.install_ladder)")
+    if not candidates:
+        _blocked(f"no pipeline candidates for model {model!r} "
+                 "(job.model_config.pipeline_candidates)")
 
     # --- install + verify the pipeline class BEFORE generating --------------
-    ok, log = install_and_probe(model, ladder)
+    ok, log = install_and_probe(model, ladder, candidates)
     (OUT / "install_log.json").write_text(json.dumps(log, indent=2), encoding="utf-8")
     if not ok:
         last = log["rungs"][-1] if log["rungs"] else {}

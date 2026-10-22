@@ -33,18 +33,19 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from tools.illustration.episode_batch import (  # noqa: E402
-    DEFAULT_INSTALL_LADDER,
-    MODEL_IDS,
     build_job,
     check_budget,
     estimate_wall_seconds,
+    get_engine,
     images_for_minutes,
     label_and_qc,
     load_specs,
     plan_renders,
+    resolve_adapter,
     split_cached,
     verify_fetched,
 )
+from tools.illustration.model_registry import EngineConfigError  # noqa: E402
 
 KERNEL_SLUG = "forts845/openmontage-runner"
 RUN_PY = REPO / "tools/kaggle_bridge/s7_bakeoff_run.py"
@@ -86,13 +87,33 @@ def _embed_job(run_text: str, job: Dict[str, Any]) -> str:
 
 def _ladder_for(model: str, attempt: int) -> List[str]:
     """Attempt N skips rungs already tried (no identical retry)."""
-    full = list(DEFAULT_INSTALL_LADDER[model])
+    try:
+        adapter = resolve_adapter(model)
+        full = list(adapter.install_ladder)
+    except ValueError:
+        full = []
     return full[max(0, attempt - 1):] or full
+
+
+def _model_choices() -> List[str]:
+    try:
+        return sorted(get_engine().models)
+    except EngineConfigError:
+        return []
+
+
+def _locked_model() -> str:
+    """The model the config locks (config/image_engine.json)."""
+    try:
+        return get_engine().model
+    except EngineConfigError as exc:
+        raise SystemExit(f"BLOCKED: {exc}")
 
 
 # --------------------------------------------------------------------- plan
 def cmd_plan(args: argparse.Namespace) -> int:
     ep = args.episode
+    model = args.model or _locked_model()
     specs = load_specs(args.spec_dir or SPEC_DIR)
     count = (args.per_spec * len(specs)) if args.per_spec else images_for_minutes(
         args.minutes, args.per_minute)
@@ -104,18 +125,18 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
     per_spec = args.per_spec or max(1, round(count / len(specs)))
     variants = [v.strip().upper() for v in args.variants.split(",") if v.strip()]
-    renders = plan_renders(specs, args.model, per_spec=per_spec,
+    renders = plan_renders(specs, model, per_spec=per_spec,
                            seed_base=args.seed_base, variants=variants)
     try:
         check_budget(len(renders), args.cap)
-    except Exception as exc:
+    except Exception as exc:  # BudgetError
         print(f"BLOCKED: {exc}")
         return 2
 
     cache = Path(args.cache) if args.cache else _episode_root(ep) / "assets" / "illustrations"
     todo, reused = split_cached(renders, cache)
-    job = build_job(ep, args.model, todo, width=args.width, height=args.height,
-                    ladder=_ladder_for(args.model, 1), attempt=1,
+    job = build_job(ep, model, todo, width=args.width, height=args.height,
+                    ladder=_ladder_for(model, 1), attempt=1,
                     max_wall_seconds=args.max_wall)
     job["plan"] = {
         "spec_dir": str(Path(args.spec_dir or SPEC_DIR).resolve()),
@@ -125,13 +146,13 @@ def cmd_plan(args: argparse.Namespace) -> int:
         "planned_total": len(renders),
         "reused": len(reused),
         "to_generate": len(todo),
-        "est_wall_seconds": estimate_wall_seconds(args.model, len(todo)),
+        "est_wall_seconds": estimate_wall_seconds(model, len(todo)),
     }
     out = Path(args.job_json) if args.job_json else (
         _episode_root(ep) / "jobs" / f"{job['job_id']}.json")
     _write_json(out, job)
 
-    print(f"episode={ep} model={args.model} specs={len(specs)} per_spec={per_spec}")
+    print(f"episode={ep} model={model} specs={len(specs)} per_spec={per_spec}")
     print(f"planned={len(renders)} reused={len(reused)} to_generate={len(todo)} "
           f"cap={args.cap}")
     est = job["plan"]["est_wall_seconds"]
@@ -161,7 +182,7 @@ def cmd_submit(args: argparse.Namespace) -> int:
     ladder = (_ladder_for(prev["model"], attempt)
               if not getattr(args, "keep_ladder", False)
               else list(prev.get("install_ladder") or
-                        DEFAULT_INSTALL_LADDER[prev["model"]]))
+                        resolve_adapter(prev["model"]).install_ladder))
     job = build_job(prev.get("episode_id", "ep"), prev["model"], renders,
                     width=prev.get("width", 1344), height=prev.get("height", 768),
                     ladder=ladder, attempt=attempt,
@@ -288,7 +309,9 @@ def main() -> int:
 
     p = sub.add_parser("plan", help="plan one model's episode batch")
     p.add_argument("--episode", required=True)
-    p.add_argument("--model", default="klein", choices=sorted(MODEL_IDS))
+    p.add_argument("--model", default="", choices=_model_choices(),
+                   help="model key from config/image_engine.json "
+                        "(default: the locked model)")
     p.add_argument("--spec-dir", default="")
     p.add_argument("--minutes", type=float, default=10.5)
     p.add_argument("--per-minute", type=float, default=8.0)
